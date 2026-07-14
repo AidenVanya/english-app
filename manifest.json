@@ -1,0 +1,22 @@
+{
+  "name": "Yeliz English - İngilizce Öğrenme Platformu",
+  "short_name": "Yeliz English",
+  "description": "Yeliz için özel olarak tasarlanmış, modern ve etkileşimli İngilizce öğrenme platformu.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#6366f1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

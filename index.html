@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Yeliz için özel olarak tasarlanmış, modern ve etkileşimli İngilizce öğrenme platformu.">
+    <title>Yeliz English - İngilizce Öğrenme Platformu</title>
+    <!-- PWA Meta & Manifest -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Glassmorphic Background Shapes -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <div class="app-container">
+        <!-- Sidebar or Top Navigation Header -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <span class="logo-text">Yeliz<span>English</span></span>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs" id="main-nav">
+                <button class="nav-btn active" data-tab="home-tab" id="btn-home">
+                    <i class="fa-solid fa-house"></i> <span data-i18n="nav-home">Ana Sayfa</span>
+                </button>
+                <button class="nav-btn" data-tab="cards-tab" id="btn-cards">
+                    <i class="fa-solid fa-clone"></i> <span data-i18n="nav-cards">Kelime Kartları</span>
+                </button>
+                <button class="nav-btn" data-tab="list-tab" id="btn-list">
+                    <i class="fa-solid fa-list"></i> <span data-i18n="nav-list">Tüm Kelimeler</span>
+                </button>
+                <button class="nav-btn" data-tab="add-tab" id="btn-add">
+                    <i class="fa-solid fa-plus"></i> <span data-i18n="nav-add">Kelime Ekle</span>
+                </button>
+                <button class="nav-btn" data-tab="quiz-tab" id="btn-quiz">
+                    <i class="fa-solid fa-circle-question"></i> <span data-i18n="nav-quiz">Quiz</span>
+                </button>
+            </nav>
+
+            <!-- Settings Menu Triggers -->
+            <div class="header-actions">
+                <button class="install-app-btn" id="pwa-install-btn" title="Uygulamayı Yükle" style="display: none;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
+                <button class="settings-toggle-btn" id="settings-toggle-btn" title="Ayarlar ve Temalar">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+                <button class="burger-menu-btn" id="burger-menu-btn" title="Menü / Ayarlar">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- 1. HOME TAB -->
+            <section class="tab-content active" id="home-tab">
+                <div class="welcome-card glass-panel">
+                    <div class="welcome-header">
+                        <div class="welcome-text">
+                            <span class="greeting-subtitle" id="greeting-time">İyi günler,</span>
+                            <h1 class="greeting-title">Welcome Yeliz! ✨</h1>
+                            <p class="motivational-quote" id="daily-quote">"The beautiful thing about learning is that no one can take it away from you."</p>
+                            <span class="quote-author" id="daily-quote-author">- B.B. King</span>
+                        </div>
+                        <div class="welcome-avatar">
+                            <div class="avatar-glow"></div>
+                            <i class="fa-solid fa-user-astronaut avatar-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fast Stats Dashboard -->
+                <div class="stats-grid">
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon-wrapper color-blue">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-total-words">0</h3>
+                            <p data-i18n="stat-total">Toplam Kelime</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon-wrapper color-green">
+                            <i class="fa-solid fa-circle-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-learned-words">0</h3>
+                            <p data-i18n="stat-learned">Öğrenilen Kelimeler</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel">
+                        <div class="stat-icon-wrapper color-purple">
+                            <i class="fa-solid fa-user-pen"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-custom-words">0</h3>
+                            <p data-i18n="stat-custom">Eklediğim Kelimeler</p>
+                        </div>
+                    </div>
+                    <div class="stat-card glass-panel" title="Ardışık gün çalışma sayacınız">
+                        <div class="stat-icon-wrapper color-orange">
+                            <i class="fa-solid fa-fire"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="stat-daily-streak">0 Gün</h3>
+                            <p data-i18n="stat-streak">Çalışma Serisi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gamification Grid -->
+                <div class="gamification-grid">
+                    <!-- 1. Daily Quests -->
+                    <div class="gamified-panel glass-panel" id="quests-panel">
+                        <h3><i class="fa-solid fa-list-check icon-pink"></i> <span data-i18n="quests-title">Günlük Görevler</span></h3>
+                        <p class="panel-subtitle" data-i18n="quests-subtitle">Her gün sıfırlanır, serini korumak için tamamla!</p>
+                        <div class="quest-list">
+                            <div class="quest-item" id="quest-cards">
+                                <div class="quest-checkbox" id="qc-cards"><i class="fa-regular fa-circle"></i></div>
+                                <span class="quest-text" id="qt-cards">5 Kelime Kartı çalış (0/5)</span>
+                            </div>
+                            <div class="quest-item" id="quest-quiz">
+                                <div class="quest-checkbox" id="qc-quiz"><i class="fa-regular fa-circle"></i></div>
+                                <span class="quest-text">Bir İngilizce Quiz tamamla</span>
+                            </div>
+                            <div class="quest-item" id="quest-wod">
+                                <div class="quest-checkbox" id="qc-wod"><i class="fa-regular fa-circle"></i></div>
+                                <span class="quest-text">Günün Kelimesini dinle</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Word of the Day -->
+                    <div class="gamified-panel glass-panel" id="word-of-day-panel">
+                        <h3><i class="fa-solid fa-star icon-gold"></i> <span data-i18n="wod-title">Günün Kelimesi</span></h3>
+                        <p class="panel-subtitle" data-i18n="wod-subtitle">Bugünün odaklanılacak kelimesi</p>
+                        <div class="wod-card">
+                            <h2 id="wod-en">Loading...</h2>
+                            <p id="wod-type">(Genel)</p>
+                            <h3 id="wod-tr">Yükleniyor...</h3>
+                            <p class="wod-ex" id="wod-ex-en">"Connecting vocabulary database."</p>
+                            <p class="wod-ex-tr" id="wod-ex-tr">"Kelime veritabanı bağlanıyor."</p>
+                            <div class="wod-actions">
+                                <button class="action-btn-sm btn-row-tts" id="wod-tts-btn" title="Dinle">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button class="btn btn-primary btn-sm" id="wod-study-btn" style="padding: 8px 16px; font-size: 12px; border-radius: 8px;" data-i18n="wod-study-btn">
+                                    Kartta Çalış
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. Achievements Cabinet -->
+                    <div class="gamified-panel glass-panel" id="badges-panel">
+                        <h3><i class="fa-solid fa-medal icon-blue"></i> <span data-i18n="badges-title">Başarı Rozetleri</span></h3>
+                        <p class="panel-subtitle" data-i18n="badges-subtitle">Yolculuğunda kazandığın ödüller</p>
+                        <div class="badges-grid">
+                            <div class="badge-item locked" id="badge-first-step" title="İlk Adım: En az 1 kelimeyi öğrendim olarak işaretle.">
+                                <div class="badge-icon"><i class="fa-solid fa-shoe-prints"></i></div>
+                                <span data-i18n="badge-first-step-title">İlk Adım</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-aviation" title="Kaptan: Havacılık alanında 5 kelime öğren.">
+                                <div class="badge-icon"><i class="fa-solid fa-plane"></i></div>
+                                <span data-i18n="badge-aviation-title">Kaptan</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-quiz-perfect" title="Dahi: Bir quizden 100% başarı elde et.">
+                                <div class="badge-icon"><i class="fa-solid fa-crown"></i></div>
+                                <span data-i18n="badge-quiz-title">Dahi</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-streak-3" title="İstikrarlı: Çalışma serisini 3 güne çıkar.">
+                                <div class="badge-icon"><i class="fa-solid fa-fire"></i></div>
+                                <span data-i18n="badge-streak-title">İstikrarlı</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-tourism" title="Gezgin: Turizm alanında 5 kelime öğren.">
+                                <div class="badge-icon"><i class="fa-solid fa-compass"></i></div>
+                                <span data-i18n="badge-tourism-title">Gezgin</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-custom-3" title="Yazar: Kendi eklediğin kelime sayısını 3'e ulaştır.">
+                                <div class="badge-icon"><i class="fa-solid fa-pen-nib"></i></div>
+                                <span data-i18n="badge-custom-title">Yazar</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-marathon" title="Maratoncu: 30 soruluk bir quizi tamamla.">
+                                <div class="badge-icon"><i class="fa-solid fa-bolt"></i></div>
+                                <span data-i18n="badge-marathon-title">Maratoncu</span>
+                            </div>
+                            <div class="badge-item locked" id="badge-hunter-25" title="Avcı: Toplamda 25 kelimeyi öğrendim olarak işaretle.">
+                                <div class="badge-icon"><i class="fa-solid fa-bullseye"></i></div>
+                                <span data-i18n="badge-hunter-title">Avcı</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Card -->
+                <div class="activity-section">
+                    <div class="info-card glass-panel" style="padding: 30px !important;">
+                        <h2 style="font-weight: 800; margin-bottom: 8px; text-align: center;" data-i18n="qa-title">Bugün Ne Yapmak İstersin?</h2>
+                        <p style="text-align: center; color: var(--text-secondary); font-size: 13px; max-width: 600px; margin: 0 auto 25px auto;" data-i18n="qa-subtitle">
+                            Öğrenme yolculuğuna devam etmek için aşağıdaki aktivitelerden birini seçerek anında başlayabilirsin.
+                        </p>
+                        
+                        <div class="quick-actions-grid">
+                            <!-- Card 1: Search -->
+                            <div class="quick-action-card" onclick="switchTab('list-tab')">
+                                <div class="action-card-icon color-blue">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <h4 data-i18n="qa-search-title">Kelimeleri Ara</h4>
+                                <p data-i18n="qa-search-desc">3900'den fazla kelimelik sözlükte filtreleme ve arama yap.</p>
+                                <span class="action-card-arrow"><span data-i18n="qa-search-btn">Sözlüğe Git</span> <i class="fa-solid fa-arrow-right"></i></span>
+                            </div>
+                            
+                            <!-- Card 2: Flashcards -->
+                            <div class="quick-action-card" onclick="switchTab('cards-tab')">
+                                <div class="action-card-icon color-purple">
+                                    <i class="fa-solid fa-play"></i>
+                                </div>
+                                <h4 data-i18n="qa-cards-title">Kartlarla Çalış</h4>
+                                <p data-i18n="qa-cards-desc">3D döndürülebilir akıllı kartlar ve seslendirme ile öğren.</p>
+                                <span class="action-card-arrow"><span data-i18n="qa-cards-btn">Kartları Aç</span> <i class="fa-solid fa-arrow-right"></i></span>
+                            </div>
+                            
+                            <!-- Card 3: Quiz -->
+                            <div class="quick-action-card" onclick="switchTab('quiz-tab')">
+                                <div class="action-card-icon color-gold">
+                                    <i class="fa-solid fa-gamepad"></i>
+                                </div>
+                                <h4 data-i18n="qa-quiz-title">Quiz Başlat</h4>
+                                <p data-i18n="qa-quiz-desc">Çok modlu testler çöz, puan topla ve serini koru.</p>
+                                <span class="action-card-arrow"><span data-i18n="qa-quiz-btn">Testi Başlat</span> <i class="fa-solid fa-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. FLASHCARDS TAB -->
+            <section class="tab-content" id="cards-tab">
+                <div class="section-header">
+                    <h2>Kelime Kartları ile Pratik</h2>
+                    <p>Kartların üzerine tıklayarak Türkçe anlamını görebilir ve ses simgesi ile İngilizce telaffuzunu dinleyebilirsin.</p>
+                </div>
+
+                <!-- Filters & Search Bar -->
+                <div class="control-panel glass-panel">
+                    <div class="filter-group">
+                        <select id="card-category-select" class="styled-select">
+                            <option value="all">Tüm Alanlar</option>
+                            <option value="General">Genel Kelimeler</option>
+                            <option value="Aviation (Havacılık)">Havacılık Kelimeleri</option>
+                            <option value="Tourism (Turizm)">Turizm Kelimeleri</option>
+                            <option value="Kitchen (Mutfak)">Mutfak & Gastronomi</option>
+                            <option value="Technology (Teknoloji)">Teknoloji & Yazılım</option>
+                            <option value="Business (İş & Ekonomi)">İş Dünyası & Ekonomi</option>
+                            <option value="Medicine (Tıp & Sağlık)">Tıp & Sağlık</option>
+                            <option value="Science (Bilim & Uzay)">Bilim & Uzay</option>
+                            <option value="Academic (Akademi & Eğitim)">Akademi & Eğitim</option>
+                            <option value="Fashion (Moda & Tasarım)">Moda & Tasarım</option>
+                            <option value="Sports (Spor & Egzersiz)">Spor & Egzersiz</option>
+                            <option value="Nature (Doğa & Çevre)">Doğa & Çevre</option>
+                            <option value="Law (Hukuk & Adalet)">Hukuk & Adalet</option>
+                            <option value="Music & Art (Müzik & Sanat)">Müzik & Sanat</option>
+                            <option value="custom">Benim Eklediklerim</option>
+                            <option value="learned">Öğrenilenler</option>
+                            <option value="learning">Çalışılacaklar</option>
+                        </select>
+                    </div>
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="card-search" placeholder="Kelime ara...">
+                    </div>
+                </div>
+
+                <!-- Flashcard Display Area -->
+                <div class="card-display-container">
+                    <div class="flashcard-wrapper">
+                        <!-- Perspective Container for flip -->
+                        <div class="flashcard" id="main-flashcard">
+                            <!-- Front of the Card -->
+                            <div class="card-face card-front">
+                                <span class="card-tag" id="card-category">Genel</span>
+                                <div class="card-word-area">
+                                    <h2 class="word-text" id="card-word-en">Challenge</h2>
+                                    <span class="word-pronunciation" id="card-word-type">/ˈtʃæl.ɪndʒ/ (n.)</span>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="card-action-btn tts-btn" id="card-tts-btn" title="Telaffuzu Dinle" aria-label="Listen pronunciation">
+                                        <i class="fa-solid fa-volume-high"></i>
+                                    </button>
+                                </div>
+                                <span class="card-tip"><i class="fa-solid fa-rotate"></i> Çevirmek için tıkla</span>
+                            </div>
+
+                            <!-- Back of the Card -->
+                            <div class="card-face card-back">
+                                <span class="card-tag">Türkçe Anlamı</span>
+                                <div class="card-translation-area">
+                                    <h2 class="translation-text" id="card-word-tr">Zorluk, Meydan Okuma</h2>
+                                </div>
+                                <div class="card-example-area">
+                                    <p class="example-en" id="card-example-en">"Learning English is a beautiful challenge."</p>
+                                    <p class="example-tr" id="card-example-tr">"İngilizce öğrenmek güzel bir meydan okumadır."</p>
+                                </div>
+                                <span class="card-tip"><i class="fa-solid fa-rotate"></i> İngilizceye dönmek için tıkla</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flashcard Controller Buttons -->
+                    <div class="card-controls">
+                        <button class="control-btn" id="prev-card-btn" title="Önceki Kelime">
+                            <i class="fa-solid fa-arrow-left"></i>
+                        </button>
+                        <button class="control-btn" id="shuffle-card-btn" title="Kelimeleri Karıştır">
+                            <i class="fa-solid fa-shuffle"></i> <span>Karıştır</span>
+                        </button>
+                        <div class="card-indicator">
+                            <span id="current-card-num">1</span> / <span id="total-cards-num">10</span>
+                        </div>
+                        <button class="control-btn" id="next-card-btn" title="Sonraki Kelime">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Learn Marking Button -->
+                    <div class="learn-toggle-container">
+                        <button class="btn btn-learned-toggle" id="mark-learned-btn">
+                            <i class="fa-regular fa-circle-check"></i> <span id="learned-btn-text">Öğrendim Olarak İşaretle</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. ALL WORDS LIST TAB (NEW) -->
+            <section class="tab-content" id="list-tab">
+                <div class="section-header">
+                    <h2>Tüm Kelimeler & Sözlük</h2>
+                    <p>Sistemde yüklü olan 3800'den fazla kelimeyi arayabilir, kullanım alanlarına (Havacılık, Turizm, Genel) göre filtreleyebilir ve telaffuzlarını dinleyebilirsiniz.</p>
+                </div>
+
+                <!-- Controls & Filters for List -->
+                <div class="control-panel glass-panel">
+                    <div class="filter-group">
+                        <select id="list-category-select" class="styled-select">
+                            <option value="all">Tüm Alanlar</option>
+                            <option value="General">Genel Kelimeler</option>
+                            <option value="Aviation (Havacılık)">Havacılık Kelimeleri</option>
+                            <option value="Tourism (Turizm)">Turizm Kelimeleri</option>
+                            <option value="Kitchen (Mutfak)">Mutfak & Gastronomi</option>
+                            <option value="Technology (Teknoloji)">Teknoloji & Yazılım</option>
+                            <option value="Business (İş & Ekonomi)">İş Dünyası & Ekonomi</option>
+                            <option value="Medicine (Tıp & Sağlık)">Tıp & Sağlık</option>
+                            <option value="Science (Bilim & Uzay)">Bilim & Uzay</option>
+                            <option value="Academic (Akademi & Eğitim)">Akademi & Eğitim</option>
+                            <option value="Fashion (Moda & Tasarım)">Moda & Tasarım</option>
+                            <option value="Sports (Spor & Egzersiz)">Spor & Egzersiz</option>
+                            <option value="Nature (Doğa & Çevre)">Doğa & Çevre</option>
+                            <option value="Law (Hukuk & Adalet)">Hukuk & Adalet</option>
+                            <option value="Music & Art (Müzik & Sanat)">Müzik & Sanat</option>
+                            <option value="custom">Benim Eklediklerim</option>
+                            <option value="learned">Öğrenilenler</option>
+                            <option value="learning">Çalışılacaklar</option>
+                        </select>
+                    </div>
+                    <div class="search-box" style="max-width: 400px;">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="list-search" placeholder="İngilizce veya Türkçe arama yapın...">
+                    </div>
+                </div>
+
+                <!-- Dictionary Words List Container -->
+                <div class="list-container glass-panel">
+                    <div class="table-responsive">
+                        <table class="words-table">
+                            <thead>
+                                <tr>
+                                    <th>İngilizce</th>
+                                    <th>Türkçe Anlamı</th>
+                                    <th>Kategori</th>
+                                    <th style="text-align: center; width: 140px;">İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="words-table-body">
+                                <!-- Dynamic rows filled via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="pagination-container">
+                        <button class="control-btn pagination-btn" id="list-prev-page">
+                            <i class="fa-solid fa-chevron-left"></i> Önceki
+                        </button>
+                        <span class="pagination-info" id="list-page-info">Sayfa 1 / 78</span>
+                        <button class="control-btn pagination-btn" id="list-next-page">
+                            Sonraki <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. ADD WORD TAB -->
+            <section class="tab-content" id="add-tab">
+                <div class="section-header">
+                    <h2>Kendi Kelime Listeni Oluştur</h2>
+                    <p>Çalışmak istediğin yeni kelimeleri buraya ekleyerek kelime kartlarına ve quizlere dahil edebilirsin.</p>
+                </div>
+
+                <div class="grid-two-columns">
+                    <!-- Add Word Form -->
+                    <div class="form-container glass-panel">
+                        <h3>Yeni Kelime Ekle</h3>
+                        <form id="add-word-form" onsubmit="event.preventDefault();">
+                            <div class="form-group">
+                                <label for="word-en"><i class="fa-solid fa-font"></i> İngilizce Kelime</label>
+                                <input type="text" id="word-en" placeholder="Örn: Serendipity" required autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label for="word-tr"><i class="fa-solid fa-language"></i> Türkçe Anlamı</label>
+                                <input type="text" id="word-tr" placeholder="Örn: Şans eseri güzel şeyler bulma yeteneği" required autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label for="word-category"><i class="fa-solid fa-tags"></i> Kategori / Tür</label>
+                                <select id="word-category">
+                                    <option value="Noun (İsim)">Noun (İsim)</option>
+                                    <option value="Verb (Fiil)">Verb (Fiil)</option>
+                                    <option value="Adjective (Sıfat)">Adjective (Sıfat)</option>
+                                    <option value="Adverb (Zarf)">Adverb (Zarf)</option>
+                                    <option value="Expression (Deyim/İfade)">Expression (Deyim/İfade)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="word-example-en"><i class="fa-solid fa-quote-left"></i> İngilizce Örnek Cümle (İsteğe Bağlı)</label>
+                                <input type="text" id="word-example-en" placeholder="Örn: We found the cozy little restaurant by serendipity.">
+                            </div>
+                            <div class="form-group">
+                                <label for="word-example-tr"><i class="fa-solid fa-quote-right"></i> Türkçe Çevirisi (İsteğe Bağlı)</label>
+                                <input type="text" id="word-example-tr" placeholder="Örn: Sıcacık küçük restoranı şans eseri bulduk.">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" id="save-word-btn">
+                                <i class="fa-solid fa-floppy-disk"></i> Listeme Ekle
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Custom Words List -->
+                    <div class="custom-list-container glass-panel">
+                        <h3>Eklediğim Kelimeler (<span id="custom-count">0</span>)</h3>
+                        <div class="custom-words-list" id="custom-words-list-container">
+                            <!-- Empty state or list item -->
+                            <div class="empty-state" id="custom-list-empty">
+                                <i class="fa-solid fa-folder-open"></i>
+                                <p>Henüz kendi kelimeni eklemedin. Sol taraftaki formu kullanarak ilk kelimeni ekle!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. QUIZ TAB -->
+            <section class="tab-content" id="quiz-tab">
+                <div class="section-header">
+                    <h2>Bilgini Sına!</h2>
+                    <p>Öğrendiğin kelimeleri farklı modlarda test et. Test uzunluğunu ve soru çeşidini seçebilirsin.</p>
+                </div>
+
+                <!-- Quiz Start / Screen Wrapper -->
+                <div class="quiz-container-wrapper">
+                    
+                    <!-- A. Quiz Start Screen -->
+                    <div class="quiz-screen glass-panel active" id="quiz-start-screen">
+                        <div class="quiz-intro">
+                            <i class="fa-solid fa-rocket quiz-intro-icon"></i>
+                            <h3>Kelime Yarışı Başlıyor!</h3>
+                            <p>Kelimelerin Türkçe/İngilizce karşılıklarını veya cümle içindeki doğru kullanımlarını test et!</p>
+                            
+                            <div class="quiz-setup" style="width: 100%; display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; max-width: 400px; margin-top: 10px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="quiz-source-select"><i class="fa-solid fa-folder"></i> Soru Kaynağı ve Alanı:</label>
+                                    <select id="quiz-source-select" class="styled-select" style="width: 100%;">
+                                        <option value="all">Tüm Kelimeler (Genel + Havacılık + Turizm + Mutfak...)</option>
+                                        <option value="Aviation (Havacılık)">Sadece Havacılık Kelimeleri</option>
+                                        <option value="Tourism (Turizm)">Sadece Turizm Kelimeleri</option>
+                                        <option value="Kitchen (Mutfak)">Sadece Mutfak & Gastronomi</option>
+                                        <option value="Technology (Teknoloji)">Sadece Teknoloji & Yazılım</option>
+                                        <option value="Business (İş & Ekonomi)">Sadece İş & Ekonomi</option>
+                                        <option value="Medicine (Tıp & Sağlık)">Sadece Tıp & Sağlık</option>
+                                        <option value="Science (Bilim & Uzay)">Sadece Bilim & Uzay</option>
+                                        <option value="Academic (Akademi & Eğitim)">Sadece Akademi & Eğitim</option>
+                                        <option value="Fashion (Moda & Tasarım)">Sadece Moda & Tasarım</option>
+                                        <option value="Sports (Spor & Egzersiz)">Sadece Spor & Egzersiz</option>
+                                        <option value="Nature (Doğa & Çevre)">Sadece Doğa & Çevre</option>
+                                        <option value="Law (Hukuk & Adalet)">Sadece Hukuk & Adalet</option>
+                                        <option value="Music & Art (Müzik & Sanat)">Sadece Müzik & Sanat</option>
+                                        <option value="custom">Sadece Benim Eklediğim Kelimeler</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="quiz-type-select"><i class="fa-solid fa-sliders"></i> Soru Türü:</label>
+                                    <select id="quiz-type-select" class="styled-select" style="width: 100%;">
+                                        <option value="en-to-tr">İngilizce ➔ Türkçe (Anlamını Bul)</option>
+                                        <option value="tr-to-en">Türkçe ➔ İngilizce (Kelimeyi Bul)</option>
+                                        <option value="sentence-fill">Boşluk Doldurma (Cümle İçi Kullanım)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="quiz-count-select"><i class="fa-solid fa-list-ol"></i> Soru Sayısı:</label>
+                                    <select id="quiz-count-select" class="styled-select" style="width: 100%;">
+                                        <option value="10">10 Soru (Pratik)</option>
+                                        <option value="20">20 Soru (Klasik)</option>
+                                        <option value="30">30 Soru (Maraton)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-primary btn-lg" id="start-quiz-btn" style="margin-top: 15px;">
+                                <i class="fa-solid fa-play"></i> Testi Başlat
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- B. Quiz Active Question Screen -->
+                    <div class="quiz-screen glass-panel" id="quiz-question-screen">
+                        <!-- Progress & Status Info -->
+                        <div class="quiz-header">
+                            <div class="quiz-progress-text">Soru <span id="quiz-current-num">1</span> / <span id="quiz-total-num">10</span></div>
+                            <div class="quiz-score-badge">Doğru: <span id="quiz-score-correct">0</span></div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="quiz-progress-fill" style="width: 10%;"></div>
+                        </div>
+
+                        <!-- Question Word -->
+                        <div class="quiz-question-box">
+                            <span class="question-label">Aşağıdaki kelimenin anlamı nedir?</span>
+                            <h2 class="question-word" id="quiz-question-word">Awesome</h2>
+                            <button class="tts-btn question-tts" id="quiz-tts-btn" title="Dinle"><i class="fa-solid fa-volume-high"></i></button>
+                        </div>
+
+                        <!-- Choices Grid -->
+                        <div class="choices-grid" id="quiz-choices-container">
+                            <!-- Example choice -->
+                            <button class="choice-card" data-index="0">Harika, Müthiş</button>
+                            <button class="choice-card" data-index="1">Sıradan</button>
+                            <button class="choice-card" data-index="2">Kötü, Berbat</button>
+                            <button class="choice-card" data-index="3">Korkutucu</button>
+                        </div>
+
+                        <!-- Quiz Navigation Controls -->
+                        <div class="quiz-controls">
+                            <button class="btn btn-secondary" id="quiz-quit-btn">
+                                <i class="fa-solid fa-right-from-bracket"></i> Testten Çık
+                            </button>
+                            <button class="btn btn-primary" id="quiz-next-btn" disabled>
+                                Sonraki Soru <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- C. Quiz Results Screen -->
+                    <div class="quiz-screen glass-panel" id="quiz-results-screen">
+                        <div class="results-container">
+                            <div class="result-icon-celebration" id="result-emoji">
+                                <i class="fa-solid fa-trophy text-gold"></i>
+                            </div>
+                            <h3 id="result-title">Tebrikler Yeliz! 🎉</h3>
+                            <p class="result-subtitle" id="result-desc">Testi başarıyla tamamladın.</p>
+                            
+                            <div class="results-stats">
+                                <div class="res-stat-card">
+                                    <span class="res-stat-val text-green" id="res-correct">8</span>
+                                    <span class="res-stat-lbl">Doğru</span>
+                                </div>
+                                <div class="res-stat-card">
+                                    <span class="res-stat-val text-red" id="res-incorrect">2</span>
+                                    <span class="res-stat-lbl">Yanlış</span>
+                                </div>
+                                <div class="res-stat-card">
+                                    <span class="res-stat-val text-purple" id="res-score-percent">80%</span>
+                                    <span class="res-stat-lbl">Başarı</span>
+                                </div>
+                            </div>
+
+                            <div class="results-actions">
+                                <button class="btn btn-primary" id="quiz-retry-btn">
+                                    <i class="fa-solid fa-rotate-left"></i> Yeniden Dene
+                                </button>
+                                <button class="btn btn-secondary" onclick="switchTab('home-tab')">
+                                    <i class="fa-solid fa-house"></i> Ana Sayfaya Dön
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification for Add Word Success / Warning -->
+    <div id="toast-notification" class="toast">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <span class="toast-message">Kelime başarıyla eklendi!</span>
+    </div>
+
+    <!-- Settings Drawer (Ayarlar & Tema Paneli) -->
+    <div class="settings-drawer-overlay" id="settings-drawer-overlay"></div>
+    <div class="settings-drawer" id="settings-drawer">
+        <div class="drawer-header">
+            <h3><i class="fa-solid fa-sliders"></i> <span data-i18n="drawer-title">Ayarlar & Temalar</span></h3>
+            <button class="drawer-close-btn" id="drawer-close-btn">&times;</button>
+        </div>
+        
+        <div class="drawer-content">
+            <!-- Theme Selection Section -->
+            <div class="drawer-section">
+                <h4><i class="fa-solid fa-palette"></i> <span data-i18n="drawer-theme-title">Renk Teması Seçimi</span></h4>
+                <p class="section-desc" data-i18n="drawer-theme-desc">Uygulamanın görsel stilini dilediğiniz gibi değiştirin:</p>
+                
+                <div class="theme-options-list">
+                    <!-- Option 1: Midnight Blue -->
+                    <div class="theme-option active" data-theme="midnight" style="--primary-color: #6366f1; --bg-color: #0b0f19;">
+                        <div class="theme-preview"></div>
+                        <div class="theme-info">
+                            <h5 data-i18n="theme-mid">Gece Mavisi (Varsayılan)</h5>
+                            <span data-i18n="theme-mid-desc">Derin lacivert & canlı indigo tonları</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 2: Emerald Forest -->
+                    <div class="theme-option" data-theme="emerald" style="--primary-color: #059669; --bg-color: #060f0e;">
+                        <div class="theme-preview"></div>
+                        <div class="theme-info">
+                            <h5 data-i18n="theme-eme">Zümrüt Ormanı</h5>
+                            <span data-i18n="theme-eme-desc">Huzur verici yeşil & zümrüt tonları</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 3: Sunset Orange -->
+                    <div class="theme-option" data-theme="sunset" style="--primary-color: #ea580c; --bg-color: #140d0a;">
+                        <div class="theme-preview"></div>
+                        <div class="theme-info">
+                            <h5 data-i18n="theme-sun">Gün Batımı</h5>
+                            <span data-i18n="theme-sun-desc">Sıcak kızıl & turuncu esintileri</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 4: Deep Amethyst -->
+                    <div class="theme-option" data-theme="amethyst" style="--primary-color: #7c3aed; --bg-color: #0c0813;">
+                        <div class="theme-preview"></div>
+                        <div class="theme-info">
+                            <h5 data-i18n="theme-amy">Mor Düşler</h5>
+                            <span data-i18n="theme-amy-desc">Kozmik mor & mistik eflatun tonları</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Option 5: Aurora Cyan -->
+                    <div class="theme-option" data-theme="aurora" style="--primary-color: #0891b2; --bg-color: #050e14;">
+                        <div class="theme-preview"></div>
+                        <div class="theme-info">
+                            <h5 data-i18n="theme-aur">Kuzey Işıkları</h5>
+                            <span data-i18n="theme-aur-desc">Fütüristik camgöbeği & turkuaz parıltısı</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language Selection Section -->
+            <div class="drawer-section" style="margin-top: 25px;">
+                <h4><i class="fa-solid fa-language"></i> <span data-i18n="drawer-lang-title">Dil Seçimi (Language)</span></h4>
+                <p class="section-desc" data-i18n="drawer-lang-desc">Uygulama arayüz dilini değiştirin:</p>
+                <div class="lang-selector-group" style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button class="btn lang-btn active" id="lang-tr-btn" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px;">
+                        🇹🇷 Türkçe
+                    </button>
+                    <button class="btn lang-btn" id="lang-en-btn" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; background: rgba(255,255,255,0.03); border-color: var(--glass-border); color: var(--text-secondary);">
+                        🇺🇸 English
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Quick Reset Section -->
+            <div class="drawer-section" style="margin-top: 30px;">
+                <h4><i class="fa-solid fa-rotate-left"></i> <span data-i18n="drawer-reset-title">İlerleme Sıfırlama</span></h4>
+                <p class="section-desc" data-i18n="drawer-reset-desc">Çalışma verilerinizi temizleyebilirsiniz (serileriniz, rozetleriniz ve kendi eklediğiniz kelimeler sıfırlanır):</p>
+                <button class="btn btn-secondary btn-block" id="reset-progress-btn" style="background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.2); color: #f43f5e; padding: 12px; margin-top: 8px;" data-i18n="drawer-reset-btn">
+                    Tüm İlerlemeyi Sıfırla
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Words Database (contains 3800+ entries) -->
+    <script src="words_db.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+                    .catch((err) => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
