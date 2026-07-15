@@ -2776,3 +2776,87 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
     }
 }
 
+/* ==========================================================================
+   19. Collapsible Add Word Panel inside Dictionary
+   ========================================================================== */
+.add-word-panel {
+    display: none;
+    margin-bottom: 25px;
+    animation: fadeIn 0.4s ease;
+    padding: 25px !important;
+}
+
+.add-word-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 10px;
+}
+
+.add-word-panel .panel-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.add-word-panel .drawer-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: var(--transition-smooth);
+}
+
+.add-word-panel .drawer-close-btn:hover {
+    color: var(--color-accent);
+}
+
+#add-word-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: flex-end;
+}
+
+#add-word-form .form-group {
+    margin-bottom: 0;
+}
+
+#add-word-form .form-group label {
+    font-size: 12px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#add-word-form .form-group input,
+#add-word-form .form-group select {
+    width: 100%;
+}
+
+#save-word-btn {
+    width: 100%;
+    padding: 12px;
+    font-weight: 700;
+    height: 46px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Adjust filter control spacing when Add button is included */
+.filter-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+

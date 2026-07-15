@@ -56,7 +56,6 @@ document.addEventListener("DOMContentLoaded", () => {
     applySavedTheme();
     applySavedLanguage(); // Initialize interface language
     initGamification();
-    renderCustomWordsList();
     renderDictionaryList(); // New
     initGrammarTab(); // Load initial grammar sidebar options
     
@@ -197,8 +196,6 @@ function switchTab(tabId) {
         }
     } else if (tabId === "list-tab") {
         renderDictionaryList();
-    } else if (tabId === "add-tab") {
-        renderCustomWordsList();
     }
 }
 
@@ -662,6 +659,29 @@ function setupDictionaryListeners() {
     const prevBtn = document.getElementById("list-prev-page");
     const nextBtn = document.getElementById("list-next-page");
 
+    const toggleAddWordBtn = document.getElementById("toggle-add-word-btn");
+    const closeAddWordBtn = document.getElementById("close-add-word-panel-btn");
+    const addWordPanel = document.getElementById("collapsible-add-word-panel");
+
+    // Toggle Add Word Panel
+    if (toggleAddWordBtn && addWordPanel) {
+        toggleAddWordBtn.addEventListener("click", () => {
+            const isHidden = addWordPanel.style.display === "none";
+            addWordPanel.style.display = isHidden ? "block" : "none";
+            if (isHidden) {
+                const enInput = document.getElementById("word-en");
+                if (enInput) enInput.focus();
+            }
+        });
+    }
+
+    // Close Add Word Panel
+    if (closeAddWordBtn && addWordPanel) {
+        closeAddWordBtn.addEventListener("click", () => {
+            addWordPanel.style.display = "none";
+        });
+    }
+
     // Category Select
     if (categorySelect) {
         categorySelect.addEventListener("change", (e) => {
@@ -828,21 +848,33 @@ function renderDictionaryList() {
             catText = "Genel";
         }
         
+        let actionsHtml = `
+            <button class="action-btn-sm btn-row-tts" title="Seslendir">
+                <i class="fa-solid fa-volume-high"></i>
+            </button>
+            <button class="action-btn-sm btn-row-learned ${isLearned ? 'learned-active' : ''}" title="${isLearned ? 'Çalışılacaklar listesine al' : 'Öğrendim olarak işaretle'}">
+                <i class="${isLearned ? 'fa-solid' : 'fa-regular'} fa-circle-check"></i>
+            </button>
+            <button class="action-btn-sm btn-row-study" title="Kartlarda Çalış">
+                <i class="fa-solid fa-clone"></i>
+            </button>
+        `;
+        
+        if (word.id.startsWith("cust_")) {
+            actionsHtml += `
+                <button class="action-btn-sm btn-row-delete" title="Kelimeyi Sil" style="color: #f43f5e;">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+        }
+
         tr.innerHTML = `
             <td><strong>${word.en}</strong></td>
             <td>${word.tr}</td>
             <td><span class="${badgeClass}">${catText}</span></td>
             <td style="text-align: center;">
                 <div class="row-actions">
-                    <button class="action-btn-sm btn-row-tts" title="Seslendir">
-                        <i class="fa-solid fa-volume-high"></i>
-                    </button>
-                    <button class="action-btn-sm btn-row-learned ${isLearned ? 'learned-active' : ''}" title="${isLearned ? 'Çalışılacaklar listesine al' : 'Öğrendim olarak işaretle'}">
-                        <i class="${isLearned ? 'fa-solid' : 'fa-regular'} fa-circle-check"></i>
-                    </button>
-                    <button class="action-btn-sm btn-row-study" title="Kartlarda Çalış">
-                        <i class="fa-solid fa-clone"></i>
-                    </button>
+                    ${actionsHtml}
                 </div>
             </td>
         `;
@@ -864,6 +896,13 @@ function renderDictionaryList() {
             e.stopPropagation();
             studyWordInCards(word.id);
         });
+
+        if (word.id.startsWith("cust_")) {
+            tr.querySelector(".btn-row-delete").addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteCustomWord(word.id);
+            });
+        }
         
         tableBody.appendChild(tr);
     });
@@ -947,11 +986,17 @@ function setupFormListener() {
         
         updateMergedWordsList();
         renderDashboard();
-        renderCustomWordsList();
         renderDictionaryList(); // Update dictionary list as well
         
         // Reset form inputs
         form.reset();
+        
+        // Collapse the add-word panel
+        const addWordPanel = document.getElementById("collapsible-add-word-panel");
+        if (addWordPanel) {
+            addWordPanel.style.display = "none";
+        }
+
         showToast("Yeni kelime başarıyla eklendi! 📚");
 
         // Mark Quest completed
@@ -959,52 +1004,6 @@ function setupFormListener() {
         localStorage.setItem("yeliz_quest_add", "true");
         checkDailyQuests();
         incrementStreak();
-    });
-}
-
-function renderCustomWordsList() {
-    const container = document.getElementById("custom-words-list-container");
-    const countEl = document.getElementById("custom-count");
-    const emptyState = document.getElementById("custom-list-empty");
-
-    if (!container) return;
-
-    if (countEl) countEl.textContent = customWords.length;
-
-    // Remove existing item rows
-    const items = container.querySelectorAll(".word-list-item");
-    items.forEach(item => item.remove());
-
-    if (customWords.length === 0) {
-        if (emptyState) emptyState.style.display = "flex";
-        return;
-    }
-
-    if (emptyState) emptyState.style.display = "none";
-
-    // Build lists in reverse order (newest first)
-    [...customWords].reverse().forEach(word => {
-        const itemRow = document.createElement("div");
-        itemRow.className = "word-list-item";
-        itemRow.setAttribute("data-id", word.id);
-
-        itemRow.innerHTML = `
-            <div class="item-left">
-                <span class="item-en">${word.en}</span>
-                <span class="item-tr">${word.tr} (${word.type})</span>
-            </div>
-            <button class="delete-item-btn" title="Kelimeyi Sil" aria-label="Delete word">
-                <i class="fa-solid fa-trash-can"></i>
-            </button>
-        `;
-
-        // Delete Row Action
-        const deleteBtn = itemRow.querySelector(".delete-item-btn");
-        deleteBtn.addEventListener("click", () => {
-            deleteCustomWord(word.id);
-        });
-
-        container.appendChild(itemRow);
     });
 }
 
@@ -1020,7 +1019,6 @@ function deleteCustomWord(wordId) {
 
         updateMergedWordsList();
         renderDashboard();
-        renderCustomWordsList();
         renderDictionaryList(); // Update dictionary list
         filterFlashcards();
         showToast("Kelime listeden silindi.", true);
@@ -1833,6 +1831,7 @@ const TRANSLATIONS = {
         "nav-cards": "Kelime Kartları",
         "nav-list": "Tüm Kelimeler",
         "nav-add": "Kelime Ekle",
+        "btn-add-word": "Yeni Kelime Ekle",
         "nav-tenses": "Zamanlar & Modallar",
         "nav-quiz": "Quiz",
         "tenses-title": "Zamanlar & Modallar",
@@ -1895,6 +1894,7 @@ const TRANSLATIONS = {
         "nav-cards": "Flashcards",
         "nav-list": "Dictionary",
         "nav-add": "Add Word",
+        "btn-add-word": "Add New Word",
         "nav-tenses": "Grammar & Modals",
         "nav-quiz": "Quiz",
         "tenses-title": "Tenses & Modals",

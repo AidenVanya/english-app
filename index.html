@@ -45,9 +45,6 @@
                 <button class="nav-btn" data-tab="list-tab" id="btn-list">
                     <i class="fa-solid fa-list"></i> <span data-i18n="nav-list">Tüm Kelimeler</span>
                 </button>
-                <button class="nav-btn" data-tab="add-tab" id="btn-add">
-                    <i class="fa-solid fa-plus"></i> <span data-i18n="nav-add">Kelime Ekle</span>
-                </button>
                 <button class="nav-btn" data-tab="tenses-tab" id="btn-tenses">
                     <i class="fa-solid fa-book-open"></i> <span data-i18n="nav-tenses">Zamanlar & Modallar</span>
                 </button>
@@ -384,11 +381,56 @@
                             <option value="learned">Öğrenilenler</option>
                             <option value="learning">Çalışılacaklar</option>
                         </select>
+                        <button class="btn btn-primary" id="toggle-add-word-btn" style="padding: 10px 16px;">
+                            <i class="fa-solid fa-plus"></i> <span data-i18n="btn-add-word">Yeni Kelime Ekle</span>
+                        </button>
                     </div>
                     <div class="search-box" style="max-width: 400px;">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" id="list-search" placeholder="İngilizce veya Türkçe arama yapın...">
                     </div>
+                </div>
+
+                <!-- Collapsible Add Word Panel -->
+                <div class="add-word-panel glass-panel" id="collapsible-add-word-panel">
+                    <div class="panel-header">
+                        <h3><i class="fa-solid fa-circle-plus"></i> Yeni Kelime Ekle</h3>
+                        <button class="drawer-close-btn" id="close-add-word-panel-btn">&times;</button>
+                    </div>
+                    
+                    <form id="add-word-form" onsubmit="event.preventDefault();">
+                        <div class="form-group">
+                            <label for="word-en"><i class="fa-solid fa-font"></i> İngilizce Kelime</label>
+                            <input type="text" id="word-en" placeholder="Örn: Serendipity" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="word-tr"><i class="fa-solid fa-language"></i> Türkçe Anlamı</label>
+                            <input type="text" id="word-tr" placeholder="Örn: Şans eseri bulma" required autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="word-category"><i class="fa-solid fa-tags"></i> Kategori / Tür</label>
+                            <select id="word-category">
+                                <option value="Noun (İsim)">Noun (İsim)</option>
+                                <option value="Verb (Fiil)">Verb (Fiil)</option>
+                                <option value="Adjective (Sıfat)">Adjective (Sıfat)</option>
+                                <option value="Adverb (Zarf)">Adverb (Zarf)</option>
+                                <option value="Expression (Deyim/İfade)">Expression (Deyim/İfade)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="word-example-en"><i class="fa-solid fa-quote-left"></i> İngilizce Örnek (İsteğe Bağlı)</label>
+                            <input type="text" id="word-example-en" placeholder="Örn: It happened by serendipity.">
+                        </div>
+                        <div class="form-group">
+                            <label for="word-example-tr"><i class="fa-solid fa-quote-right"></i> Türkçe Çeviri (İsteğe Bağlı)</label>
+                            <input type="text" id="word-example-tr" placeholder="Örn: Şans eseri gerçekleşti.">
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary" id="save-word-btn">
+                                <i class="fa-solid fa-floppy-disk"></i> Listeme Ekle
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Dictionary Words List Container -->
@@ -422,63 +464,7 @@
                 </div>
             </section>
 
-            <!-- 4. ADD WORD TAB -->
-            <section class="tab-content" id="add-tab">
-                <div class="section-header">
-                    <h2>Kendi Kelime Listeni Oluştur</h2>
-                    <p>Çalışmak istediğin yeni kelimeleri buraya ekleyerek kelime kartlarına ve quizlere dahil edebilirsin.</p>
-                </div>
 
-                <div class="grid-two-columns">
-                    <!-- Add Word Form -->
-                    <div class="form-container glass-panel">
-                        <h3>Yeni Kelime Ekle</h3>
-                        <form id="add-word-form" onsubmit="event.preventDefault();">
-                            <div class="form-group">
-                                <label for="word-en"><i class="fa-solid fa-font"></i> İngilizce Kelime</label>
-                                <input type="text" id="word-en" placeholder="Örn: Serendipity" required autocomplete="off">
-                            </div>
-                            <div class="form-group">
-                                <label for="word-tr"><i class="fa-solid fa-language"></i> Türkçe Anlamı</label>
-                                <input type="text" id="word-tr" placeholder="Örn: Şans eseri güzel şeyler bulma yeteneği" required autocomplete="off">
-                            </div>
-                            <div class="form-group">
-                                <label for="word-category"><i class="fa-solid fa-tags"></i> Kategori / Tür</label>
-                                <select id="word-category">
-                                    <option value="Noun (İsim)">Noun (İsim)</option>
-                                    <option value="Verb (Fiil)">Verb (Fiil)</option>
-                                    <option value="Adjective (Sıfat)">Adjective (Sıfat)</option>
-                                    <option value="Adverb (Zarf)">Adverb (Zarf)</option>
-                                    <option value="Expression (Deyim/İfade)">Expression (Deyim/İfade)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="word-example-en"><i class="fa-solid fa-quote-left"></i> İngilizce Örnek Cümle (İsteğe Bağlı)</label>
-                                <input type="text" id="word-example-en" placeholder="Örn: We found the cozy little restaurant by serendipity.">
-                            </div>
-                            <div class="form-group">
-                                <label for="word-example-tr"><i class="fa-solid fa-quote-right"></i> Türkçe Çevirisi (İsteğe Bağlı)</label>
-                                <input type="text" id="word-example-tr" placeholder="Örn: Sıcacık küçük restoranı şans eseri bulduk.">
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-block" id="save-word-btn">
-                                <i class="fa-solid fa-floppy-disk"></i> Listeme Ekle
-                            </button>
-                        </form>
-                    </div>
-
-                    <!-- Custom Words List -->
-                    <div class="custom-list-container glass-panel">
-                        <h3>Eklediğim Kelimeler (<span id="custom-count">0</span>)</h3>
-                        <div class="custom-words-list" id="custom-words-list-container">
-                            <!-- Empty state or list item -->
-                            <div class="empty-state" id="custom-list-empty">
-                                <i class="fa-solid fa-folder-open"></i>
-                                <p>Henüz kendi kelimeni eklemedin. Sol taraftaki formu kullanarak ilk kelimeni ekle!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             <!-- 5. TENSES & MODALS TAB -->
             <section class="tab-content" id="tenses-tab">
