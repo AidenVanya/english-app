@@ -1681,21 +1681,67 @@ body {
 
 @media (max-width: 768px) {
     body {
-        padding: 10px;
+        padding: 10px 10px 90px 10px; /* Extra bottom padding to avoid floating nav bar overlapping content */
     }
     
     .app-container {
         gap: 15px;
     }
     
-    .nav-btn span {
-        display: none !important; /* Hide text on small viewports for iPhone/Android */
+    /* Floating Bottom Navigation Bar for Mobile */
+    .nav-tabs {
+        position: fixed !important;
+        bottom: 12px !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: calc(100% - 24px) !important;
+        margin: 0 auto !important;
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(25px) !important;
+        -webkit-backdrop-filter: blur(25px) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: var(--border-radius-md) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+        padding: 8px 6px !important;
+        z-index: 9999 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        gap: 4px !important;
     }
     
     .nav-btn {
-        flex: 1;
-        justify-content: center;
-        padding: 12px 10px;
+        flex: 1 !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 8px 4px !important;
+        font-size: 10px !important;
+        gap: 4px !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
+        border-radius: var(--border-radius-sm) !important;
+    }
+    
+    .nav-btn i {
+        font-size: 18px !important;
+        margin: 0 !important;
+    }
+    
+    .nav-btn span {
+        display: block !important; /* Show labels underneath icons on standard mobile viewports */
+        font-size: 9px !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        opacity: 0.8;
+    }
+
+    .nav-btn.active {
+        color: var(--color-primary-light) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
     }
     
     .greeting-title {
@@ -1707,7 +1753,14 @@ body {
     }
     
     .welcome-header {
-        gap: 15px;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 15px !important;
+    }
+    
+    .welcome-text {
+        text-align: center !important;
     }
     
     .welcome-avatar {
@@ -1739,6 +1792,18 @@ body {
 }
 
 @media (max-width: 480px) {
+    .nav-btn span {
+        display: none !important; /* Hide labels on very narrow screens (portrait phones) */
+    }
+    
+    .nav-btn i {
+        font-size: 20px !important;
+    }
+    
+    .nav-btn {
+        padding: 10px 5px !important;
+    }
+
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 12px;
@@ -2195,6 +2260,7 @@ body.theme-aurora .bg-shape.shape-2 { background: radial-gradient(circle, rgba(1
     .app-header {
         position: relative;
         flex-direction: row !important; /* Keep Logo and Burger menu in one row on mobile/tablets! */
+        flex-wrap: wrap !important;
         justify-content: space-between !important;
         align-items: center !important;
         width: 100%;
