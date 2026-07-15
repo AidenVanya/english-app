@@ -87,6 +87,23 @@ function loadDataFromStorage() {
 // Merge default database (from words_db.js) and custom words
 function updateMergedWordsList() {
     const baseDb = typeof WORDS_DATABASE !== 'undefined' ? WORDS_DATABASE : [];
+    
+    // Inject cached dynamic sentences into baseDb
+    try {
+        const cachedData = localStorage.getItem("yeliz_dynamic_sentences");
+        if (cachedData) {
+            const cachedSentences = JSON.parse(cachedData);
+            baseDb.forEach(word => {
+                if (cachedSentences[word.id]) {
+                    word.exEn = cachedSentences[word.id].exEn;
+                    word.exTr = cachedSentences[word.id].exTr;
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Error merging cached sentences:", e);
+    }
+    
     wordsList = [...baseDb, ...customWords];
 }
 
@@ -363,6 +380,126 @@ function filterFlashcards(shouldShuffle = true) {
     displayCurrentCard();
 }
 
+// Dynamic Example Sentence Loader from Free Dictionary API and MyMemory Translator
+let dynamicSentencesCache = {};
+try {
+    const cachedData = localStorage.getItem("yeliz_dynamic_sentences");
+    if (cachedData) {
+        dynamicSentencesCache = JSON.parse(cachedData);
+    }
+} catch (e) {
+    console.error("Cache initialization error:", e);
+}
+
+function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
+    if (!word || !word.en) return;
+    
+    // Safety check if they are already fetched in the background
+    if (word.exEn) {
+        if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+        if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+        return;
+    }
+    
+    // Check local cache
+    if (dynamicSentencesCache[word.id]) {
+        word.exEn = dynamicSentencesCache[word.id].exEn;
+        word.exTr = dynamicSentencesCache[word.id].exTr;
+        if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+        if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+        return;
+    }
+    
+    // Fetch from API
+    const englishWord = encodeURIComponent(word.en.toLowerCase());
+    const dictionaryApiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${englishWord}`;
+    
+    fetch(dictionaryApiUrl)
+        .then(response => {
+            if (!response.ok) throw new Error("Dictionary API request failed");
+            return response.json();
+        })
+        .then(data => {
+            let foundExample = "";
+            
+            // Traverse meanings and definitions to find an example
+            if (Array.isArray(data) && data.length > 0) {
+                for (const entry of data) {
+                    if (entry.meanings) {
+                        for (const meaning of entry.meanings) {
+                            if (meaning.definitions) {
+                                for (const def of meaning.definitions) {
+                                    if (def.example && def.example.trim()) {
+                                        foundExample = def.example.trim();
+                                        break;
+                                    }
+                                }
+                            }
+                            if (foundExample) break;
+                        }
+                    }
+                    if (foundExample) break;
+                }
+            }
+            
+            // Fallback if no example found in dictionary API
+            if (!foundExample) {
+                foundExample = `This is a study card for the word: ${word.en}.`;
+            }
+            
+            // Translate the example sentence
+            const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(foundExample)}&langpair=en|tr`;
+            return fetch(myMemoryUrl)
+                .then(res => res.json())
+                .then(transData => {
+                    const translatedText = (transData.responseData && transData.responseData.translatedText) 
+                        ? transData.responseData.translatedText.trim()
+                        : `Bu, ${word.tr} kelimesinin örnek bir cümlesidir.`;
+                    
+                    // Save to word object
+                    word.exEn = foundExample;
+                    word.exTr = translatedText;
+                    
+                    // Save to cache
+                    dynamicSentencesCache[word.id] = {
+                        exEn: foundExample,
+                        exTr: translatedText
+                    };
+                    localStorage.setItem("yeliz_dynamic_sentences", JSON.stringify(dynamicSentencesCache));
+                    
+                    // Update UI if the same word is still displayed
+                    updateUIIfActive();
+                });
+        })
+        .catch(err => {
+            console.warn("Could not load dynamic example sentence:", err);
+            // Non-blocking fallback template in case of offline or errors
+            const fallbackExample = `We need to check the definition of ${word.en}.`;
+            const fallbackTranslation = `İngilizce ${word.en} (${word.tr}) kelimesinin tanımını kontrol etmemiz gerekiyor.`;
+            
+            word.exEn = fallbackExample;
+            word.exTr = fallbackTranslation;
+            
+            updateUIIfActive();
+        });
+        
+    function updateUIIfActive() {
+        if (type === "card") {
+            const currentEnText = document.getElementById("card-word-en") ? document.getElementById("card-word-en").textContent : "";
+            if (currentEnText === word.en) {
+                if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+                if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+            }
+        } else if (type === "wod") {
+            const currentWodText = document.getElementById("wod-en") ? document.getElementById("wod-en").textContent : "";
+            if (currentWodText === word.en) {
+                if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+                if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+            }
+        }
+    }
+}
+
 // Render dynamic card face content
 function displayCurrentCard() {
     const cardEl = document.getElementById("main-flashcard");
@@ -428,8 +565,19 @@ function displayCurrentCard() {
             typeEl.textContent = word.type || "General";
         }
     }
-    if (exEnEl) exEnEl.textContent = word.exEn ? `"${word.exEn}"` : "";
-    if (exTrEl) exTrEl.textContent = word.exTr ? `"${word.exTr}"` : "";
+    if (exEnEl) exEnEl.textContent = "";
+    if (exTrEl) exTrEl.textContent = "";
+    
+    if (word.exEn) {
+        if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+        if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+    } else {
+        // Trigger async fetch from APIs
+        if (exEnEl) exEnEl.textContent = "Örnek cümle yükleniyor... / Loading example...";
+        if (exTrEl) exTrEl.textContent = "";
+        
+        loadDynamicExampleSentence(word, exEnEl, exTrEl, "card");
+    }
     
     // Category representation
     if (categoryEl) {
@@ -1549,8 +1697,19 @@ function determineWordOfTheDay() {
         }
     }
     if (trEl) trEl.textContent = wordOfTheDay.tr;
-    if (exEnEl) exEnEl.textContent = wordOfTheDay.exEn ? `"${wordOfTheDay.exEn}"` : "Örnek cümle bulunmamaktadır.";
-    if (exTrEl) exTrEl.textContent = wordOfTheDay.exTr ? `"${wordOfTheDay.exTr}"` : "";
+    
+    if (exEnEl) exEnEl.textContent = "";
+    if (exTrEl) exTrEl.textContent = "";
+    
+    if (wordOfTheDay.exEn) {
+        if (exEnEl) exEnEl.textContent = `"${wordOfTheDay.exEn}"`;
+        if (exTrEl) exTrEl.textContent = `"${wordOfTheDay.exTr}"`;
+    } else {
+        if (exEnEl) exEnEl.textContent = "Günün kelimesi örneği yükleniyor...";
+        if (exTrEl) exTrEl.textContent = "";
+        
+        loadDynamicExampleSentence(wordOfTheDay, exEnEl, exTrEl, "wod");
+    }
 }
 
 function setupWodListeners() {
