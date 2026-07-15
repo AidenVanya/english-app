@@ -49,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupDictionaryListeners(); // New
     setupFormListener();
     setupQuizListeners();
+    setupGrammarListeners(); // Setup Zamanlar & Modallar listeners
     
     // Initial renders & settings loader
     setupSettingsListeners();
@@ -57,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initGamification();
     renderCustomWordsList();
     renderDictionaryList(); // New
+    initGrammarTab(); // Load initial grammar sidebar options
     
     // Dynamic greeting based on hours
     setGreeting();
@@ -1831,7 +1833,14 @@ const TRANSLATIONS = {
         "nav-cards": "Kelime Kartları",
         "nav-list": "Tüm Kelimeler",
         "nav-add": "Kelime Ekle",
+        "nav-tenses": "Zamanlar & Modallar",
         "nav-quiz": "Quiz",
+        "tenses-title": "Zamanlar & Modallar",
+        "tenses-subtitle": "İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.",
+        "grammar-topics": "Konu Listesi",
+        "grammar-usage": "Kullanım Amacı",
+        "grammar-formula": "Cümle Yapısı (Formül)",
+        "grammar-ex-title": "Örnek Cümleler (Olumlu / Olumsuz / Soru)",
         "stat-total": "Toplam Kelime",
         "stat-learned": "Öğrenilen Kelimeler",
         "stat-custom": "Eklediğim Kelimeler",
@@ -1886,7 +1895,14 @@ const TRANSLATIONS = {
         "nav-cards": "Flashcards",
         "nav-list": "Dictionary",
         "nav-add": "Add Word",
+        "nav-tenses": "Grammar & Modals",
         "nav-quiz": "Quiz",
+        "tenses-title": "Tenses & Modals",
+        "tenses-subtitle": "Learn the 12 basic tenses and key modals of English with structural formulas and examples.",
+        "grammar-topics": "Topic List",
+        "grammar-usage": "Usage / Purpose",
+        "grammar-formula": "Sentence Structure (Formula)",
+        "grammar-ex-title": "Example Sentences (Positive / Negative / Question)",
         "stat-total": "Total Words",
         "stat-learned": "Learned Words",
         "stat-custom": "My Custom Words",
@@ -2038,3 +2054,150 @@ window.addEventListener('appinstalled', (evt) => {
         installBtn.style.display = 'none';
     }
 });
+
+// ==========================================================================
+// 15. Zamanlar & Modallar (Tenses & Modals) Controller Logic
+// ==========================================================================
+let activeGrammarItem = null;
+let currentExampleIndex = 0;
+
+function initGrammarTab() {
+    const tensesContainer = document.getElementById("tenses-list-container");
+    const modalsContainer = document.getElementById("modals-list-container");
+    
+    if (!tensesContainer || !modalsContainer) return;
+    
+    tensesContainer.innerHTML = "";
+    modalsContainer.innerHTML = "";
+    
+    const db = typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : [];
+    
+    db.forEach(item => {
+        const btn = document.createElement("button");
+        btn.className = "grammar-topic-btn";
+        btn.setAttribute("data-id", item.id);
+        
+        btn.innerHTML = `
+            <span class="en-title">${item.title}</span>
+            <span class="tr-sub">${item.trTitle}</span>
+        `;
+        
+        btn.addEventListener("click", () => {
+            selectGrammarTopic(item.id);
+        });
+        
+        if (item.category === "Tense") {
+            tensesContainer.appendChild(btn);
+        } else {
+            modalsContainer.appendChild(btn);
+        }
+    });
+}
+
+function selectGrammarTopic(id) {
+    const db = typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : [];
+    const topic = db.find(item => item.id === id);
+    if (!topic) return;
+    
+    activeGrammarItem = topic;
+    currentExampleIndex = 0;
+    
+    // Update active button state in sidebar
+    document.querySelectorAll(".grammar-topic-btn").forEach(btn => {
+        if (btn.getAttribute("data-id") === id) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+    
+    // Toggle content displays
+    const emptyState = document.getElementById("grammar-empty-state");
+    const displayPanel = document.getElementById("grammar-content-display");
+    
+    if (emptyState) emptyState.style.display = "none";
+    if (displayPanel) displayPanel.style.display = "block";
+    
+    // Populate header & details
+    const categoryEl = document.getElementById("grammar-item-category");
+    const titleEl = document.getElementById("grammar-item-title");
+    const trTitleEl = document.getElementById("grammar-item-tr-title");
+    const usageEl = document.getElementById("grammar-item-usage");
+    const formulaEl = document.getElementById("grammar-item-formula");
+    
+    if (categoryEl) categoryEl.textContent = topic.category;
+    if (titleEl) titleEl.textContent = topic.title;
+    if (trTitleEl) trTitleEl.textContent = topic.trTitle;
+    if (usageEl) usageEl.textContent = topic.usage;
+    if (formulaEl) formulaEl.textContent = topic.formula;
+    
+    // Render examples slides
+    renderGrammarExamples();
+}
+
+function renderGrammarExamples() {
+    const container = document.getElementById("grammar-examples-container");
+    if (!container || !activeGrammarItem) return;
+    
+    container.innerHTML = "";
+    
+    const examples = activeGrammarItem.examples || [];
+    
+    examples.forEach((ex, idx) => {
+        const slide = document.createElement("div");
+        slide.className = `grammar-example-slide ${idx === currentExampleIndex ? "active" : ""}`;
+        
+        slide.innerHTML = `
+            <div class="state-block positive-block">
+                <span class="state-lbl pos">Olumlu (Positive)</span>
+                <p class="state-sentence-en">${ex.positive}</p>
+                <p class="state-sentence-tr">${ex.positiveTr}</p>
+            </div>
+            <div class="state-block negative-block">
+                <span class="state-lbl neg">Olumsuz (Negative)</span>
+                <p class="state-sentence-en">${ex.negative}</p>
+                <p class="state-sentence-tr">${ex.negativeTr}</p>
+            </div>
+            <div class="state-block question-block">
+                <span class="state-lbl que">Soru (Question)</span>
+                <p class="state-sentence-en">${ex.question}</p>
+                <p class="state-sentence-tr">${ex.questionTr}</p>
+            </div>
+        `;
+        
+        container.appendChild(slide);
+    });
+    
+    // Update indicator
+    const indicator = document.getElementById("grammar-carousel-indicator");
+    if (indicator) {
+        indicator.textContent = `${currentExampleIndex + 1} / ${examples.length}`;
+    }
+}
+
+function setupGrammarListeners() {
+    const prevBtn = document.getElementById("grammar-prev-ex-btn");
+    const nextBtn = document.getElementById("grammar-next-ex-btn");
+    
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (!activeGrammarItem) return;
+            const len = activeGrammarItem.examples ? activeGrammarItem.examples.length : 0;
+            if (len === 0) return;
+            
+            currentExampleIndex = (currentExampleIndex - 1 + len) % len;
+            renderGrammarExamples();
+        });
+    }
+    
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (!activeGrammarItem) return;
+            const len = activeGrammarItem.examples ? activeGrammarItem.examples.length : 0;
+            if (len === 0) return;
+            
+            currentExampleIndex = (currentExampleIndex + 1) % len;
+            renderGrammarExamples();
+        });
+    }
+}

@@ -48,6 +48,9 @@
                 <button class="nav-btn" data-tab="add-tab" id="btn-add">
                     <i class="fa-solid fa-plus"></i> <span data-i18n="nav-add">Kelime Ekle</span>
                 </button>
+                <button class="nav-btn" data-tab="tenses-tab" id="btn-tenses">
+                    <i class="fa-solid fa-book-open"></i> <span data-i18n="nav-tenses">Zamanlar & Modallar</span>
+                </button>
                 <button class="nav-btn" data-tab="quiz-tab" id="btn-quiz">
                     <i class="fa-solid fa-circle-question"></i> <span data-i18n="nav-quiz">Quiz</span>
                 </button>
@@ -477,7 +480,79 @@
                 </div>
             </section>
 
-            <!-- 5. QUIZ TAB -->
+            <!-- 5. TENSES & MODALS TAB -->
+            <section class="tab-content" id="tenses-tab">
+                <div class="section-header">
+                    <h2 data-i18n="tenses-title">Zamanlar & Modallar</h2>
+                    <p data-i18n="tenses-subtitle">İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.</p>
+                </div>
+
+                <div class="grammar-layout">
+                    <!-- Sidebar Selector for Grammatical Structures -->
+                    <div class="grammar-sidebar glass-panel">
+                        <div class="grammar-sidebar-header">
+                            <h3 data-i18n="grammar-topics">Konu Listesi</h3>
+                        </div>
+                        <div class="grammar-categories">
+                            <div class="grammar-cat-group">
+                                <h4>Zamanlar (Tenses)</h4>
+                                <div class="grammar-topics-list" id="tenses-list-container">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                            </div>
+                            <div class="grammar-cat-group" style="margin-top: 15px;">
+                                <h4>Kipler (Modals)</h4>
+                                <div class="grammar-topics-list" id="modals-list-container">
+                                    <!-- Rendered dynamically via JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Display Panel for Grammar Topic -->
+                    <div class="grammar-main glass-panel">
+                        <div id="grammar-empty-state" class="empty-state">
+                            <i class="fa-solid fa-book-open" style="font-size: 40px; color: var(--color-primary-light); margin-bottom: 12px;"></i>
+                            <p>Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin.</p>
+                        </div>
+                        
+                        <div id="grammar-content-display" style="display: none;">
+                            <div class="grammar-topic-header">
+                                <span class="card-tag" id="grammar-item-category">Tense</span>
+                                <h3 id="grammar-item-title">Simple Present Tense</h3>
+                                <p class="grammar-tr-title" id="grammar-item-tr-title">Geniş Zaman</p>
+                            </div>
+
+                            <div class="grammar-meta-group">
+                                <div class="grammar-meta-box">
+                                    <h5><i class="fa-solid fa-lightbulb"></i> <span data-i18n="grammar-usage">Kullanım Amacı</span></h5>
+                                    <p id="grammar-item-usage">Genel doğrular, rutinler ve alışkanlıklar.</p>
+                                </div>
+                                <div class="grammar-meta-box">
+                                    <h5><i class="fa-solid fa-compass"></i> <span data-i18n="grammar-formula">Cümle Yapısı (Formül)</span></h5>
+                                    <p class="grammar-formula-text" id="grammar-item-formula">Olumlu: S + V1 / Olumsuz: S + don't + V1 / Soru: Do + S + V1?</p>
+                                </div>
+                            </div>
+
+                            <div class="grammar-examples-section">
+                                <h4><i class="fa-solid fa-star"></i> <span data-i18n="grammar-ex-title">Örnek Cümleler (Olumlu / Olumsuz / Soru)</span></h4>
+                                
+                                <div class="grammar-examples-carousel" id="grammar-examples-container">
+                                    <!-- Dynamic carousel slides with 5 examples in Positive/Negative/Question states -->
+                                </div>
+                                
+                                <div class="grammar-carousel-controls">
+                                    <button class="control-btn" id="grammar-prev-ex-btn"><i class="fa-solid fa-chevron-left"></i></button>
+                                    <span class="grammar-carousel-indicator" id="grammar-carousel-indicator">1 / 5</span>
+                                    <button class="control-btn" id="grammar-next-ex-btn"><i class="fa-solid fa-chevron-right"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. QUIZ TAB -->
             <section class="tab-content" id="quiz-tab">
                 <div class="section-header">
                     <h2>Bilgini Sına!</h2>
@@ -711,6 +786,8 @@
 
     <!-- Words Database (contains 3800+ entries) -->
     <script src="words_db.js"></script>
+    <!-- Grammar Database (Tenses and Modals) -->
+    <script src="tenses_db.js"></script>
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
     <!-- PWA Service Worker Registration -->
