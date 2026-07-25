@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yeliz-english-cache-v1';
+const CACHE_NAME = 'linguapulse-cache-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

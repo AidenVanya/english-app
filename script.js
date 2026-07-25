@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Yeliz English - Interactive Controller and State Management
+   LinguaPulse - Interactive Controller and State Management
    ========================================================================== */
 
 // 1. State Variables
@@ -8,6 +8,7 @@ let customWords = [];
 let learnedWordIds = [];
 let activeTab = "home-tab";
 let currentLang = "tr"; // 'tr' (Turkish) or 'en' (English)
+let wordAddedToday = false;
 
 // Flashcard Browser State
 let currentFilter = "all"; // 'all', 'General', 'Aviation (Havacılık)', 'Tourism (Turizm)', 'custom', 'learned', 'learning'
@@ -62,21 +63,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // Dynamic greeting based on hours
     setGreeting();
 });
+// Helper for localStorage keys with migration from legacy yeliz_ prefix
+function getAppStorage(key) {
+    return localStorage.getItem("linguapulse_" + key) ?? localStorage.getItem("yeliz_" + key);
+}
+function setAppStorage(key, value) {
+    localStorage.setItem("linguapulse_" + key, value);
+}
 
-// Load state from localStorage
+// Load state from localStorage safely
 function loadDataFromStorage() {
     // Custom Words
-    const storedCustom = localStorage.getItem("yeliz_custom_words");
+    const storedCustom = getAppStorage("custom_words");
     if (storedCustom) {
-        customWords = JSON.parse(storedCustom);
+        try {
+            customWords = JSON.parse(storedCustom) || [];
+        } catch (e) {
+            console.error("Error parsing custom words storage:", e);
+            customWords = [];
+        }
     } else {
         customWords = [];
     }
 
     // Learned Word IDs
-    const storedLearned = localStorage.getItem("yeliz_learned_words");
+    const storedLearned = getAppStorage("learned_words");
     if (storedLearned) {
-        learnedWordIds = JSON.parse(storedLearned);
+        try {
+            learnedWordIds = JSON.parse(storedLearned) || [];
+        } catch (e) {
+            console.error("Error parsing learned words storage:", e);
+            learnedWordIds = [];
+        }
     } else {
         learnedWordIds = [];
     }
@@ -91,7 +109,7 @@ function updateMergedWordsList() {
     
     // Inject cached dynamic sentences into baseDb
     try {
-        const cachedData = localStorage.getItem("yeliz_dynamic_sentences");
+        const cachedData = getAppStorage("dynamic_sentences");
         if (cachedData) {
             const cachedSentences = JSON.parse(cachedData);
             baseDb.forEach(word => {
@@ -102,8 +120,8 @@ function updateMergedWordsList() {
             });
         }
     } catch (e) {
-        console.error("Error merging cached sentences:", e);
-    }
+        console.error("Error reading cached dynamic sentences:", e);
+    } 
     
     wordsList = [...baseDb, ...customWords];
 }
@@ -315,6 +333,31 @@ function setupFlashcardListeners() {
             }
         });
     }
+
+    // Global Keyboard Navigation for Flashcards
+    document.addEventListener("keydown", (e) => {
+        if (activeTab !== "cards-tab") return;
+        // Don't intercept keypresses when typing in input or select elements
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
+        if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") return;
+
+        if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            const prev = document.getElementById("prev-card-btn");
+            if (prev) prev.click();
+        } else if (e.key === "ArrowRight") {
+            e.preventDefault();
+            const next = document.getElementById("next-card-btn");
+            if (next) next.click();
+        } else if (e.key === " " || e.key === "Spacebar" || e.key === "ArrowUp" || e.key === "ArrowDown") {
+            e.preventDefault();
+            const flashcardEl = document.getElementById("main-flashcard");
+            if (flashcardEl) flashcardEl.click();
+        } else if (e.key === "s" || e.key === "S") {
+            const ttsBtn = document.getElementById("card-tts-btn");
+            if (ttsBtn) ttsBtn.click();
+        }
+    });
 }
 
 function resetFlashcardState() {
@@ -382,7 +425,7 @@ function filterFlashcards(shouldShuffle = true) {
 // Dynamic Example Sentence Loader from Free Dictionary API and MyMemory Translator
 let dynamicSentencesCache = {};
 try {
-    const cachedData = localStorage.getItem("yeliz_dynamic_sentences");
+    const cachedData = getAppStorage("dynamic_sentences");
     if (cachedData) {
         dynamicSentencesCache = JSON.parse(cachedData);
     }
@@ -464,7 +507,7 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
                         exEn: foundExample,
                         exTr: translatedText
                     };
-                    localStorage.setItem("yeliz_dynamic_sentences", JSON.stringify(dynamicSentencesCache));
+                    setAppStorage("dynamic_sentences", JSON.stringify(dynamicSentencesCache));
                     
                     // Update UI if the same word is still displayed
                     updateUIIfActive();
@@ -514,6 +557,14 @@ function displayCurrentCard() {
     const markLearnedBtn = document.getElementById("mark-learned-btn");
     const learnedBtnText = document.getElementById("learned-btn-text");
 
+    // Bound checks for currentCardIndex
+    if (currentCardIndex >= filteredWords.length) {
+        currentCardIndex = Math.max(0, filteredWords.length - 1);
+    }
+    if (currentCardIndex < 0) {
+        currentCardIndex = 0;
+    }
+
     if (filteredWords.length === 0) {
         // Empty state UI display on card
         if (cardEl) cardEl.style.pointerEvents = "none";
@@ -533,6 +584,7 @@ function displayCurrentCard() {
     if (markLearnedBtn) markLearnedBtn.style.display = "flex";
 
     const word = filteredWords[currentCardIndex];
+    if (!word) return;
 
     // Card face text injections
     if (enEl) {
@@ -642,7 +694,7 @@ function toggleWordLearned(wordId) {
         learnedWordIds.push(wordId);
         showToast("Harika! Kelime öğrenildi olarak işaretlendi.");
     }
-    localStorage.setItem("yeliz_learned_words", JSON.stringify(learnedWordIds));
+    setAppStorage("learned_words", JSON.stringify(learnedWordIds));
     
     // Evaluate achievements when status changes
     if (typeof checkAchievements === 'function') {
@@ -982,7 +1034,7 @@ function setupFormListener() {
 
         // Add to states
         customWords.push(newWord);
-        localStorage.setItem("yeliz_custom_words", JSON.stringify(customWords));
+        setAppStorage("custom_words", JSON.stringify(customWords));
         
         updateMergedWordsList();
         renderDashboard();
@@ -1001,7 +1053,7 @@ function setupFormListener() {
 
         // Mark Quest completed
         wordAddedToday = true;
-        localStorage.setItem("yeliz_quest_add", "true");
+        setAppStorage("quest_add", "true");
         checkDailyQuests();
         incrementStreak();
     });
@@ -1011,11 +1063,11 @@ function deleteCustomWord(wordId) {
     if (confirm("Bu kelimeyi listenizden silmek istediğinize emin misiniz?")) {
         // Remove from custom list
         customWords = customWords.filter(w => w.id !== wordId);
-        localStorage.setItem("yeliz_custom_words", JSON.stringify(customWords));
+        setAppStorage("custom_words", JSON.stringify(customWords));
         
         // Remove from learned list if present
         learnedWordIds = learnedWordIds.filter(id => id !== wordId);
-        localStorage.setItem("yeliz_learned_words", JSON.stringify(learnedWordIds));
+        setAppStorage("learned_words", JSON.stringify(learnedWordIds));
 
         updateMergedWordsList();
         renderDashboard();
@@ -1129,10 +1181,12 @@ function startQuizGame() {
             correctAnswer = correctWord.tr;
             speakText = correctWord.en;
             
-            choices = [correctWord.tr];
-            for (let j = 0; j < Math.min(3, shuffledWrongPool.length); j++) {
-                choices.push(shuffledWrongPool[j].tr);
-            }
+            const uniqueWrongTrs = [...new Set(
+                shuffledWrongPool
+                    .map(w => w.tr)
+                    .filter(tr => tr.toLowerCase().trim() !== correctWord.tr.toLowerCase().trim())
+            )];
+            choices = [correctWord.tr, ...uniqueWrongTrs.slice(0, 3)];
         } else if (selectedType === "tr-to-en") {
             // Mode 2: Turkish to English
             questionText = "Aşağıdaki Türkçe anlamın İngilizce karşılığı nedir?";
@@ -1140,29 +1194,34 @@ function startQuizGame() {
             correctAnswer = correctWord.en;
             speakText = correctWord.en; 
             
-            choices = [correctWord.en];
-            for (let j = 0; j < Math.min(3, shuffledWrongPool.length); j++) {
-                choices.push(shuffledWrongPool[j].en);
-            }
+            const uniqueWrongEns = [...new Set(
+                shuffledWrongPool
+                    .map(w => w.en)
+                    .filter(en => en.toLowerCase().trim() !== correctWord.en.toLowerCase().trim())
+            )];
+            choices = [correctWord.en, ...uniqueWrongEns.slice(0, 3)];
         } else if (selectedType === "sentence-fill") {
             // Mode 3: Sentence fill-in-the-blank
             questionText = "Cümledeki boşluğa uygun İngilizce kelimeyi seçin:";
             
-            // Blank out target word case-insensitively
-            const regex = new RegExp(`\\b${correctWord.en}\\b`, 'gi');
+            // Blank out target word case-insensitively with safe regex escaping
+            const escapedWord = escapeRegExp(correctWord.en);
+            const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
             let blankedSentence = correctWord.exEn.replace(regex, "______");
             if (blankedSentence === correctWord.exEn) {
-                blankedSentence = correctWord.exEn.replace(new RegExp(correctWord.en, 'gi'), "______");
+                blankedSentence = correctWord.exEn.replace(new RegExp(escapedWord, 'gi'), "______");
             }
             
             questionWord = blankedSentence;
             correctAnswer = correctWord.en;
             speakText = correctWord.exEn; // Read the entire sentence
             
-            choices = [correctWord.en];
-            for (let j = 0; j < Math.min(3, shuffledWrongPool.length); j++) {
-                choices.push(shuffledWrongPool[j].en);
-            }
+            const uniqueWrongEns = [...new Set(
+                shuffledWrongPool
+                    .map(w => w.en)
+                    .filter(en => en.toLowerCase().trim() !== correctWord.en.toLowerCase().trim())
+            )];
+            choices = [correctWord.en, ...uniqueWrongEns.slice(0, 3)];
         }
 
         const finalChoices = shuffleArray(choices);
@@ -1323,7 +1382,7 @@ function showQuizResults() {
     const scorePercent = Math.round((quizScoreCorrect / totalQuestions) * 100);
 
     // Save final score to localStorage for statistics
-    localStorage.setItem("yeliz_last_quiz_score", scorePercent);
+    setAppStorage("last_quiz_score", scorePercent);
 
     if (correctValEl) correctValEl.textContent = quizScoreCorrect;
     if (incorrectValEl) incorrectValEl.textContent = incorrectVal;
@@ -1333,7 +1392,7 @@ function showQuizResults() {
     const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
     if (scorePercent >= 80) {
         if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-trophy text-gold" style="font-size: 65px;"></i>`;
-        if (titleEl) titleEl.textContent = isEn ? "Awesome Yeliz! 🎉" : "Harikasın Yeliz! 🎉";
+        if (titleEl) titleEl.textContent = isEn ? "Awesome Job! 🎉" : "Harikasın! 🎉";
         if (descEl) descEl.textContent = isEn ? "You learned the words perfectly! Keep studying like this." : "Kelimeleri mükemmel bir şekilde öğrenmişsin! İngilizce çalışmalarına bu şekilde devam et.";
     } else if (scorePercent >= 50) {
         if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-star-half-stroke" style="color: #f59e0b; font-size: 65px;"></i>`;
@@ -1350,14 +1409,14 @@ function showQuizResults() {
 
     // Mark Quest completed
     quizCompletedToday = true;
-    localStorage.setItem("yeliz_quest_quiz", "true");
+    setAppStorage("quest_quiz", "true");
     
     if (scorePercent === 100) {
-        localStorage.setItem("yeliz_perfect_quiz_unlocked", "true");
+        setAppStorage("perfect_quiz_unlocked", "true");
     }
 
     if (totalQuestions >= 30) {
-        localStorage.setItem("yeliz_marathon_quiz_unlocked", "true");
+        setAppStorage("marathon_quiz_unlocked", "true");
     }
 
     checkDailyQuests();
@@ -1372,6 +1431,11 @@ function shuffleArray(array) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+}
+
+// Helper to escape special regular expression characters
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // 10. Toast Notifications
@@ -1407,7 +1471,7 @@ function showToast(message, isWarning = false) {
 // 12. Settings Drawer & Theme Customizer Engine (Midnight, Emerald, Sunset, Amethyst, Aurora)
 // ==========================================================================
 function applySavedTheme() {
-    const savedTheme = localStorage.getItem("yeliz_theme") || "midnight";
+    const savedTheme = getAppStorage("theme") || "midnight";
     applyTheme(savedTheme);
 }
 
@@ -1458,7 +1522,7 @@ function setupSettingsListeners() {
         opt.addEventListener("click", () => {
             const theme = opt.getAttribute("data-theme");
             applyTheme(theme);
-            localStorage.setItem("yeliz_theme", theme);
+            setAppStorage("theme", theme);
             const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
             const themeName = opt.querySelector("h5").textContent;
             showToast(isEn ? `Theme changed to: ${themeName} ✨` : `Tema değiştirildi: ${themeName} ✨`);
@@ -1472,14 +1536,14 @@ function setupSettingsListeners() {
     if (trBtn) {
         trBtn.addEventListener("click", () => {
             applyLanguage("tr");
-            localStorage.setItem("yeliz_lang", "tr");
+            setAppStorage("lang", "tr");
             showToast("Dil Türkçe olarak ayarlandı! 🇹🇷");
         });
     }
     if (enBtn) {
         enBtn.addEventListener("click", () => {
             applyLanguage("en");
-            localStorage.setItem("yeliz_lang", "en");
+            setAppStorage("lang", "en");
             showToast("Language set to English! 🇺🇸");
         });
     }
@@ -1525,10 +1589,10 @@ function initGamification() {
 
 function loadGamificationState() {
     const today = getTodayDateString();
-    const storedDate = localStorage.getItem("yeliz_last_active_date");
+    const storedDate = getAppStorage("last_active_date");
     
     lastActiveDate = storedDate || "";
-    streakCount = parseInt(localStorage.getItem("yeliz_streak_count") || "0");
+    streakCount = parseInt(getAppStorage("streak_count") || "0");
     
     // Check if the date is different (new day)
     if (storedDate !== today) {
@@ -1537,23 +1601,23 @@ function loadGamificationState() {
         quizCompletedToday = false;
         wodListenedToday = false;
         
-        localStorage.setItem("yeliz_cards_studied_today", "0");
-        localStorage.setItem("yeliz_quest_quiz", "false");
-        localStorage.setItem("yeliz_quest_wod", "false");
+        setAppStorage("cards_studied_today", "0");
+        setAppStorage("quest_quiz", "false");
+        setAppStorage("quest_wod", "false");
         
         // If they missed a day (difference is greater than 1 day), reset streak
         if (storedDate) {
             const dateDiff = Math.floor((new Date(today) - new Date(storedDate)) / 86400000);
             if (dateDiff > 1) {
                 streakCount = 0;
-                localStorage.setItem("yeliz_streak_count", "0");
+                setAppStorage("streak_count", "0");
             }
         }
     } else {
         // Load today's progress
-        cardsStudiedCount = parseInt(localStorage.getItem("yeliz_cards_studied_today") || "0");
-        quizCompletedToday = localStorage.getItem("yeliz_quest_quiz") === "true";
-        wodListenedToday = localStorage.getItem("yeliz_quest_wod") === "true";
+        cardsStudiedCount = parseInt(getAppStorage("cards_studied_today") || "0");
+        quizCompletedToday = getAppStorage("quest_quiz") === "true";
+        wodListenedToday = getAppStorage("quest_wod") === "true";
     }
 }
 
@@ -1574,8 +1638,8 @@ function incrementStreak() {
         streakCount++;
         lastActiveDate = today;
         
-        localStorage.setItem("yeliz_streak_count", streakCount.toString());
-        localStorage.setItem("yeliz_last_active_date", today);
+        setAppStorage("streak_count", streakCount.toString());
+        setAppStorage("last_active_date", today);
         
         // Update stats
         const streakEl = document.getElementById("stat-daily-streak");
@@ -1588,7 +1652,7 @@ function incrementStreak() {
 
 function trackCardStudyProgress() {
     cardsStudiedCount++;
-    localStorage.setItem("yeliz_cards_studied_today", cardsStudiedCount.toString());
+    setAppStorage("cards_studied_today", cardsStudiedCount.toString());
     
     if (cardsStudiedCount === 5) {
         showToast("Günlük Görev Tamamlandı: 5 Kart İncelendi! ⚡");
@@ -1761,7 +1825,7 @@ function checkAchievements() {
     // Badge 3: Quiz Perfect (Score 100% on a quiz)
     const badgeQuiz = document.getElementById("badge-quiz-perfect");
     if (badgeQuiz) {
-        const isPerfect = localStorage.getItem("yeliz_perfect_quiz_unlocked") === "true";
+        const isPerfect = getAppStorage("perfect_quiz_unlocked") === "true";
         if (isPerfect) {
             badgeQuiz.classList.remove("locked");
         } else {
@@ -1803,7 +1867,7 @@ function checkAchievements() {
     // Badge 7: Marathoner Badge (Complete a 30 questions quiz)
     const badgeMarathon = document.getElementById("badge-marathon");
     if (badgeMarathon) {
-        const isMarathonUnlocked = localStorage.getItem("yeliz_marathon_quiz_unlocked") === "true";
+        const isMarathonUnlocked = getAppStorage("marathon_quiz_unlocked") === "true";
         if (isMarathonUnlocked) {
             badgeMarathon.classList.remove("locked");
         } else {
@@ -1955,7 +2019,7 @@ const TRANSLATIONS = {
 };
 
 function applySavedLanguage() {
-    const savedLang = localStorage.getItem("yeliz_lang") || "tr";
+    const savedLang = getAppStorage("lang") || "tr";
     applyLanguage(savedLang);
 }
 
@@ -2006,7 +2070,7 @@ function applyLanguage(lang) {
 function trackWodListening() {
     if (!wodListenedToday) {
         wodListenedToday = true;
-        localStorage.setItem("yeliz_quest_wod", "true");
+        setAppStorage("quest_wod", "true");
         showToast(currentLang === 'en' ? "Daily Quest Completed: Listened to Word of the Day! ⚡" : "Günlük Görev Tamamlandı: Günün Kelimesi Dinlendi! ⚡");
         incrementStreak();
         checkDailyQuests();
@@ -2049,7 +2113,7 @@ if (installBtn) {
 }
 
 window.addEventListener('appinstalled', (evt) => {
-    console.log('Yeliz English was installed.');
+    console.log('LinguaPulse was installed.');
     if (installBtn) {
         installBtn.style.display = 'none';
     }

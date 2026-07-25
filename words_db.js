@@ -1,4 +1,4 @@
-// Yeliz English - 4000+ Words Database File
+// LinguaPulse - 4000+ Words Database File
 const WORDS_DATABASE = [
     {
         "id": "ox_1",

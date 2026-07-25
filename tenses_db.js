@@ -1036,8 +1036,8 @@ const TENSES_MODALS_DATABASE = [
                 "questionTr": "Otel detaylarını kontrol etmesi gerekir miydi?"
             },
             {
-                "positive": "They should have invited Yeliz to their party.",
-                "positiveTr": "Yeliz'i partilerine davet etmeliydiler.",
+                "positive": "They should have invited Alex to their party.",
+                "positiveTr": "Alex'i partilerine davet etmeliydiler.",
                 "negative": "They shouldn't have kept the location secret.",
                 "negativeTr": "Konumu gizli tutmamalıydılar.",
                 "question": "Should we have bought the tickets earlier?",

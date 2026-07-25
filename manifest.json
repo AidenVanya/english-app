@@ -1,7 +1,7 @@
 {
-  "name": "Yeliz English - İngilizce Öğrenme Platformu",
-  "short_name": "Yeliz English",
-  "description": "Yeliz için özel olarak tasarlanmış, modern ve etkileşimli İngilizce öğrenme platformu.",
+  "name": "LinguaPulse - İngilizce Öğrenme Platformu",
+  "short_name": "LinguaPulse",
+  "description": "Modern ve etkileşimli İngilizce öğrenme platformu.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0f19",
