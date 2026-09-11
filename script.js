@@ -1,5 +1,5 @@
 /* ==========================================================================
-   LinguaPulse - Interactive Controller and Multi-Language State Management
+   LexiGoo - Interactive Controller and Multi-Language State Management
    ========================================================================== */
 
 // 1. State Variables
@@ -68,12 +68,12 @@ document.addEventListener("DOMContentLoaded", () => {
     setGreeting();
 });
 
-// Helper for localStorage keys with migration from legacy yeliz_ prefix
+// Helper for localStorage keys with migration from legacy linguapulse_ and yeliz_ prefixes
 function getAppStorage(key) {
-    return localStorage.getItem("linguapulse_" + key) ?? localStorage.getItem("yeliz_" + key);
+    return localStorage.getItem("lexigoo_" + key) ?? localStorage.getItem("linguapulse_" + key) ?? localStorage.getItem("yeliz_" + key);
 }
 function setAppStorage(key, value) {
-    localStorage.setItem("linguapulse_" + key, value);
+    localStorage.setItem("lexigoo_" + key, value);
 }
 
 // Load and apply saved target learning language (en / de)

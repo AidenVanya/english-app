@@ -1,6 +1,6 @@
 {
-  "name": "LinguaPulse - İngilizce Öğrenme Platformu",
-  "short_name": "LinguaPulse",
+  "name": "LexiGoo - Çok Dilli Dil Öğrenme Platformu",
+  "short_name": "LexiGoo",
   "description": "Modern ve etkileşimli İngilizce öğrenme platformu.",
   "start_url": "./index.html",
   "display": "standalone",

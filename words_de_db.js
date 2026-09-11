@@ -1,4 +1,4 @@
-// LinguaPulse - German Vocabulary Database (540+ Words)
+// LexiGoo - German Vocabulary Database (540+ Words)
 const WORDS_DE_DATABASE = [
     {
         "id": "de_1",

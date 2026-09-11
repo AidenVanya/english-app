@@ -1,4 +1,4 @@
-const CACHE_NAME = 'linguapulse-cache-v3';
+const CACHE_NAME = 'lexigoo-cache-v1';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

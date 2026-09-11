@@ -1,4 +1,4 @@
-// LinguaPulse - 4000+ Words Database File
+// LexiGoo - 4000+ Words Database File
 const WORDS_DATABASE = [
     {
         "id": "ox_1",

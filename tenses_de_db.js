@@ -1,4 +1,4 @@
-// LinguaPulse - German Grammar, Tenses & Modals Database
+// LexiGoo - German Grammar, Tenses & Modals Database
 const TENSES_DE_DATABASE = [
     {
         "id": "de_t_1",
