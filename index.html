@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Modern ve etkileşimli İngilizce öğrenme platformu.">
-    <title>LinguaPulse - İngilizce Öğrenme Platformu</title>
+    <title>LinguaPulse - Çok Dilli Dil Öğrenme Platformu</title>
     <!-- PWA Meta & Manifest -->
     <meta name="theme-color" content="#6366f1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,11 +27,25 @@
     <div class="bg-shape shape-3"></div>
 
     <div class="app-container">
-        <!-- Sidebar or Top Navigation Header -->
+        <!-- Top Navigation Header -->
         <header class="app-header">
-            <div class="logo">
-                <i class="fa-solid fa-graduation-cap logo-icon"></i>
-                <span class="logo-text">Lingua<span>Pulse</span></span>
+            <div class="header-brand">
+                <div class="logo">
+                    <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                    <span class="logo-text">Lingua<span>Pulse</span></span>
+                </div>
+
+                <div class="header-brand-divider"></div>
+
+                <!-- Target Learning Language Switcher (İngilizce / Almanca) -->
+                <div class="target-lang-switcher" id="target-lang-switcher" title="Öğrenilen Dili Değiştir (İngilizce / Almanca)">
+                    <button class="target-lang-btn active" data-target="en" id="target-en-btn" title="İngilizce Öğren">
+                        <span class="flag-icon">🇬🇧</span> <span class="lang-label">İngilizce</span>
+                    </button>
+                    <button class="target-lang-btn" data-target="de" id="target-de-btn" title="Almanca Öğren">
+                        <span class="flag-icon">🇩🇪</span> <span class="lang-label">Almanca</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Navigation Tabs -->
@@ -157,10 +171,15 @@
                             <h2 id="wod-en">Loading...</h2>
                             <p id="wod-type">(Genel)</p>
                             <h3 id="wod-tr">Yükleniyor...</h3>
-                            <p class="wod-ex" id="wod-ex-en">"Connecting vocabulary database."</p>
+                            <div class="wod-example-row">
+                                <p class="wod-ex" id="wod-ex-en" title="Cümleyi Dinlemek İçin Tıklayın">"Connecting vocabulary database."</p>
+                                <button class="action-btn-sm btn-sentence-tts" id="wod-sentence-tts-btn" title="Örnek Cümleyi Dinle">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                            </div>
                             <p class="wod-ex-tr" id="wod-ex-tr">"Kelime veritabanı bağlanıyor."</p>
                             <div class="wod-actions">
-                                <button class="action-btn-sm btn-row-tts" id="wod-tts-btn" title="Dinle">
+                                <button class="action-btn-sm btn-row-tts" id="wod-tts-btn" title="Kelimeyi Dinle">
                                     <i class="fa-solid fa-volume-high"></i>
                                 </button>
                                 <button class="btn btn-primary btn-sm" id="wod-study-btn" style="padding: 8px 16px; font-size: 12px; border-radius: 8px;" data-i18n="wod-study-btn">
@@ -318,7 +337,12 @@
                                     <h2 class="translation-text" id="card-word-tr">Zorluk, Meydan Okuma</h2>
                                 </div>
                                 <div class="card-example-area">
-                                    <p class="example-en" id="card-example-en">"Learning English is a beautiful challenge."</p>
+                                    <div class="card-example-row">
+                                        <p class="example-en" id="card-example-en" title="Cümleyi Dinlemek İçin Tıklayın">"Learning English is a beautiful challenge."</p>
+                                        <button class="action-btn-sm btn-sentence-tts" id="card-example-tts-btn" title="Cümleyi Dinle" aria-label="Listen example sentence">
+                                            <i class="fa-solid fa-volume-high"></i>
+                                        </button>
+                                    </div>
                                     <p class="example-tr" id="card-example-tr">"İngilizce öğrenmek güzel bir meydan okumadır."</p>
                                 </div>
                                 <span class="card-tip"><i class="fa-solid fa-rotate"></i> İngilizceye dönmek için tıkla</span>
@@ -745,16 +769,33 @@
                 </div>
             </div>
 
-            <!-- Language Selection Section -->
+            <!-- Target Learning Language Selection Section in Drawer -->
             <div class="drawer-section" style="margin-top: 25px;">
-                <h4><i class="fa-solid fa-language"></i> <span data-i18n="drawer-lang-title">Dil Seçimi (Language)</span></h4>
+                <h4><i class="fa-solid fa-graduation-cap"></i> <span data-i18n="drawer-target-lang-title">Öğrenilen Dil (Target Language)</span></h4>
+                <p class="section-desc" data-i18n="drawer-target-lang-desc">Çalışmak istediğiniz hedef dili değiştirin:</p>
+                <div class="target-drawer-group" style="display: flex; gap: 10px; margin-top: 8px;">
+                    <button class="btn target-drawer-btn active" id="drawer-target-en" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px;">
+                        🇬🇧 İngilizce
+                    </button>
+                    <button class="btn target-drawer-btn" id="drawer-target-de" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; background: rgba(255,255,255,0.03); border-color: var(--glass-border); color: var(--text-secondary);">
+                        🇩🇪 Almanca
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interface Language Selection Section -->
+            <div class="drawer-section" style="margin-top: 25px;">
+                <h4><i class="fa-solid fa-language"></i> <span data-i18n="drawer-lang-title">Arayüz Dili (Interface Language)</span></h4>
                 <p class="section-desc" data-i18n="drawer-lang-desc">Uygulama arayüz dilini değiştirin:</p>
-                <div class="lang-selector-group" style="display: flex; gap: 10px; margin-top: 8px;">
-                    <button class="btn lang-btn active" id="lang-tr-btn" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px;">
+                <div class="lang-selector-group" style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button class="btn lang-btn active" id="lang-tr-btn" style="flex: 1; padding: 10px 6px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 8px;">
                         🇹🇷 Türkçe
                     </button>
-                    <button class="btn lang-btn" id="lang-en-btn" style="flex: 1; padding: 10px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; background: rgba(255,255,255,0.03); border-color: var(--glass-border); color: var(--text-secondary);">
+                    <button class="btn lang-btn" id="lang-en-btn" style="flex: 1; padding: 10px 6px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 8px; background: rgba(255,255,255,0.03); border-color: var(--glass-border); color: var(--text-secondary);">
                         🇺🇸 English
+                    </button>
+                    <button class="btn lang-btn" id="lang-de-btn" style="flex: 1; padding: 10px 6px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; border-radius: 8px; background: rgba(255,255,255,0.03); border-color: var(--glass-border); color: var(--text-secondary);">
+                        🇩🇪 Deutsch
                     </button>
                 </div>
             </div>
@@ -770,10 +811,12 @@
         </div>
     </div>
 
-    <!-- Words Database (contains 3800+ entries) -->
+    <!-- English Databases -->
     <script src="words_db.js"></script>
-    <!-- Grammar Database (Tenses and Modals) -->
     <script src="tenses_db.js"></script>
+    <!-- German Databases (Almanca Veritabanları) -->
+    <script src="words_de_db.js"></script>
+    <script src="tenses_de_db.js"></script>
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
     <!-- PWA Service Worker Registration -->

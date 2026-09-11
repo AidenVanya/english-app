@@ -1,10 +1,13 @@
-const CACHE_NAME = 'linguapulse-cache-v2';
+const CACHE_NAME = 'linguapulse-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './script.js',
   './words_db.js',
+  './tenses_db.js',
+  './words_de_db.js',
+  './tenses_de_db.js',
   './icon-192.png',
   './icon-512.png'
 ];

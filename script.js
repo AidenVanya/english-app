@@ -1,13 +1,14 @@
 /* ==========================================================================
-   LinguaPulse - Interactive Controller and State Management
+   LinguaPulse - Interactive Controller and Multi-Language State Management
    ========================================================================== */
 
 // 1. State Variables
+let targetLang = "en"; // 'en' (English) or 'de' (German)
 let wordsList = [];
 let customWords = [];
 let learnedWordIds = [];
 let activeTab = "home-tab";
-let currentLang = "tr"; // 'tr' (Turkish) or 'en' (English)
+let currentLang = "tr"; // 'tr' (Turkish), 'en' (English), or 'de' (German)
 let wordAddedToday = false;
 
 // Flashcard Browser State
@@ -18,7 +19,7 @@ let currentCardIndex = 0;
 let isCardFlipped = false;
 let preventAutoShuffle = false; // Flag to prevent double shuffling during dictionary redirects
 
-// Dictionary List State (NEW)
+// Dictionary List State
 let listSelectedCategory = "all";
 let listSearchPhrase = "";
 let listFilteredWords = [];
@@ -44,25 +45,29 @@ const MOTIVATIONAL_QUOTES = [
 
 // 2. App Initialization
 document.addEventListener("DOMContentLoaded", () => {
+    applySavedTargetLanguage();
     loadDataFromStorage();
     setupTabListeners();
     setupFlashcardListeners();
-    setupDictionaryListeners(); // New
+    setupDictionaryListeners();
     setupFormListener();
     setupQuizListeners();
-    setupGrammarListeners(); // Setup Zamanlar & Modallar listeners
+    setupGrammarListeners();
+    setupTargetLanguageListeners();
     
     // Initial renders & settings loader
     setupSettingsListeners();
     applySavedTheme();
     applySavedLanguage(); // Initialize interface language
     initGamification();
-    renderDictionaryList(); // New
+    renderDictionaryList();
     initGrammarTab(); // Load initial grammar sidebar options
+    updateFormLabelsForTargetLang();
     
     // Dynamic greeting based on hours
     setGreeting();
 });
+
 // Helper for localStorage keys with migration from legacy yeliz_ prefix
 function getAppStorage(key) {
     return localStorage.getItem("linguapulse_" + key) ?? localStorage.getItem("yeliz_" + key);
@@ -71,13 +76,117 @@ function setAppStorage(key, value) {
     localStorage.setItem("linguapulse_" + key, value);
 }
 
-// Load state from localStorage safely
+// Load and apply saved target learning language (en / de)
+function applySavedTargetLanguage() {
+    targetLang = getAppStorage("target_lang") || "en";
+    updateTargetLanguageUI();
+}
+
+function updateTargetLanguageUI() {
+    // Header buttons
+    const enBtn = document.getElementById("target-en-btn");
+    const deBtn = document.getElementById("target-de-btn");
+    if (enBtn && deBtn) {
+        if (targetLang === "de") {
+            deBtn.classList.add("active");
+            enBtn.classList.remove("active");
+        } else {
+            enBtn.classList.add("active");
+            deBtn.classList.remove("active");
+        }
+    }
+    // Drawer buttons
+    const drawerEn = document.getElementById("drawer-target-en");
+    const drawerDe = document.getElementById("drawer-target-de");
+    if (drawerEn && drawerDe) {
+        if (targetLang === "de") {
+            drawerDe.classList.add("active");
+            drawerEn.classList.remove("active");
+        } else {
+            drawerEn.classList.add("active");
+            drawerDe.classList.remove("active");
+        }
+    }
+}
+
+function setupTargetLanguageListeners() {
+    const enBtn = document.getElementById("target-en-btn");
+    const deBtn = document.getElementById("target-de-btn");
+    const drawerEn = document.getElementById("drawer-target-en");
+    const drawerDe = document.getElementById("drawer-target-de");
+
+    if (enBtn) enBtn.addEventListener("click", () => setTargetLanguage("en"));
+    if (deBtn) deBtn.addEventListener("click", () => setTargetLanguage("de"));
+    if (drawerEn) drawerEn.addEventListener("click", () => setTargetLanguage("en"));
+    if (drawerDe) drawerDe.addEventListener("click", () => setTargetLanguage("de"));
+}
+
+function setTargetLanguage(lang, notify = true) {
+    if (targetLang === lang && wordsList.length > 0) return;
+    targetLang = lang;
+    setAppStorage("target_lang", lang);
+    updateTargetLanguageUI();
+    loadDataFromStorage();
+    
+    // Refresh all views
+    renderDashboard();
+    filterFlashcards(true);
+    listCurrentPage = 1;
+    renderDictionaryList();
+    initGrammarTab();
+    determineWordOfTheDay();
+    updateFormLabelsForTargetLang();
+    
+    if (notify) {
+        const isDe = targetLang === "de";
+        let msg = "";
+        if (currentLang === "en") {
+            msg = isDe ? "Target learning language set to German! 🇩🇪" : "Target learning language set to English! 🇬🇧";
+        } else if (currentLang === "de") {
+            msg = isDe ? "Lernsprache auf Deutsch eingestellt! 🇩🇪" : "Lernsprache auf Englisch eingestellt! 🇬🇧";
+        } else {
+            msg = isDe ? "Öğrenilen dil Almanca olarak ayarlandı! 🇩🇪" : "Öğrenilen dil İngilizce olarak ayarlandı! 🇬🇧";
+        }
+        showToast(msg);
+    }
+}
+
+// Update form & dictionary labels based on target language
+function updateFormLabelsForTargetLang() {
+    const isDe = targetLang === "de";
+    const isEnUi = currentLang === "en";
+    const isDeUi = currentLang === "de";
+
+    // Table Header
+    const thWord = document.getElementById("th-target-word");
+    if (thWord) {
+        if (isDe) {
+            thWord.textContent = isEnUi ? "German Word" : (isDeUi ? "Deutsches Wort" : "Almanca");
+        } else {
+            thWord.textContent = isEnUi ? "English Word" : (isDeUi ? "Englisches Wort" : "İngilizce");
+        }
+    }
+
+    // Add Word Form labels & placeholders
+    const enInput = document.getElementById("word-en");
+    const exEnInput = document.getElementById("word-example-en");
+    if (enInput) {
+        enInput.placeholder = isDe ? "Örn: die Herausforderung" : "Örn: Serendipity";
+    }
+    if (exEnInput) {
+        exEnInput.placeholder = isDe ? "Örn: Deutsch lernen macht Spaß." : "Örn: It happened by serendipity.";
+    }
+}
+
+// Load state from localStorage safely for the active target language
 function loadDataFromStorage() {
     // Custom Words
     const storedCustom = getAppStorage("custom_words");
     if (storedCustom) {
         try {
-            customWords = JSON.parse(storedCustom) || [];
+            const allCustom = JSON.parse(storedCustom) || [];
+            // Filter custom words that match active target language (or legacy words without lang)
+            customWords = allCustom.filter(w => !w.lang || w.lang === targetLang);
         } catch (e) {
             console.error("Error parsing custom words storage:", e);
             customWords = [];
@@ -86,8 +195,9 @@ function loadDataFromStorage() {
         customWords = [];
     }
 
-    // Learned Word IDs
-    const storedLearned = getAppStorage("learned_words");
+    // Learned Word IDs per language
+    const storageKey = targetLang === "de" ? "learned_words_de" : "learned_words";
+    const storedLearned = getAppStorage(storageKey);
     if (storedLearned) {
         try {
             learnedWordIds = JSON.parse(storedLearned) || [];
@@ -103,10 +213,22 @@ function loadDataFromStorage() {
     updateMergedWordsList();
 }
 
-// Merge default database (from words_db.js) and custom words
+// Merge default database (from words_db.js or words_de_db.js) and custom words
 function updateMergedWordsList() {
-    const baseDb = typeof WORDS_DATABASE !== 'undefined' ? WORDS_DATABASE : [];
-    
+    let baseDb = [];
+    if (targetLang === "de") {
+        baseDb = typeof WORDS_DE_DATABASE !== 'undefined' ? WORDS_DE_DATABASE : [];
+    } else {
+        baseDb = typeof WORDS_DATABASE !== 'undefined' ? WORDS_DATABASE : [];
+    }
+
+    // Ensure all entries have normalized word, en, de properties
+    baseDb.forEach(word => {
+        if (!word.word) word.word = word.de || word.en;
+        if (!word.en && word.de) word.en = word.de;
+        if (!word.de && word.en) word.de = word.en;
+    });
+
     // Inject cached dynamic sentences into baseDb
     try {
         const cachedData = getAppStorage("dynamic_sentences");
@@ -277,15 +399,39 @@ function setupFlashcardListeners() {
         });
     }
 
-    // TTS button
+    // TTS button (Word Pronunciation)
     if (ttsBtn) {
         ttsBtn.addEventListener("click", (e) => {
             e.stopPropagation(); // prevent flip
             const activeWord = filteredWords[currentCardIndex];
             if (activeWord) {
-                speakEnglishText(activeWord.en);
+                const textToSpeak = activeWord.word || (targetLang === "de" ? activeWord.de : activeWord.en) || activeWord.en;
+                speakEnglishText(textToSpeak);
             }
         });
+    }
+
+    // Sentence TTS button & Clickable Example Sentence on Flashcard Back
+    const exTtsBtn = document.getElementById("card-example-tts-btn");
+    const exEnEl = document.getElementById("card-example-en");
+    
+    const speakCardExample = (e) => {
+        if (e) e.stopPropagation(); // prevent flipping card back
+        const activeWord = filteredWords[currentCardIndex];
+        if (activeWord) {
+            let sentence = (targetLang === "de" ? (activeWord.exDe || activeWord.exEn) : (activeWord.exEn || activeWord.exDe)) || "";
+            sentence = sentence.replace(/^["']|["']$/g, "").trim();
+            if (sentence) {
+                speakEnglishText(sentence);
+            }
+        }
+    };
+    
+    if (exTtsBtn) {
+        exTtsBtn.addEventListener("click", speakCardExample);
+    }
+    if (exEnEl) {
+        exEnEl.addEventListener("click", speakCardExample);
     }
 
     // Mark as Learned Button
@@ -329,7 +475,7 @@ function setupFlashcardListeners() {
                 filteredWords = shuffleArray([...filteredWords]);
                 currentCardIndex = 0;
                 displayCurrentCard();
-                showToast("Kelimeler karıştırıldı! 🔀");
+                showToast(currentLang === 'en' ? "Words shuffled! 🔀" : (currentLang === 'de' ? "Wörter gemischt! 🔀" : "Kelimeler karıştırıldı! 🔀"));
             }
         });
     }
@@ -368,21 +514,27 @@ function resetFlashcardState() {
     }
 }
 
-// TTS Speech Synthesizer
-function speakEnglishText(text) {
+// Multi-Language Speech Synthesizer (English & German Support)
+function speakEnglishText(text, forcedLang = null) {
     if ("speechSynthesis" in window) {
         // Cancel active readings
         window.speechSynthesis.cancel();
         
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
+        const langCode = forcedLang || (targetLang === "de" ? "de-DE" : "en-US");
+        utterance.lang = langCode;
         utterance.rate = 0.85; // slightly slower for better learning clarity
         
-        // Retrieve english speaking voices if available
+        // Retrieve matching voices
         const voices = window.speechSynthesis.getVoices();
-        const enVoice = voices.find(voice => voice.lang.startsWith("en-US") || voice.lang.startsWith("en-GB"));
-        if (enVoice) {
-            utterance.voice = enVoice;
+        let selectedVoice = null;
+        if (langCode.startsWith("de")) {
+            selectedVoice = voices.find(voice => voice.lang.startsWith("de") || voice.lang.includes("DE"));
+        } else {
+            selectedVoice = voices.find(voice => voice.lang.startsWith("en-US") || voice.lang.startsWith("en-GB") || voice.lang.startsWith("en"));
+        }
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
         }
 
         window.speechSynthesis.speak(utterance);
@@ -400,16 +552,17 @@ function filterFlashcards(shouldShuffle = true) {
         if (currentFilter === "learning" && isLearned) return false;
         if (currentFilter === "custom" && !word.id.startsWith("cust_")) return false;
         
-        // Filter by specific database categories (General, Aviation, Tourism)
+        // Filter by specific database categories
         if (currentFilter !== "all" && currentFilter !== "custom" && currentFilter !== "learned" && currentFilter !== "learning") {
             if (word.category !== currentFilter) return false;
         }
 
         // Filter by search query
         if (searchPhrase) {
-            const matchEn = word.en.toLowerCase().includes(searchPhrase);
-            const matchTr = word.tr.toLowerCase().includes(searchPhrase);
-            return matchEn || matchTr;
+            const wordTarget = (targetLang === 'de' ? (word.de || word.word || word.en) : (word.en || word.word)) || "";
+            const matchTarget = wordTarget.toLowerCase().includes(searchPhrase);
+            const matchTr = (word.tr || "").toLowerCase().includes(searchPhrase);
+            return matchTarget || matchTr;
         }
         return true;
     });
@@ -434,12 +587,14 @@ try {
 }
 
 function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
-    if (!word || !word.en) return;
+    const wordTarget = word.word || (targetLang === "de" ? word.de : word.en) || word.en;
+    if (!word || !wordTarget) return;
     
     // Safety check if they are already fetched in the background
-    if (word.exEn) {
-        if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
-        if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+    const existingEx = (targetLang === "de" ? (word.exDe || word.exEn) : (word.exEn || word.exDe));
+    if (existingEx) {
+        if (exEnEl) exEnEl.textContent = `"${existingEx}"`;
+        if (exTrEl) exTrEl.textContent = `"${word.exTr || ''}"`;
         return;
     }
     
@@ -452,8 +607,19 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
         return;
     }
     
-    // Fetch from API
-    const englishWord = encodeURIComponent(word.en.toLowerCase());
+    if (targetLang === "de") {
+        // German fallback
+        const fallbackEx = `Das Wort "${wordTarget}" ist sehr wichtig im Deutschen.`;
+        const fallbackTr = `"${word.tr || wordTarget}" kelimesi Almancada çok önemlidir.`;
+        word.exDe = fallbackEx;
+        word.exTr = fallbackTr;
+        if (exEnEl) exEnEl.textContent = `"${fallbackEx}"`;
+        if (exTrEl) exTrEl.textContent = `"${fallbackTr}"`;
+        return;
+    }
+
+    // Fetch from API for English
+    const englishWord = encodeURIComponent(wordTarget.toLowerCase());
     const dictionaryApiUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${englishWord}`;
     
     fetch(dictionaryApiUrl)
@@ -464,7 +630,6 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
         .then(data => {
             let foundExample = "";
             
-            // Traverse meanings and definitions to find an example
             if (Array.isArray(data) && data.length > 0) {
                 for (const entry of data) {
                     if (entry.meanings) {
@@ -484,12 +649,10 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
                 }
             }
             
-            // Fallback if no example found in dictionary API
             if (!foundExample) {
-                foundExample = `This is a study card for the word: ${word.en}.`;
+                foundExample = `This is a study card for the word: ${wordTarget}.`;
             }
             
-            // Translate the example sentence
             const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(foundExample)}&langpair=en|tr`;
             return fetch(myMemoryUrl)
                 .then(res => res.json())
@@ -498,26 +661,22 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
                         ? transData.responseData.translatedText.trim()
                         : `Bu, ${word.tr} kelimesinin örnek bir cümlesidir.`;
                     
-                    // Save to word object
                     word.exEn = foundExample;
                     word.exTr = translatedText;
                     
-                    // Save to cache
                     dynamicSentencesCache[word.id] = {
                         exEn: foundExample,
                         exTr: translatedText
                     };
                     setAppStorage("dynamic_sentences", JSON.stringify(dynamicSentencesCache));
                     
-                    // Update UI if the same word is still displayed
                     updateUIIfActive();
                 });
         })
         .catch(err => {
             console.warn("Could not load dynamic example sentence:", err);
-            // Non-blocking fallback template in case of offline or errors
-            const fallbackExample = `We need to check the definition of ${word.en}.`;
-            const fallbackTranslation = `İngilizce ${word.en} (${word.tr}) kelimesinin tanımını kontrol etmemiz gerekiyor.`;
+            const fallbackExample = `We need to check the definition of ${wordTarget}.`;
+            const fallbackTranslation = `${wordTarget} (${word.tr}) kelimesinin tanımını kontrol etmemiz gerekiyor.`;
             
             word.exEn = fallbackExample;
             word.exTr = fallbackTranslation;
@@ -528,14 +687,14 @@ function loadDynamicExampleSentence(word, exEnEl, exTrEl, type = "card") {
     function updateUIIfActive() {
         if (type === "card") {
             const currentEnText = document.getElementById("card-word-en") ? document.getElementById("card-word-en").textContent : "";
-            if (currentEnText === word.en) {
-                if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+            if (currentEnText === wordTarget) {
+                if (exEnEl) exEnEl.textContent = `"${word.exEn || word.exDe}"`;
                 if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
             }
         } else if (type === "wod") {
             const currentWodText = document.getElementById("wod-en") ? document.getElementById("wod-en").textContent : "";
-            if (currentWodText === word.en) {
-                if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
+            if (currentWodText === wordTarget) {
+                if (exEnEl) exEnEl.textContent = `"${word.exEn || word.exDe}"`;
                 if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
             }
         }
@@ -566,7 +725,6 @@ function displayCurrentCard() {
     }
 
     if (filteredWords.length === 0) {
-        // Empty state UI display on card
         if (cardEl) cardEl.style.pointerEvents = "none";
         if (enEl) enEl.textContent = "Kelime Bulunamadı";
         if (trEl) trEl.textContent = "Lütfen aramayı veya filtreyi değiştirin";
@@ -586,47 +744,46 @@ function displayCurrentCard() {
     const word = filteredWords[currentCardIndex];
     if (!word) return;
 
+    const wordTarget = word.word || (targetLang === "de" ? word.de : word.en) || word.en;
+
     // Card face text injections
     if (enEl) {
-        enEl.textContent = word.en;
-        // Dynamic resizing for longer English words to prevent overflow on mobile/tablet viewports
-        if (word.en.length > 18) {
+        enEl.textContent = wordTarget;
+        if (wordTarget.length > 18) {
             enEl.style.fontSize = "24px";
-        } else if (word.en.length > 12) {
+        } else if (wordTarget.length > 12) {
             enEl.style.fontSize = "28px";
         } else {
-            enEl.style.fontSize = ""; // Reset to CSS default (38px / 26px)
+            enEl.style.fontSize = "";
         }
     }
     if (trEl) {
         trEl.textContent = word.tr;
-        // Dynamic resizing for longer Turkish translations to prevent overflow
         if (word.tr.length > 25) {
             trEl.style.fontSize = "20px";
         } else if (word.tr.length > 15) {
             trEl.style.fontSize = "24px";
         } else {
-            trEl.style.fontSize = ""; // Reset to CSS default (32px / 22px)
+            trEl.style.fontSize = "";
         }
     }
     if (typeEl) {
         if (word.id.startsWith("cust_")) {
             typeEl.textContent = `(${word.type})`;
         } else {
-            typeEl.textContent = word.type || "General";
+            typeEl.textContent = word.type || (targetLang === "de" ? "Wort" : "General");
         }
     }
     if (exEnEl) exEnEl.textContent = "";
     if (exTrEl) exTrEl.textContent = "";
     
-    if (word.exEn) {
-        if (exEnEl) exEnEl.textContent = `"${word.exEn}"`;
-        if (exTrEl) exTrEl.textContent = `"${word.exTr}"`;
+    const exSentence = (targetLang === "de" ? (word.exDe || word.exEn) : (word.exEn || word.exDe)) || "";
+    if (exSentence) {
+        if (exEnEl) exEnEl.textContent = `"${exSentence}"`;
+        if (exTrEl) exTrEl.textContent = `"${word.exTr || ''}"`;
     } else {
-        // Trigger async fetch from APIs
         if (exEnEl) exEnEl.textContent = "Örnek cümle yükleniyor... / Loading example...";
         if (exTrEl) exTrEl.textContent = "";
-        
         loadDynamicExampleSentence(word, exEnEl, exTrEl, "card");
     }
     
@@ -804,9 +961,10 @@ function renderDictionaryList() {
         if (!matchCategory) return false;
         
         if (listSearchPhrase) {
-            const matchEn = word.en.toLowerCase().includes(listSearchPhrase);
-            const matchTr = word.tr.toLowerCase().includes(listSearchPhrase);
-            return matchEn || matchTr;
+            const wordTarget = (targetLang === 'de' ? (word.de || word.word || word.en) : (word.en || word.word)) || "";
+            const matchTarget = wordTarget.toLowerCase().includes(listSearchPhrase);
+            const matchTr = (word.tr || "").toLowerCase().includes(listSearchPhrase);
+            return matchTarget || matchTr;
         }
         return true;
     });
@@ -850,6 +1008,7 @@ function renderDictionaryList() {
     pageItems.forEach(word => {
         const tr = document.createElement("tr");
         const isLearned = learnedWordIds.includes(word.id);
+        const wordDisplay = word.word || (targetLang === "de" ? word.de : word.en) || word.en;
         
         let badgeClass = "category-badge";
         let catText = word.category;
@@ -921,7 +1080,7 @@ function renderDictionaryList() {
         }
 
         tr.innerHTML = `
-            <td><strong>${word.en}</strong></td>
+            <td><strong>${wordDisplay}</strong></td>
             <td>${word.tr}</td>
             <td><span class="${badgeClass}">${catText}</span></td>
             <td style="text-align: center;">
@@ -934,7 +1093,7 @@ function renderDictionaryList() {
         // Listeners for Row Buttons
         tr.querySelector(".btn-row-tts").addEventListener("click", (e) => {
             e.stopPropagation();
-            speakEnglishText(word.en);
+            speakEnglishText(wordDisplay);
         });
         
         tr.querySelector(".btn-row-learned").addEventListener("click", (e) => {
@@ -1014,8 +1173,11 @@ function setupFormListener() {
         const exEnVal = exEnInput.value.trim();
         const exTrVal = exTrInput.value.trim();
 
-        // Check if english word already exists
-        const wordExists = wordsList.some(w => w.en.toLowerCase() === enVal.toLowerCase());
+        // Check if word already exists in current list
+        const wordExists = wordsList.some(w => {
+            const wTxt = w.word || (targetLang === 'de' ? w.de : w.en) || w.en;
+            return wTxt.toLowerCase() === enVal.toLowerCase();
+        });
         if (wordExists) {
             showToast("Bu kelime zaten listende kayıtlı!", true);
             return;
@@ -1024,21 +1186,30 @@ function setupFormListener() {
         // Create new word entity
         const newWord = {
             id: "cust_" + Date.now(),
+            lang: targetLang,
+            word: enVal,
             en: enVal,
+            de: enVal,
             tr: trVal,
-            category: "custom", // Internal reference
+            category: "custom",
             type: catVal,
             exEn: exEnVal,
+            exDe: exEnVal,
             exTr: exTrVal
         };
 
-        // Add to states
-        customWords.push(newWord);
-        setAppStorage("custom_words", JSON.stringify(customWords));
+        // Add to persistent storage
+        try {
+            const allCustom = JSON.parse(getAppStorage("custom_words") || "[]");
+            allCustom.push(newWord);
+            setAppStorage("custom_words", JSON.stringify(allCustom));
+        } catch(e) {
+            console.error("Error saving custom word:", e);
+        }
         
-        updateMergedWordsList();
+        loadDataFromStorage();
         renderDashboard();
-        renderDictionaryList(); // Update dictionary list as well
+        renderDictionaryList();
         
         // Reset form inputs
         form.reset();
@@ -1060,20 +1231,31 @@ function setupFormListener() {
 }
 
 function deleteCustomWord(wordId) {
-    if (confirm("Bu kelimeyi listenizden silmek istediğinize emin misiniz?")) {
-        // Remove from custom list
-        customWords = customWords.filter(w => w.id !== wordId);
-        setAppStorage("custom_words", JSON.stringify(customWords));
+    const isEn = currentLang === 'en';
+    const isDe = currentLang === 'de';
+    const confirmMsg = isEn 
+        ? "Are you sure you want to delete this word?" 
+        : (isDe ? "Möchten Sie dieses Wort wirklich löschen?" : "Bu kelimeyi listenizden silmek istediğinize emin misiniz?");
+        
+    if (confirm(confirmMsg)) {
+        try {
+            let allCustom = JSON.parse(getAppStorage("custom_words") || "[]");
+            allCustom = allCustom.filter(w => w.id !== wordId);
+            setAppStorage("custom_words", JSON.stringify(allCustom));
+        } catch(e) {
+            console.error("Error deleting custom word:", e);
+        }
         
         // Remove from learned list if present
+        const storageKey = targetLang === "de" ? "learned_words_de" : "learned_words";
         learnedWordIds = learnedWordIds.filter(id => id !== wordId);
-        setAppStorage("learned_words", JSON.stringify(learnedWordIds));
+        setAppStorage(storageKey, JSON.stringify(learnedWordIds));
 
-        updateMergedWordsList();
+        loadDataFromStorage();
         renderDashboard();
-        renderDictionaryList(); // Update dictionary list
+        renderDictionaryList();
         filterFlashcards();
-        showToast("Kelime listeden silindi.", true);
+        showToast(isEn ? "Word deleted from list." : (isDe ? "Wort aus der Liste gelöscht." : "Kelime listeden silindi."), true);
     }
 }
 
@@ -1137,7 +1319,7 @@ function startQuizGame() {
     let sourceWords = [];
     if (selectedSource === "custom") {
         sourceWords = [...customWords];
-    } else if (selectedSource === "Aviation (Havacılık)" || selectedSource === "Tourism (Turizm)") {
+    } else if (selectedSource !== "all") {
         sourceWords = wordsList.filter(w => w.category === selectedSource);
     } else {
         sourceWords = [...wordsList];
@@ -1145,9 +1327,12 @@ function startQuizGame() {
     
     // If Sentence Fill-in-the-blank is selected, filter out words without example sentences
     if (selectedType === "sentence-fill") {
-        sourceWords = sourceWords.filter(w => w.exEn && w.exEn.trim() !== "");
+        sourceWords = sourceWords.filter(w => {
+            const ex = targetLang === "de" ? (w.exDe || w.exEn) : (w.exEn || w.exDe);
+            return ex && ex.trim() !== "";
+        });
         if (sourceWords.length < 4) {
-            alert("Boşluk doldurma testi başlatabilmek için seçilen alanda örnek cümlesi bulunan en az 4 kelime olmalıdır! Lütfen Havacılık, Turizm veya örnek cümle eklediğiniz kendi kelimelerinizi seçin.");
+            alert("Boşluk doldurma testi başlatabilmek için seçilen alanda örnek cümlesi bulunan en az 4 kelime olmalıdır! Lütfen diğer kategorileri veya tüm kelimeleri seçin.");
             return;
         }
     }
@@ -1163,8 +1348,11 @@ function startQuizGame() {
     const questionsCount = Math.min(selectedCount, shuffledWords.length);
     quizQuestions = [];
 
+    const isDe = targetLang === "de";
+
     for (let i = 0; i < questionsCount; i++) {
         const correctWord = shuffledWords[i];
+        const correctTargetWord = correctWord.word || (isDe ? correctWord.de : correctWord.en) || correctWord.en;
         const wrongOptionsPool = sourceWords.filter(w => w.id !== correctWord.id);
         const shuffledWrongPool = shuffleArray([...wrongOptionsPool]);
         
@@ -1175,53 +1363,59 @@ function startQuizGame() {
         let speakText = ""; 
 
         if (selectedType === "en-to-tr") {
-            // Mode 1: English to Turkish
-            questionText = "Aşağıdaki kelimenin anlamı nedir?";
-            questionWord = correctWord.en;
+            // Mode 1: Target Language to Turkish
+            questionText = isDe ? "Aşağıdaki Almanca kelimenin anlamı nedir?" : "Aşağıdaki İngilizce kelimenin anlamı nedir?";
+            questionWord = correctTargetWord;
             correctAnswer = correctWord.tr;
-            speakText = correctWord.en;
+            speakText = correctTargetWord;
             
             const uniqueWrongTrs = [...new Set(
                 shuffledWrongPool
                     .map(w => w.tr)
-                    .filter(tr => tr.toLowerCase().trim() !== correctWord.tr.toLowerCase().trim())
+                    .filter(tr => tr && tr.toLowerCase().trim() !== correctWord.tr.toLowerCase().trim())
             )];
             choices = [correctWord.tr, ...uniqueWrongTrs.slice(0, 3)];
         } else if (selectedType === "tr-to-en") {
-            // Mode 2: Turkish to English
-            questionText = "Aşağıdaki Türkçe anlamın İngilizce karşılığı nedir?";
+            // Mode 2: Turkish to Target Language
+            questionText = isDe ? "Aşağıdaki Türkçe anlamın Almanca karşılığı nedir?" : "Aşağıdaki Türkçe anlamın İngilizce karşılığı nedir?";
             questionWord = correctWord.tr;
-            correctAnswer = correctWord.en;
-            speakText = correctWord.en; 
+            correctAnswer = correctTargetWord;
+            speakText = correctTargetWord; 
             
-            const uniqueWrongEns = [...new Set(
+            const uniqueWrongTargets = [...new Set(
                 shuffledWrongPool
-                    .map(w => w.en)
-                    .filter(en => en.toLowerCase().trim() !== correctWord.en.toLowerCase().trim())
+                    .map(w => w.word || (isDe ? w.de : w.en) || w.en)
+                    .filter(wTxt => wTxt && wTxt.toLowerCase().trim() !== correctTargetWord.toLowerCase().trim())
             )];
-            choices = [correctWord.en, ...uniqueWrongEns.slice(0, 3)];
+            choices = [correctTargetWord, ...uniqueWrongTargets.slice(0, 3)];
         } else if (selectedType === "sentence-fill") {
             // Mode 3: Sentence fill-in-the-blank
-            questionText = "Cümledeki boşluğa uygun İngilizce kelimeyi seçin:";
+            questionText = isDe ? "Cümledeki boşluğa uygun Almanca kelimeyi seçin:" : "Cümledeki boşluğa uygun İngilizce kelimeyi seçin:";
             
-            // Blank out target word case-insensitively with safe regex escaping
-            const escapedWord = escapeRegExp(correctWord.en);
-            const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
-            let blankedSentence = correctWord.exEn.replace(regex, "______");
-            if (blankedSentence === correctWord.exEn) {
-                blankedSentence = correctWord.exEn.replace(new RegExp(escapedWord, 'gi'), "______");
+            const exSentence = (isDe ? (correctWord.exDe || correctWord.exEn) : (correctWord.exEn || correctWord.exDe)) || "";
+            
+            // Blank out target word (and article if present) case-insensitively
+            const wordOnly = correctTargetWord.replace(/^(der|die|das|den|dem|des|ein|eine|einen|einem|eines)\s+/i, "");
+            const escapedWord = escapeRegExp(wordOnly);
+            let blankedSentence = exSentence.replace(new RegExp(`\\b${escapedWord}\\b`, 'gi'), "______");
+            if (blankedSentence === exSentence) {
+                blankedSentence = exSentence.replace(new RegExp(escapedWord, 'gi'), "______");
+            }
+            if (blankedSentence === exSentence) {
+                const fullEscaped = escapeRegExp(correctTargetWord);
+                blankedSentence = exSentence.replace(new RegExp(fullEscaped, 'gi'), "______");
             }
             
-            questionWord = blankedSentence;
-            correctAnswer = correctWord.en;
-            speakText = correctWord.exEn; // Read the entire sentence
+            questionWord = blankedSentence || exSentence;
+            correctAnswer = correctTargetWord;
+            speakText = exSentence; // Read the entire sentence
             
-            const uniqueWrongEns = [...new Set(
+            const uniqueWrongTargets = [...new Set(
                 shuffledWrongPool
-                    .map(w => w.en)
-                    .filter(en => en.toLowerCase().trim() !== correctWord.en.toLowerCase().trim())
+                    .map(w => w.word || (isDe ? w.de : w.en) || w.en)
+                    .filter(wTxt => wTxt && wTxt.toLowerCase().trim() !== correctTargetWord.toLowerCase().trim())
             )];
-            choices = [correctWord.en, ...uniqueWrongEns.slice(0, 3)];
+            choices = [correctTargetWord, ...uniqueWrongTargets.slice(0, 3)];
         }
 
         const finalChoices = shuffleArray(choices);
@@ -1532,6 +1726,7 @@ function setupSettingsListeners() {
     // Language buttons click handlers
     const trBtn = document.getElementById("lang-tr-btn");
     const enBtn = document.getElementById("lang-en-btn");
+    const deBtn = document.getElementById("lang-de-btn");
     
     if (trBtn) {
         trBtn.addEventListener("click", () => {
@@ -1547,20 +1742,29 @@ function setupSettingsListeners() {
             showToast("Language set to English! 🇺🇸");
         });
     }
+    if (deBtn) {
+        deBtn.addEventListener("click", () => {
+            applyLanguage("de");
+            setAppStorage("lang", "de");
+            showToast("Sprache auf Deutsch eingestellt! 🇩🇪");
+        });
+    }
     
     // Reset Progress handler
     const resetBtn = document.getElementById("reset-progress-btn");
     if (resetBtn) {
         resetBtn.addEventListener("click", () => {
             const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+            const isDe = typeof currentLang !== 'undefined' && currentLang === 'de';
             const confirmMsg = isEn ? 
                 "Are you sure you want to reset all your study progress, earned badges, streaks, and custom words? This cannot be undone!" :
-                "Tüm ders çalışma ilerlemenizi, kazandığınız rozetleri, günlük serilerinizi ve kendi eklediğiniz kelimeleri sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz!";
+                (isDe ? "Möchten Sie wirklich Ihren gesamten Lernfortschritt, Abzeichen und benutzerdefinierten Wörter zurücksetzen?" :
+                "Tüm ders çalışma ilerlemenizi, kazandığınız rozetleri, günlük serilerinizi ve kendi eklediğiniz kelimeleri sıfırlamak istediğinize emin misiniz? Bu işlem geri alınamaz!");
             
             const confirmReset = confirm(confirmMsg);
             if (confirmReset) {
                 localStorage.clear(); // Clear all localStorage values
-                showToast(isEn ? "All progress reset. Reloading page..." : "Tüm verileriniz sıfırlandı. Sayfa yeniden yükleniyor...", true);
+                showToast(isEn ? "All progress reset. Reloading page..." : (isDe ? "Alle Fortschritte zurückgesetzt. Seite wird neu geladen..." : "Tüm verileriniz sıfırlandı. Sayfa yeniden yükleniyor..."), true);
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
@@ -1676,20 +1880,39 @@ function checkDailyQuests() {
     const qtWod = document.querySelector("#quest-wod .quest-text");
     
     const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+    const isDe = typeof currentLang !== 'undefined' && currentLang === 'de';
     
     // 1. Cards Quest (0/5)
     if (qtCards) {
-        qtCards.textContent = isEn ? `Study 5 Flashcards (${Math.min(5, cardsStudiedCount)}/5)` : `5 Kelime Kartı çalış (${Math.min(5, cardsStudiedCount)}/5)`;
+        if (isEn) {
+            qtCards.textContent = `Study 5 Flashcards (${Math.min(5, cardsStudiedCount)}/5)`;
+        } else if (isDe) {
+            qtCards.textContent = `5 Karteikarten lernen (${Math.min(5, cardsStudiedCount)}/5)`;
+        } else {
+            qtCards.textContent = `5 Kelime Kartı çalış (${Math.min(5, cardsStudiedCount)}/5)`;
+        }
     }
     
     // 2. Quiz Quest
     if (qtQuiz) {
-        qtQuiz.textContent = isEn ? "Complete one Quiz" : "Bir İngilizce Quiz tamamla";
+        if (isEn) {
+            qtQuiz.textContent = "Complete one Quiz";
+        } else if (isDe) {
+            qtQuiz.textContent = "Ein Quiz abschließen";
+        } else {
+            qtQuiz.textContent = "Bir İngilizce Quiz tamamla";
+        }
     }
     
     // 3. WOD Quest
     if (qtWod) {
-        qtWod.textContent = isEn ? "Listen to the Word of the Day" : "Günün Kelimesini dinle";
+        if (isEn) {
+            qtWod.textContent = "Listen to the Word of the Day";
+        } else if (isDe) {
+            qtWod.textContent = "Wort des Tages anhören";
+        } else {
+            qtWod.textContent = "Günün Kelimesini dinle";
+        }
     }
     
     if (cardsStudiedCount >= 5) {
@@ -1737,7 +1960,10 @@ function determineWordOfTheDay() {
     const index = Math.abs(hash) % wordsList.length;
     wordOfTheDay = wordsList[index];
     
-    if (enEl) enEl.textContent = wordOfTheDay.en;
+    const isDe = targetLang === "de";
+    const targetWord = wordOfTheDay.word || (isDe ? wordOfTheDay.de : wordOfTheDay.en) || wordOfTheDay.en;
+
+    if (enEl) enEl.textContent = targetWord;
     if (typeEl) {
         if (wordOfTheDay.id.startsWith("cust_")) {
             typeEl.textContent = `(${wordOfTheDay.type})`;
@@ -1765,11 +1991,12 @@ function determineWordOfTheDay() {
     if (exEnEl) exEnEl.textContent = "";
     if (exTrEl) exTrEl.textContent = "";
     
-    if (wordOfTheDay.exEn) {
-        if (exEnEl) exEnEl.textContent = `"${wordOfTheDay.exEn}"`;
-        if (exTrEl) exTrEl.textContent = `"${wordOfTheDay.exTr}"`;
+    const exSentence = (isDe ? (wordOfTheDay.exDe || wordOfTheDay.exEn) : (wordOfTheDay.exEn || wordOfTheDay.exDe)) || "";
+    if (exSentence) {
+        if (exEnEl) exEnEl.textContent = `"${exSentence}"`;
+        if (exTrEl) exTrEl.textContent = `"${wordOfTheDay.exTr || ''}"`;
     } else {
-        if (exEnEl) exEnEl.textContent = "Günün kelimesi örneği yükleniyor...";
+        if (exEnEl) exEnEl.textContent = isDe ? "Günün kelimesi örneği yükleniyor..." : "Loading Word of the Day example...";
         if (exTrEl) exTrEl.textContent = "";
         
         loadDynamicExampleSentence(wordOfTheDay, exEnEl, exTrEl, "wod");
@@ -1778,15 +2005,36 @@ function determineWordOfTheDay() {
 
 function setupWodListeners() {
     const ttsBtn = document.getElementById("wod-tts-btn");
+    const sentenceTtsBtn = document.getElementById("wod-sentence-tts-btn");
+    const exEnEl = document.getElementById("wod-ex-en");
     const studyBtn = document.getElementById("wod-study-btn");
     
     if (ttsBtn) {
         ttsBtn.addEventListener("click", () => {
             if (wordOfTheDay) {
-                speakEnglishText(wordOfTheDay.en);
+                const targetWord = wordOfTheDay.word || (targetLang === "de" ? wordOfTheDay.de : wordOfTheDay.en) || wordOfTheDay.en;
+                speakEnglishText(targetWord);
                 trackWodListening();
             }
         });
+    }
+
+    const speakWodSentence = () => {
+        if (wordOfTheDay) {
+            let sentence = (targetLang === "de" ? (wordOfTheDay.exDe || wordOfTheDay.exEn) : (wordOfTheDay.exEn || wordOfTheDay.exDe)) || "";
+            sentence = sentence.replace(/^["']|["']$/g, "").trim();
+            if (sentence) {
+                speakEnglishText(sentence);
+                trackWodListening();
+            }
+        }
+    };
+    
+    if (sentenceTtsBtn) {
+        sentenceTtsBtn.addEventListener("click", speakWodSentence);
+    }
+    if (exEnEl) {
+        exEnEl.addEventListener("click", speakWodSentence);
     }
     
     if (studyBtn) {
@@ -1855,7 +2103,7 @@ function checkAchievements() {
     }
 
     // Badge 6: Author Badge (Add 3 custom words)
-    const badgeCustom = document.getElementById("badge-custom-3");
+    const badgeCustom = document.getElementById("badge-custom-author");
     if (badgeCustom) {
         if (customWords.length >= 3) {
             badgeCustom.classList.remove("locked");
@@ -1864,11 +2112,10 @@ function checkAchievements() {
         }
     }
 
-    // Badge 7: Marathoner Badge (Complete a 30 questions quiz)
-    const badgeMarathon = document.getElementById("badge-marathon");
+    // Badge 7: Streak Marathoner
+    const badgeMarathon = document.getElementById("badge-streak-7");
     if (badgeMarathon) {
-        const isMarathonUnlocked = getAppStorage("marathon_quiz_unlocked") === "true";
-        if (isMarathonUnlocked) {
+        if (streakCount >= 7) {
             badgeMarathon.classList.remove("locked");
         } else {
             badgeMarathon.classList.add("locked");
@@ -1887,7 +2134,7 @@ function checkAchievements() {
 }
 
 // ==========================================================================
-// 13. Localization & i18n Engine (Turkish / English Support)
+// 13. Localization & i18n Engine (Turkish / English / German Support)
 // ==========================================================================
 const TRANSLATIONS = {
     tr: {
@@ -1899,7 +2146,7 @@ const TRANSLATIONS = {
         "nav-tenses": "Zamanlar & Modallar",
         "nav-quiz": "Quiz",
         "tenses-title": "Zamanlar & Modallar",
-        "tenses-subtitle": "İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.",
+        "tenses-subtitle": "Dilbilgisindeki temel zamanları ve en çok kullanılan kipleri detaylı formüller ve örneklerle öğrenin.",
         "grammar-topics": "Konu Listesi",
         "grammar-usage": "Kullanım Amacı",
         "grammar-formula": "Cümle Yapısı (Formül)",
@@ -1926,7 +2173,7 @@ const TRANSLATIONS = {
         "qa-title": "Bugün Ne Yapmak İstersin?",
         "qa-subtitle": "Öğrenme yolculuğuna devam etmek için aşağıdaki aktivitelerden birini seçerek anında başlayabilirsin.",
         "qa-search-title": "Kelimeleri Ara",
-        "qa-search-desc": "3900'den fazla kelimelik sözlükte filtreleme ve arama yap.",
+        "qa-search-desc": "Zengin sözlük veritabanında filtreleme ve arama yap.",
         "qa-search-btn": "Sözlüğe Git",
         "qa-cards-title": "Kartlarla Çalış",
         "qa-cards-desc": "3D döndürülebilir akıllı kartlar ve seslendirme ile öğren.",
@@ -1937,6 +2184,8 @@ const TRANSLATIONS = {
         "drawer-title": "Ayarlar & Temalar",
         "drawer-theme-title": "Renk Teması Seçimi",
         "drawer-theme-desc": "Uygulamanın görsel stilini dilediğiniz gibi değiştirin:",
+        "drawer-target-lang-title": "Öğrenilen Dil (Target Language)",
+        "drawer-target-lang-desc": "Çalışmak istediğiniz hedef dili değiştirin:",
         "theme-mid": "Gece Mavisi (Varsayılan)",
         "theme-mid-desc": "Derin lacivert & canlı indigo tonları",
         "theme-eme": "Zümrüt Ormanı",
@@ -1947,7 +2196,7 @@ const TRANSLATIONS = {
         "theme-amy-desc": "Kozmik mor & mistik eflatun tonları",
         "theme-aur": "Kuzey Işıkları",
         "theme-aur-desc": "Fütüristik camgöbeği & turkuaz parıltısı",
-        "drawer-lang-title": "Dil Seçimi (Language)",
+        "drawer-lang-title": "Arayüz Dili (Interface Language)",
         "drawer-lang-desc": "Uygulama arayüz dilini değiştirin:",
         "drawer-reset-title": "İlerleme Sıfırlama",
         "drawer-reset-desc": "Çalışma verilerinizi temizleyebilirsiniz (serileriniz, rozetleriniz ve kendi eklediğiniz kelimeler sıfırlanır):",
@@ -1961,8 +2210,8 @@ const TRANSLATIONS = {
         "btn-add-word": "Add New Word",
         "nav-tenses": "Grammar & Modals",
         "nav-quiz": "Quiz",
-        "tenses-title": "Tenses & Modals",
-        "tenses-subtitle": "Learn the 12 basic tenses and key modals of English with structural formulas and examples.",
+        "tenses-title": "Grammar & Modals",
+        "tenses-subtitle": "Learn core tenses and key modals with structural formulas and examples.",
         "grammar-topics": "Topic List",
         "grammar-usage": "Usage / Purpose",
         "grammar-formula": "Sentence Structure (Formula)",
@@ -1989,7 +2238,7 @@ const TRANSLATIONS = {
         "qa-title": "What would you like to do today?",
         "qa-subtitle": "Choose from the learning activities below to get started instantly.",
         "qa-search-title": "Search Dictionary",
-        "qa-search-desc": "Search and filter in our 3900+ words database.",
+        "qa-search-desc": "Search and filter in our rich multilingual database.",
         "qa-search-btn": "Go to Dictionary",
         "qa-cards-title": "Study Flashcards",
         "qa-cards-desc": "Learn with 3D flippable smart cards and voice feedback.",
@@ -2000,6 +2249,8 @@ const TRANSLATIONS = {
         "drawer-title": "Settings & Themes",
         "drawer-theme-title": "Color Theme Select",
         "drawer-theme-desc": "Change the visual style of the application:",
+        "drawer-target-lang-title": "Target Learning Language",
+        "drawer-target-lang-desc": "Choose which language you want to study:",
         "theme-mid": "Midnight Blue (Default)",
         "theme-mid-desc": "Deep navy & vibrant indigo hues",
         "theme-eme": "Emerald Forest",
@@ -2010,11 +2261,76 @@ const TRANSLATIONS = {
         "theme-amy-desc": "Cosmic violet & mystic amethyst hues",
         "theme-aur": "Aurora Cyan",
         "theme-aur-desc": "Futuristic cyan & electric turquoise glow",
-        "drawer-lang-title": "Language Selection",
+        "drawer-lang-title": "Interface Language",
         "drawer-lang-desc": "Toggle the interface language:",
         "drawer-reset-title": "Reset Progress",
         "drawer-reset-desc": "Clean up your learning data (streaks, badges, and custom words will be deleted):",
         "drawer-reset-btn": "Reset All Progress"
+    },
+    de: {
+        "nav-home": "Startseite",
+        "nav-cards": "Karteikarten",
+        "nav-list": "Wörterbuch",
+        "nav-add": "Wort Hinzufügen",
+        "btn-add-word": "Neues Wort Hinzufügen",
+        "nav-tenses": "Grammatik & Modale",
+        "nav-quiz": "Quiz",
+        "tenses-title": "Grammatik & Modale",
+        "tenses-subtitle": "Lernen Sie die wichtigsten Zeiten, Modalverben und Strukturen mit Formeln und Beispielen.",
+        "grammar-topics": "Themenliste",
+        "grammar-usage": "Verwendung / Zweck",
+        "grammar-formula": "Satzstruktur (Formel)",
+        "grammar-ex-title": "Beispielsätze (Positiv / Negativ / Frage)",
+        "stat-total": "Wörter Gesamt",
+        "stat-learned": "Gelernte Wörter",
+        "stat-custom": "Eigene Wörter",
+        "stat-streak": "Lernserie",
+        "quests-title": "Tägliche Quests",
+        "quests-subtitle": "Täglich zurückgesetzt – halte deine Serie aktiv!",
+        "wod-title": "Wort des Tages",
+        "wod-subtitle": "Das heutige Fokus-Wort zum Lernen",
+        "wod-study-btn": "In Karten lernen",
+        "badges-title": "Erfolgsabzeichen",
+        "badges-subtitle": "Belohnungen auf deiner Lernreise",
+        "badge-first-step-title": "Erster Schritt",
+        "badge-aviation-title": "Kapitän",
+        "badge-quiz-title": "Genie",
+        "badge-streak-title": "Beständig",
+        "badge-tourism-title": "Entdecker",
+        "badge-custom-title": "Autor",
+        "badge-marathon-title": "Marathonläufer",
+        "badge-hunter-title": "Wortjäger",
+        "qa-title": "Was möchtest du heute tun?",
+        "qa-subtitle": "Wähle eine der folgenden Aktivitäten, um sofort loszulegen.",
+        "qa-search-title": "Wörterbuch durchsuchen",
+        "qa-search-desc": "Durchsuche und filtere in unserer umfangreichen Datenbank.",
+        "qa-search-btn": "Zum Wörterbuch",
+        "qa-cards-title": "Karteikarten lernen",
+        "qa-cards-desc": "Lerne mit 3D-Karten und Sprachausgabe.",
+        "qa-cards-btn": "Karten öffnen",
+        "qa-quiz-title": "Quiz starten",
+        "qa-quiz-desc": "Löse Tests, sammle Punkte und schütze deine Serie.",
+        "qa-quiz-btn": "Quiz starten",
+        "drawer-title": "Einstellungen & Themes",
+        "drawer-theme-title": "Farbschema auswählen",
+        "drawer-theme-desc": "Ändere den visuellen Stil der Anwendung:",
+        "drawer-target-lang-title": "Lernsprache (Ziel)",
+        "drawer-target-lang-desc": "Wähle die Sprache, die du lernen möchtest:",
+        "theme-mid": "Mitternachtsblau (Standard)",
+        "theme-mid-desc": "Tiefes Marineblau & lebendiges Indigo",
+        "theme-eme": "Smaragdwald",
+        "theme-eme-desc": "Beruhigendes Tannengrün & Smaragdtöne",
+        "theme-sun": "Sonnenuntergang",
+        "theme-sun-desc": "Warmes Karmesinrot & Bernsteinleuchten",
+        "theme-amy": "Dunkler Amethyst",
+        "theme-amy-desc": "Kosmisches Violett & Amethysttöne",
+        "theme-aur": "Nordlichter",
+        "theme-aur-desc": "Futuristisches Cyan & elektrisches Türkis",
+        "drawer-lang-title": "Oberflächensprache",
+        "drawer-lang-desc": "Ändere die Sprache der Benutzeroberfläche:",
+        "drawer-reset-title": "Fortschritt zurücksetzen",
+        "drawer-reset-desc": "Lösche deine Lerndaten (Serien, Abzeichen und eigene Wörter werden entfernt):",
+        "drawer-reset-btn": "Gesamten Fortschritt zurücksetzen"
     }
 };
 
@@ -2037,41 +2353,40 @@ function applyLanguage(lang) {
     // 2. Active buttons updates in drawer selection
     const trBtn = document.getElementById("lang-tr-btn");
     const enBtn = document.getElementById("lang-en-btn");
+    const deBtn = document.getElementById("lang-de-btn");
     
-    if (trBtn && enBtn) {
-        if (lang === "tr") {
-            trBtn.classList.add("active");
-            trBtn.style.background = "";
-            trBtn.style.borderColor = "";
-            trBtn.style.color = "";
-            
-            enBtn.classList.remove("active");
-            enBtn.style.background = "rgba(255,255,255,0.03)";
-            enBtn.style.borderColor = "var(--glass-border)";
-            enBtn.style.color = "var(--text-secondary)";
-        } else {
-            enBtn.classList.add("active");
-            enBtn.style.background = "";
-            enBtn.style.borderColor = "";
-            enBtn.style.color = "";
-            
-            trBtn.classList.remove("active");
-            trBtn.style.background = "rgba(255,255,255,0.03)";
-            trBtn.style.borderColor = "var(--glass-border)";
-            trBtn.style.color = "var(--text-secondary)";
+    [trBtn, enBtn, deBtn].forEach(b => {
+        if (b) {
+            b.classList.remove("active");
+            b.style.background = "rgba(255,255,255,0.03)";
+            b.style.borderColor = "var(--glass-border)";
+            b.style.color = "var(--text-secondary)";
         }
+    });
+
+    let activeBtn = null;
+    if (lang === "tr") activeBtn = trBtn;
+    else if (lang === "de") activeBtn = deBtn;
+    else activeBtn = enBtn;
+
+    if (activeBtn) {
+        activeBtn.classList.add("active");
+        activeBtn.style.background = "";
+        activeBtn.style.borderColor = "";
+        activeBtn.style.color = "";
     }
     
     // 3. Dynamic header titles & labels translation updates
     setGreeting(); // Refresh greeting to translate time words
     checkDailyQuests(); // Refresh quests labels
+    updateFormLabelsForTargetLang();
 }
 
 function trackWodListening() {
     if (!wodListenedToday) {
         wodListenedToday = true;
         setAppStorage("quest_wod", "true");
-        showToast(currentLang === 'en' ? "Daily Quest Completed: Listened to Word of the Day! ⚡" : "Günlük Görev Tamamlandı: Günün Kelimesi Dinlendi! ⚡");
+        showToast(currentLang === 'en' ? "Daily Quest Completed: Listened to Word of the Day! ⚡" : (currentLang === 'de' ? "Tagesquest abgeschlossen: Wort des Tages angehört! ⚡" : "Günlük Görev Tamamlandı: Günün Kelimesi Dinlendi! ⚡"));
         incrementStreak();
         checkDailyQuests();
     }
@@ -2101,11 +2416,6 @@ if (installBtn) {
         deferredPrompt.prompt();
         // Wait for user choice
         deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('User accepted the install prompt');
-            } else {
-                console.log('User dismissed the install prompt');
-            }
             deferredPrompt = null;
             installBtn.style.display = 'none';
         });
@@ -2113,7 +2423,6 @@ if (installBtn) {
 }
 
 window.addEventListener('appinstalled', (evt) => {
-    console.log('LinguaPulse was installed.');
     if (installBtn) {
         installBtn.style.display = 'none';
     }
@@ -2134,7 +2443,10 @@ function initGrammarTab() {
     tensesContainer.innerHTML = "";
     modalsContainer.innerHTML = "";
     
-    const db = typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : [];
+    const isDe = targetLang === "de";
+    const db = isDe 
+        ? (typeof TENSES_DE_DATABASE !== 'undefined' ? TENSES_DE_DATABASE : [])
+        : (typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : []);
     
     db.forEach(item => {
         const btn = document.createElement("button");
@@ -2150,16 +2462,27 @@ function initGrammarTab() {
             selectGrammarTopic(item.id);
         });
         
-        if (item.category === "Tense") {
+        const cat = item.category || "";
+        if (cat.includes("Zamanlar") || cat === "Tense" || cat.includes("Zeiten")) {
             tensesContainer.appendChild(btn);
         } else {
             modalsContainer.appendChild(btn);
         }
     });
+
+    // Reset display view
+    const emptyState = document.getElementById("grammar-empty-state");
+    const displayPanel = document.getElementById("grammar-content-display");
+    if (emptyState) emptyState.style.display = "block";
+    if (displayPanel) displayPanel.style.display = "none";
+    activeGrammarItem = null;
 }
 
 function selectGrammarTopic(id) {
-    const db = typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : [];
+    const isDe = targetLang === "de";
+    const db = isDe 
+        ? (typeof TENSES_DE_DATABASE !== 'undefined' ? TENSES_DE_DATABASE : [])
+        : (typeof TENSES_MODALS_DATABASE !== 'undefined' ? TENSES_MODALS_DATABASE : []);
     const topic = db.find(item => item.id === id);
     if (!topic) return;
     
@@ -2206,6 +2529,7 @@ function renderGrammarExamples() {
     container.innerHTML = "";
     
     const examples = activeGrammarItem.examples || [];
+    const isDe = targetLang === "de";
     
     examples.forEach((ex, idx) => {
         const slide = document.createElement("div");
@@ -2213,23 +2537,49 @@ function renderGrammarExamples() {
         
         slide.innerHTML = `
             <div class="state-block positive-block">
-                <span class="state-lbl pos">Olumlu (Positive)</span>
-                <p class="state-sentence-en">${ex.positive}</p>
+                <div class="state-block-header">
+                    <span class="state-lbl pos">Olumlu (${isDe ? 'Positiv' : 'Positive'})</span>
+                    <button class="action-btn-sm btn-sentence-tts btn-grammar-tts" data-speech="${encodeURIComponent(ex.positive)}" title="Cümleyi Sesli Dinle">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="state-sentence-en" data-speech="${encodeURIComponent(ex.positive)}" title="Cümleyi Dinlemek İçin Tıklayın">${ex.positive}</p>
                 <p class="state-sentence-tr">${ex.positiveTr}</p>
             </div>
             <div class="state-block negative-block">
-                <span class="state-lbl neg">Olumsuz (Negative)</span>
-                <p class="state-sentence-en">${ex.negative}</p>
+                <div class="state-block-header">
+                    <span class="state-lbl neg">Olumsuz (${isDe ? 'Negativ' : 'Negative'})</span>
+                    <button class="action-btn-sm btn-sentence-tts btn-grammar-tts" data-speech="${encodeURIComponent(ex.negative)}" title="Cümleyi Sesli Dinle">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="state-sentence-en" data-speech="${encodeURIComponent(ex.negative)}" title="Cümleyi Dinlemek İçin Tıklayın">${ex.negative}</p>
                 <p class="state-sentence-tr">${ex.negativeTr}</p>
             </div>
             <div class="state-block question-block">
-                <span class="state-lbl que">Soru (Question)</span>
-                <p class="state-sentence-en">${ex.question}</p>
+                <div class="state-block-header">
+                    <span class="state-lbl que">Soru (${isDe ? 'Frage' : 'Question'})</span>
+                    <button class="action-btn-sm btn-sentence-tts btn-grammar-tts" data-speech="${encodeURIComponent(ex.question)}" title="Cümleyi Sesli Dinle">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                <p class="state-sentence-en" data-speech="${encodeURIComponent(ex.question)}" title="Cümleyi Dinlemek İçin Tıklayın">${ex.question}</p>
                 <p class="state-sentence-tr">${ex.questionTr}</p>
             </div>
         `;
         
         container.appendChild(slide);
+    });
+
+    // Attach speech listeners to grammar sentence items & buttons
+    container.querySelectorAll(".btn-grammar-tts, .state-sentence-en").forEach(el => {
+        el.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const textToSpeak = decodeURIComponent(el.getAttribute("data-speech") || "");
+            if (textToSpeak) {
+                speakEnglishText(textToSpeak);
+            }
+        });
     });
     
     // Update indicator
