@@ -28008,6 +28008,1006 @@ const WORDS_DATABASE = [
         "exEn": "The drummer maintained a steady rhythm throughout the song.",
         "exTr": "Baterist şarkı boyunca düzenli bir ritim tutturdu.",
         "id": "mu_3967"
+    },
+    {
+            "id": "num_1",
+            "word": "One",
+            "en": "One",
+            "tr": "1 (bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is one.",
+            "exTr": "Sayı bir."
+    },
+    {
+            "id": "num_2",
+            "word": "Two",
+            "en": "Two",
+            "tr": "2 (iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is two.",
+            "exTr": "Sayı iki."
+    },
+    {
+            "id": "num_3",
+            "word": "Three",
+            "en": "Three",
+            "tr": "3 (üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is three.",
+            "exTr": "Sayı üç."
+    },
+    {
+            "id": "num_4",
+            "word": "Four",
+            "en": "Four",
+            "tr": "4 (dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is four.",
+            "exTr": "Sayı dört."
+    },
+    {
+            "id": "num_5",
+            "word": "Five",
+            "en": "Five",
+            "tr": "5 (beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is five.",
+            "exTr": "Sayı beş."
+    },
+    {
+            "id": "num_6",
+            "word": "Six",
+            "en": "Six",
+            "tr": "6 (altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is six.",
+            "exTr": "Sayı altı."
+    },
+    {
+            "id": "num_7",
+            "word": "Seven",
+            "en": "Seven",
+            "tr": "7 (yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seven.",
+            "exTr": "Sayı yedi."
+    },
+    {
+            "id": "num_8",
+            "word": "Eight",
+            "en": "Eight",
+            "tr": "8 (sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eight.",
+            "exTr": "Sayı sekiz."
+    },
+    {
+            "id": "num_9",
+            "word": "Nine",
+            "en": "Nine",
+            "tr": "9 (dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is nine.",
+            "exTr": "Sayı dokuz."
+    },
+    {
+            "id": "num_10",
+            "word": "Ten",
+            "en": "Ten",
+            "tr": "10 (on)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ten.",
+            "exTr": "Sayı on."
+    },
+    {
+            "id": "num_11",
+            "word": "Eleven",
+            "en": "Eleven",
+            "tr": "11 (on bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eleven.",
+            "exTr": "Sayı on bir."
+    },
+    {
+            "id": "num_12",
+            "word": "Twelve",
+            "en": "Twelve",
+            "tr": "12 (on iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twelve.",
+            "exTr": "Sayı on iki."
+    },
+    {
+            "id": "num_13",
+            "word": "Thirteen",
+            "en": "Thirteen",
+            "tr": "13 (on üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirteen.",
+            "exTr": "Sayı on üç."
+    },
+    {
+            "id": "num_14",
+            "word": "Fourteen",
+            "en": "Fourteen",
+            "tr": "14 (on dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fourteen.",
+            "exTr": "Sayı on dört."
+    },
+    {
+            "id": "num_15",
+            "word": "Fifteen",
+            "en": "Fifteen",
+            "tr": "15 (on beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifteen.",
+            "exTr": "Sayı on beş."
+    },
+    {
+            "id": "num_16",
+            "word": "Sixteen",
+            "en": "Sixteen",
+            "tr": "16 (on altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixteen.",
+            "exTr": "Sayı on altı."
+    },
+    {
+            "id": "num_17",
+            "word": "Seventeen",
+            "en": "Seventeen",
+            "tr": "17 (on yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventeen.",
+            "exTr": "Sayı on yedi."
+    },
+    {
+            "id": "num_18",
+            "word": "Eighteen",
+            "en": "Eighteen",
+            "tr": "18 (on sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighteen.",
+            "exTr": "Sayı on sekiz."
+    },
+    {
+            "id": "num_19",
+            "word": "Nineteen",
+            "en": "Nineteen",
+            "tr": "19 (on dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is nineteen.",
+            "exTr": "Sayı on dokuz."
+    },
+    {
+            "id": "num_20",
+            "word": "Twenty",
+            "en": "Twenty",
+            "tr": "20 (yirmi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty.",
+            "exTr": "Sayı yirmi."
+    },
+    {
+            "id": "num_21",
+            "word": "Twenty-one",
+            "en": "Twenty-one",
+            "tr": "21 (yirmi bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-one.",
+            "exTr": "Sayı yirmi bir."
+    },
+    {
+            "id": "num_22",
+            "word": "Twenty-two",
+            "en": "Twenty-two",
+            "tr": "22 (yirmi iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-two.",
+            "exTr": "Sayı yirmi iki."
+    },
+    {
+            "id": "num_23",
+            "word": "Twenty-three",
+            "en": "Twenty-three",
+            "tr": "23 (yirmi üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-three.",
+            "exTr": "Sayı yirmi üç."
+    },
+    {
+            "id": "num_24",
+            "word": "Twenty-four",
+            "en": "Twenty-four",
+            "tr": "24 (yirmi dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-four.",
+            "exTr": "Sayı yirmi dört."
+    },
+    {
+            "id": "num_25",
+            "word": "Twenty-five",
+            "en": "Twenty-five",
+            "tr": "25 (yirmi beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-five.",
+            "exTr": "Sayı yirmi beş."
+    },
+    {
+            "id": "num_26",
+            "word": "Twenty-six",
+            "en": "Twenty-six",
+            "tr": "26 (yirmi altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-six.",
+            "exTr": "Sayı yirmi altı."
+    },
+    {
+            "id": "num_27",
+            "word": "Twenty-seven",
+            "en": "Twenty-seven",
+            "tr": "27 (yirmi yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-seven.",
+            "exTr": "Sayı yirmi yedi."
+    },
+    {
+            "id": "num_28",
+            "word": "Twenty-eight",
+            "en": "Twenty-eight",
+            "tr": "28 (yirmi sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-eight.",
+            "exTr": "Sayı yirmi sekiz."
+    },
+    {
+            "id": "num_29",
+            "word": "Twenty-nine",
+            "en": "Twenty-nine",
+            "tr": "29 (yirmi dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is twenty-nine.",
+            "exTr": "Sayı yirmi dokuz."
+    },
+    {
+            "id": "num_30",
+            "word": "Thirty",
+            "en": "Thirty",
+            "tr": "30 (otuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty.",
+            "exTr": "Sayı otuz."
+    },
+    {
+            "id": "num_31",
+            "word": "Thirty-one",
+            "en": "Thirty-one",
+            "tr": "31 (otuz bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-one.",
+            "exTr": "Sayı otuz bir."
+    },
+    {
+            "id": "num_32",
+            "word": "Thirty-two",
+            "en": "Thirty-two",
+            "tr": "32 (otuz iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-two.",
+            "exTr": "Sayı otuz iki."
+    },
+    {
+            "id": "num_33",
+            "word": "Thirty-three",
+            "en": "Thirty-three",
+            "tr": "33 (otuz üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-three.",
+            "exTr": "Sayı otuz üç."
+    },
+    {
+            "id": "num_34",
+            "word": "Thirty-four",
+            "en": "Thirty-four",
+            "tr": "34 (otuz dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-four.",
+            "exTr": "Sayı otuz dört."
+    },
+    {
+            "id": "num_35",
+            "word": "Thirty-five",
+            "en": "Thirty-five",
+            "tr": "35 (otuz beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-five.",
+            "exTr": "Sayı otuz beş."
+    },
+    {
+            "id": "num_36",
+            "word": "Thirty-six",
+            "en": "Thirty-six",
+            "tr": "36 (otuz altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-six.",
+            "exTr": "Sayı otuz altı."
+    },
+    {
+            "id": "num_37",
+            "word": "Thirty-seven",
+            "en": "Thirty-seven",
+            "tr": "37 (otuz yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-seven.",
+            "exTr": "Sayı otuz yedi."
+    },
+    {
+            "id": "num_38",
+            "word": "Thirty-eight",
+            "en": "Thirty-eight",
+            "tr": "38 (otuz sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-eight.",
+            "exTr": "Sayı otuz sekiz."
+    },
+    {
+            "id": "num_39",
+            "word": "Thirty-nine",
+            "en": "Thirty-nine",
+            "tr": "39 (otuz dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is thirty-nine.",
+            "exTr": "Sayı otuz dokuz."
+    },
+    {
+            "id": "num_40",
+            "word": "Forty",
+            "en": "Forty",
+            "tr": "40 (kırk)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty.",
+            "exTr": "Sayı kırk."
+    },
+    {
+            "id": "num_41",
+            "word": "Forty-one",
+            "en": "Forty-one",
+            "tr": "41 (kırk bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-one.",
+            "exTr": "Sayı kırk bir."
+    },
+    {
+            "id": "num_42",
+            "word": "Forty-two",
+            "en": "Forty-two",
+            "tr": "42 (kırk iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-two.",
+            "exTr": "Sayı kırk iki."
+    },
+    {
+            "id": "num_43",
+            "word": "Forty-three",
+            "en": "Forty-three",
+            "tr": "43 (kırk üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-three.",
+            "exTr": "Sayı kırk üç."
+    },
+    {
+            "id": "num_44",
+            "word": "Forty-four",
+            "en": "Forty-four",
+            "tr": "44 (kırk dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-four.",
+            "exTr": "Sayı kırk dört."
+    },
+    {
+            "id": "num_45",
+            "word": "Forty-five",
+            "en": "Forty-five",
+            "tr": "45 (kırk beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-five.",
+            "exTr": "Sayı kırk beş."
+    },
+    {
+            "id": "num_46",
+            "word": "Forty-six",
+            "en": "Forty-six",
+            "tr": "46 (kırk altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-six.",
+            "exTr": "Sayı kırk altı."
+    },
+    {
+            "id": "num_47",
+            "word": "Forty-seven",
+            "en": "Forty-seven",
+            "tr": "47 (kırk yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-seven.",
+            "exTr": "Sayı kırk yedi."
+    },
+    {
+            "id": "num_48",
+            "word": "Forty-eight",
+            "en": "Forty-eight",
+            "tr": "48 (kırk sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-eight.",
+            "exTr": "Sayı kırk sekiz."
+    },
+    {
+            "id": "num_49",
+            "word": "Forty-nine",
+            "en": "Forty-nine",
+            "tr": "49 (kırk dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is forty-nine.",
+            "exTr": "Sayı kırk dokuz."
+    },
+    {
+            "id": "num_50",
+            "word": "Fifty",
+            "en": "Fifty",
+            "tr": "50 (elli)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty.",
+            "exTr": "Sayı elli."
+    },
+    {
+            "id": "num_51",
+            "word": "Fifty-one",
+            "en": "Fifty-one",
+            "tr": "51 (elli bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-one.",
+            "exTr": "Sayı elli bir."
+    },
+    {
+            "id": "num_52",
+            "word": "Fifty-two",
+            "en": "Fifty-two",
+            "tr": "52 (elli iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-two.",
+            "exTr": "Sayı elli iki."
+    },
+    {
+            "id": "num_53",
+            "word": "Fifty-three",
+            "en": "Fifty-three",
+            "tr": "53 (elli üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-three.",
+            "exTr": "Sayı elli üç."
+    },
+    {
+            "id": "num_54",
+            "word": "Fifty-four",
+            "en": "Fifty-four",
+            "tr": "54 (elli dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-four.",
+            "exTr": "Sayı elli dört."
+    },
+    {
+            "id": "num_55",
+            "word": "Fifty-five",
+            "en": "Fifty-five",
+            "tr": "55 (elli beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-five.",
+            "exTr": "Sayı elli beş."
+    },
+    {
+            "id": "num_56",
+            "word": "Fifty-six",
+            "en": "Fifty-six",
+            "tr": "56 (elli altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-six.",
+            "exTr": "Sayı elli altı."
+    },
+    {
+            "id": "num_57",
+            "word": "Fifty-seven",
+            "en": "Fifty-seven",
+            "tr": "57 (elli yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-seven.",
+            "exTr": "Sayı elli yedi."
+    },
+    {
+            "id": "num_58",
+            "word": "Fifty-eight",
+            "en": "Fifty-eight",
+            "tr": "58 (elli sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-eight.",
+            "exTr": "Sayı elli sekiz."
+    },
+    {
+            "id": "num_59",
+            "word": "Fifty-nine",
+            "en": "Fifty-nine",
+            "tr": "59 (elli dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is fifty-nine.",
+            "exTr": "Sayı elli dokuz."
+    },
+    {
+            "id": "num_60",
+            "word": "Sixty",
+            "en": "Sixty",
+            "tr": "60 (altmış)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty.",
+            "exTr": "Sayı altmış."
+    },
+    {
+            "id": "num_61",
+            "word": "Sixty-one",
+            "en": "Sixty-one",
+            "tr": "61 (altmış bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-one.",
+            "exTr": "Sayı altmış bir."
+    },
+    {
+            "id": "num_62",
+            "word": "Sixty-two",
+            "en": "Sixty-two",
+            "tr": "62 (altmış iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-two.",
+            "exTr": "Sayı altmış iki."
+    },
+    {
+            "id": "num_63",
+            "word": "Sixty-three",
+            "en": "Sixty-three",
+            "tr": "63 (altmış üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-three.",
+            "exTr": "Sayı altmış üç."
+    },
+    {
+            "id": "num_64",
+            "word": "Sixty-four",
+            "en": "Sixty-four",
+            "tr": "64 (altmış dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-four.",
+            "exTr": "Sayı altmış dört."
+    },
+    {
+            "id": "num_65",
+            "word": "Sixty-five",
+            "en": "Sixty-five",
+            "tr": "65 (altmış beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-five.",
+            "exTr": "Sayı altmış beş."
+    },
+    {
+            "id": "num_66",
+            "word": "Sixty-six",
+            "en": "Sixty-six",
+            "tr": "66 (altmış altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-six.",
+            "exTr": "Sayı altmış altı."
+    },
+    {
+            "id": "num_67",
+            "word": "Sixty-seven",
+            "en": "Sixty-seven",
+            "tr": "67 (altmış yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-seven.",
+            "exTr": "Sayı altmış yedi."
+    },
+    {
+            "id": "num_68",
+            "word": "Sixty-eight",
+            "en": "Sixty-eight",
+            "tr": "68 (altmış sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-eight.",
+            "exTr": "Sayı altmış sekiz."
+    },
+    {
+            "id": "num_69",
+            "word": "Sixty-nine",
+            "en": "Sixty-nine",
+            "tr": "69 (altmış dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is sixty-nine.",
+            "exTr": "Sayı altmış dokuz."
+    },
+    {
+            "id": "num_70",
+            "word": "Seventy",
+            "en": "Seventy",
+            "tr": "70 (yetmiş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy.",
+            "exTr": "Sayı yetmiş."
+    },
+    {
+            "id": "num_71",
+            "word": "Seventy-one",
+            "en": "Seventy-one",
+            "tr": "71 (yetmiş bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-one.",
+            "exTr": "Sayı yetmiş bir."
+    },
+    {
+            "id": "num_72",
+            "word": "Seventy-two",
+            "en": "Seventy-two",
+            "tr": "72 (yetmiş iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-two.",
+            "exTr": "Sayı yetmiş iki."
+    },
+    {
+            "id": "num_73",
+            "word": "Seventy-three",
+            "en": "Seventy-three",
+            "tr": "73 (yetmiş üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-three.",
+            "exTr": "Sayı yetmiş üç."
+    },
+    {
+            "id": "num_74",
+            "word": "Seventy-four",
+            "en": "Seventy-four",
+            "tr": "74 (yetmiş dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-four.",
+            "exTr": "Sayı yetmiş dört."
+    },
+    {
+            "id": "num_75",
+            "word": "Seventy-five",
+            "en": "Seventy-five",
+            "tr": "75 (yetmiş beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-five.",
+            "exTr": "Sayı yetmiş beş."
+    },
+    {
+            "id": "num_76",
+            "word": "Seventy-six",
+            "en": "Seventy-six",
+            "tr": "76 (yetmiş altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-six.",
+            "exTr": "Sayı yetmiş altı."
+    },
+    {
+            "id": "num_77",
+            "word": "Seventy-seven",
+            "en": "Seventy-seven",
+            "tr": "77 (yetmiş yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-seven.",
+            "exTr": "Sayı yetmiş yedi."
+    },
+    {
+            "id": "num_78",
+            "word": "Seventy-eight",
+            "en": "Seventy-eight",
+            "tr": "78 (yetmiş sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-eight.",
+            "exTr": "Sayı yetmiş sekiz."
+    },
+    {
+            "id": "num_79",
+            "word": "Seventy-nine",
+            "en": "Seventy-nine",
+            "tr": "79 (yetmiş dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is seventy-nine.",
+            "exTr": "Sayı yetmiş dokuz."
+    },
+    {
+            "id": "num_80",
+            "word": "Eighty",
+            "en": "Eighty",
+            "tr": "80 (seksen)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty.",
+            "exTr": "Sayı seksen."
+    },
+    {
+            "id": "num_81",
+            "word": "Eighty-one",
+            "en": "Eighty-one",
+            "tr": "81 (seksen bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-one.",
+            "exTr": "Sayı seksen bir."
+    },
+    {
+            "id": "num_82",
+            "word": "Eighty-two",
+            "en": "Eighty-two",
+            "tr": "82 (seksen iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-two.",
+            "exTr": "Sayı seksen iki."
+    },
+    {
+            "id": "num_83",
+            "word": "Eighty-three",
+            "en": "Eighty-three",
+            "tr": "83 (seksen üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-three.",
+            "exTr": "Sayı seksen üç."
+    },
+    {
+            "id": "num_84",
+            "word": "Eighty-four",
+            "en": "Eighty-four",
+            "tr": "84 (seksen dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-four.",
+            "exTr": "Sayı seksen dört."
+    },
+    {
+            "id": "num_85",
+            "word": "Eighty-five",
+            "en": "Eighty-five",
+            "tr": "85 (seksen beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-five.",
+            "exTr": "Sayı seksen beş."
+    },
+    {
+            "id": "num_86",
+            "word": "Eighty-six",
+            "en": "Eighty-six",
+            "tr": "86 (seksen altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-six.",
+            "exTr": "Sayı seksen altı."
+    },
+    {
+            "id": "num_87",
+            "word": "Eighty-seven",
+            "en": "Eighty-seven",
+            "tr": "87 (seksen yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-seven.",
+            "exTr": "Sayı seksen yedi."
+    },
+    {
+            "id": "num_88",
+            "word": "Eighty-eight",
+            "en": "Eighty-eight",
+            "tr": "88 (seksen sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-eight.",
+            "exTr": "Sayı seksen sekiz."
+    },
+    {
+            "id": "num_89",
+            "word": "Eighty-nine",
+            "en": "Eighty-nine",
+            "tr": "89 (seksen dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is eighty-nine.",
+            "exTr": "Sayı seksen dokuz."
+    },
+    {
+            "id": "num_90",
+            "word": "Ninety",
+            "en": "Ninety",
+            "tr": "90 (doksan)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety.",
+            "exTr": "Sayı doksan."
+    },
+    {
+            "id": "num_91",
+            "word": "Ninety-one",
+            "en": "Ninety-one",
+            "tr": "91 (doksan bir)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-one.",
+            "exTr": "Sayı doksan bir."
+    },
+    {
+            "id": "num_92",
+            "word": "Ninety-two",
+            "en": "Ninety-two",
+            "tr": "92 (doksan iki)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-two.",
+            "exTr": "Sayı doksan iki."
+    },
+    {
+            "id": "num_93",
+            "word": "Ninety-three",
+            "en": "Ninety-three",
+            "tr": "93 (doksan üç)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-three.",
+            "exTr": "Sayı doksan üç."
+    },
+    {
+            "id": "num_94",
+            "word": "Ninety-four",
+            "en": "Ninety-four",
+            "tr": "94 (doksan dört)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-four.",
+            "exTr": "Sayı doksan dört."
+    },
+    {
+            "id": "num_95",
+            "word": "Ninety-five",
+            "en": "Ninety-five",
+            "tr": "95 (doksan beş)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-five.",
+            "exTr": "Sayı doksan beş."
+    },
+    {
+            "id": "num_96",
+            "word": "Ninety-six",
+            "en": "Ninety-six",
+            "tr": "96 (doksan altı)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-six.",
+            "exTr": "Sayı doksan altı."
+    },
+    {
+            "id": "num_97",
+            "word": "Ninety-seven",
+            "en": "Ninety-seven",
+            "tr": "97 (doksan yedi)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-seven.",
+            "exTr": "Sayı doksan yedi."
+    },
+    {
+            "id": "num_98",
+            "word": "Ninety-eight",
+            "en": "Ninety-eight",
+            "tr": "98 (doksan sekiz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-eight.",
+            "exTr": "Sayı doksan sekiz."
+    },
+    {
+            "id": "num_99",
+            "word": "Ninety-nine",
+            "en": "Ninety-nine",
+            "tr": "99 (doksan dokuz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is ninety-nine.",
+            "exTr": "Sayı doksan dokuz."
+    },
+    {
+            "id": "num_100",
+            "word": "One hundred",
+            "en": "One hundred",
+            "tr": "100 (yüz)",
+            "category": "Numbers (Sayılar)",
+            "type": "Number (Sayı)",
+            "exEn": "The number is one hundred.",
+            "exTr": "Sayı yüz."
     }
 ];
 

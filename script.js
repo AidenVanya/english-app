@@ -865,6 +865,8 @@ function displayCurrentCard() {
             categoryEl.textContent = "Hukuk & Adalet";
         } else if (word.category.includes("Music")) {
             categoryEl.textContent = "Müzik & Sanat";
+        } else if (word.category.includes("Numbers")) {
+            categoryEl.textContent = "Sayılar (1-100)";
         } else {
             categoryEl.textContent = "Genel";
         }
@@ -1103,6 +1105,9 @@ function renderDictionaryList() {
         } else if (word.category.includes("Music")) {
             badgeClass += " badge-music";
             catText = "Müzik & San.";
+        } else if (word.category.includes("Numbers")) {
+            badgeClass += " badge-numbers";
+            catText = "Sayılar";
         } else {
             catText = "Genel";
         }

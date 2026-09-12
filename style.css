@@ -1101,6 +1101,12 @@ body.theme-aurora .hero-3d-canvas {
     border: 1px solid rgba(236, 72, 153, 0.2);
 }
 
+.badge-numbers {
+    background: rgba(20, 184, 166, 0.12);
+    color: #2dd4bf;
+    border: 1px solid rgba(20, 184, 166, 0.2);
+}
+
 /* Table Row Actions */
 .row-actions {
     display: flex;
