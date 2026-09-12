@@ -32,6 +32,18 @@ let quizCurrentIndex = 0;
 let quizScoreCorrect = 0;
 let quizSelectedAnswer = null;
 
+// Gamification & Streaks State
+let streakCount = 0;
+let lastActiveDate = "";
+let cardsStudiedCount = 0;
+let quizCompletedToday = false;
+let wodListenedToday = false;
+let wordOfTheDay = null;
+
+// Grammar & Tenses State
+let activeGrammarItem = null;
+let currentExampleIndex = 0;
+
 // Motivational Quotes Database
 const MOTIVATIONAL_QUOTES = [
     { text: "The beautiful thing about learning is that no one can take it away from you.", author: "B.B. King" },
@@ -44,7 +56,7 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 // 2. App Initialization
-document.addEventListener("DOMContentLoaded", () => {
+function initApp() {
     applySavedTargetLanguage();
     loadDataFromStorage();
     setupTabListeners();
@@ -56,17 +68,19 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTargetLanguageListeners();
     
     // Initial renders & settings loader
+    initGamification(); // Load streaks, quests & Word of the Day
     setupSettingsListeners();
     applySavedTheme();
     applySavedLanguage(); // Initialize interface language
-    initGamification();
+    renderDashboard(); // Render initial total words, learned words, custom words, streak count
+    filterFlashcards(false); // Prepare initial flashcards without shuffle
     renderDictionaryList();
     initGrammarTab(); // Load initial grammar sidebar options
     updateFormLabelsForTargetLang();
     
     // Dynamic greeting based on hours
     setGreeting();
-});
+}
 
 // Helper for localStorage keys with migration from legacy linguapulse_ and yeliz_ prefixes
 function getAppStorage(key) {
@@ -349,10 +363,16 @@ function renderDashboard() {
     const customWordsEl = document.getElementById("stat-custom-words");
     const streakEl = document.getElementById("stat-daily-streak");
 
-    if (totalWordsEl) totalWordsEl.textContent = wordsList.length;
-    if (learnedWordsEl) learnedWordsEl.textContent = learnedWordIds.length;
-    if (customWordsEl) customWordsEl.textContent = customWords.length;
-    if (streakEl) streakEl.textContent = `${streakCount} Gün`;
+    if (totalWordsEl) totalWordsEl.textContent = (wordsList ? wordsList.length : 0);
+    if (learnedWordsEl) learnedWordsEl.textContent = (learnedWordIds ? learnedWordIds.length : 0);
+    if (customWordsEl) customWordsEl.textContent = (customWords ? customWords.length : 0);
+    
+    if (streakEl) {
+        const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+        const isDe = typeof currentLang !== 'undefined' && currentLang === 'de';
+        const unit = isEn ? "Days" : (isDe ? "Tage" : "Gün");
+        streakEl.textContent = `${streakCount || 0} ${unit}`;
+    }
 }
 
 // 6. Flashcards Controller Logic
@@ -1779,13 +1799,6 @@ function setupSettingsListeners() {
 // ==========================================================================
 // 11. Gamification Engine (Streaks, Quests, Word of the Day & Achievements)
 // ==========================================================================
-let streakCount = 0;
-let lastActiveDate = "";
-let cardsStudiedCount = 0;
-let quizCompletedToday = false;
-let wodListenedToday = false;
-let wordOfTheDay = null;
-
 function initGamification() {
     loadGamificationState();
     determineWordOfTheDay();
@@ -2383,6 +2396,7 @@ function applyLanguage(lang) {
     setGreeting(); // Refresh greeting to translate time words
     checkDailyQuests(); // Refresh quests labels
     updateFormLabelsForTargetLang();
+    renderDashboard(); // Refresh localized stats labels and units
 }
 
 function trackWodListening() {
@@ -2434,9 +2448,6 @@ window.addEventListener('appinstalled', (evt) => {
 // ==========================================================================
 // 15. Zamanlar & Modallar (Tenses & Modals) Controller Logic
 // ==========================================================================
-let activeGrammarItem = null;
-let currentExampleIndex = 0;
-
 function initGrammarTab() {
     const tensesContainer = document.getElementById("tenses-list-container");
     const modalsContainer = document.getElementById("modals-list-container");
@@ -2623,3 +2634,13 @@ function setupGrammarListeners() {
         });
     }
 }
+
+// ==========================================================================
+// 16. App Bootstrap Execution
+// ==========================================================================
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initApp);
+} else {
+    initApp();
+}
+
