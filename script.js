@@ -300,9 +300,9 @@ function switchTab(tabId) {
 
     // Hide old active content
     const oldContent = document.getElementById(activeTab);
-    const oldBtn = document.querySelector(`.nav-btn[data-tab="${activeTab}"]`);
+    const oldBtns = document.querySelectorAll(`.nav-btn[data-tab="${activeTab}"]`);
     if (oldContent) oldContent.classList.remove("active");
-    if (oldBtn) oldBtn.classList.remove("active");
+    oldBtns.forEach(btn => btn.classList.remove("active"));
 
     // Reset flips and states when leaving card tab
     if (activeTab === "cards-tab") {
@@ -316,7 +316,7 @@ function switchTab(tabId) {
     // Set new active content
     activeTab = tabId;
     const newContent = document.getElementById(tabId);
-    const newBtn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+    const newBtns = document.querySelectorAll(`.nav-btn[data-tab="${tabId}"]`);
     
     if (newContent) {
         newContent.classList.add("active");
@@ -326,7 +326,7 @@ function switchTab(tabId) {
             newContent.style.opacity = "1";
         }, 50);
     }
-    if (newBtn) newBtn.classList.add("active");
+    newBtns.forEach(btn => btn.classList.add("active"));
 
     // Specific tab loading logic
     if (tabId === "home-tab") {

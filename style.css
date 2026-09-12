@@ -187,6 +187,11 @@ body {
 }
 
 /* Navigation Tabs (Desktop Segmented Glass Pill Bar) */
+/* Desktop Nav & Mobile Bottom Nav Base */
+.mobile-bottom-nav {
+    display: none;
+}
+
 .nav-tabs {
     display: flex;
     align-items: center;
@@ -2784,35 +2789,109 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
     }
 }
 
-/* Tablets (769px to 992px) */
+/* Tablets & Small Laptops (up to 992px) - Switch to Mobile-friendly Navigation */
 @media (max-width: 992px) {
+    /* Hide top desktop navbar in header */
+    .nav-tabs {
+        display: none !important;
+    }
+    
+    /* Header layout: Brand on left, Hamburger on right */
     .app-header {
-        flex-wrap: wrap;
-        padding: 14px 20px;
-        gap: 12px;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        padding: 10px 18px !important;
+        gap: 12px !important;
     }
     
     .header-brand {
-        order: 1;
+        display: flex !important;
+        align-items: center !important;
+        gap: 12px !important;
     }
     
-    .header-actions {
-        order: 2;
+    /* Hide desktop gear icon, show 3-line hamburger menu button at top right */
+    .settings-toggle-btn {
+        display: none !important;
     }
     
-    .nav-tabs {
-        order: 3;
-        width: 100%;
-        justify-content: space-around;
-        padding: 6px;
-        overflow-x: auto;
+    .burger-menu-btn {
+        display: flex !important;
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
     }
-    
-    .nav-btn {
-        flex: 1;
-        justify-content: center;
-        padding: 8px 10px;
-        font-size: 12.5px;
+
+    /* Floating Bottom Dock Navigation for Tablets */
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed !important;
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        left: 12px !important;
+        right: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: 540px !important;
+        margin: 0 auto !important;
+        background: rgba(13, 18, 30, 0.95) !important;
+        backdrop-filter: blur(25px) !important;
+        -webkit-backdrop-filter: blur(25px) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: var(--border-radius-md) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75) !important;
+        padding: 6px 4px !important;
+        z-index: 9999 !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        gap: 4px !important;
+    }
+
+    .mobile-bottom-nav .nav-btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: 20% !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 6px 2px !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        box-shadow: none !important;
+        border-radius: var(--border-radius-sm) !important;
+        gap: 3px !important;
+    }
+
+    .mobile-bottom-nav .nav-btn i {
+        font-size: 17px !important;
+        margin: 0 !important;
+    }
+
+    .mobile-bottom-nav .nav-btn span {
+        display: block !important;
+        font-size: 9.5px !important;
+        font-weight: 600 !important;
+        opacity: 0.85 !important;
+        text-align: center !important;
+        line-height: 1.15 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .mobile-bottom-nav .nav-btn.active {
+        color: var(--color-primary-light) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(99, 102, 241, 0.3) !important;
+    }
+
+    .mobile-bottom-nav .nav-btn.active span {
+        opacity: 1 !important;
+    }
+
+    /* Body padding to prevent content from hiding behind bottom nav */
+    body {
+        padding-bottom: calc(85px + env(safe-area-inset-bottom, 0px)) !important;
     }
 
     .stats-grid {
@@ -2863,6 +2942,11 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
     /* iOS Safari Auto-zoom on focus fix */
     input, select, textarea {
         font-size: 16px !important;
+    }
+
+    /* Hide top desktop navbar */
+    .nav-tabs {
+        display: none !important;
     }
 
     /* Header Mobile Adaptation */
@@ -2922,7 +3006,7 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         line-height: 1 !important;
     }
     
-    /* Header Action Buttons */
+    /* Header Action Buttons (Sağ Üstte 3 Çizgi Hamburger Butonu) */
     .header-actions {
         display: flex !important;
         align-items: center !important;
@@ -2946,8 +3030,9 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         font-size: 15px !important;
     }
 
-    /* Floating Bottom Dock Navigation */
-    .nav-tabs {
+    /* Floating Bottom Dock Navigation (Altta Navbar) */
+    .mobile-bottom-nav {
+        display: flex !important;
         position: fixed !important;
         bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
         left: 8px !important;
@@ -2963,14 +3048,13 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75) !important;
         padding: 6px 3px !important;
         z-index: 9999 !important;
-        display: flex !important;
         flex-direction: row !important;
         justify-content: space-around !important;
         align-items: center !important;
         gap: 2px !important;
     }
     
-    .nav-btn {
+    .mobile-bottom-nav .nav-btn {
         flex: 1 1 0 !important;
         min-width: 0 !important;
         max-width: 20% !important;
@@ -2985,12 +3069,12 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         gap: 2px !important;
     }
     
-    .nav-btn i {
+    .mobile-bottom-nav .nav-btn i {
         font-size: 16px !important;
         margin: 0 !important;
     }
     
-    .nav-btn span {
+    .mobile-bottom-nav .nav-btn span {
         display: block !important;
         font-size: 8.5px !important;
         font-weight: 600 !important;
@@ -3003,13 +3087,13 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         overflow: hidden !important;
     }
 
-    .nav-btn.active {
+    .mobile-bottom-nav .nav-btn.active {
         color: var(--color-primary-light) !important;
         background: rgba(255, 255, 255, 0.08) !important;
         border-color: rgba(99, 102, 241, 0.3) !important;
     }
 
-    .nav-btn.active span {
+    .mobile-bottom-nav .nav-btn.active span {
         opacity: 1 !important;
     }
     
@@ -3516,11 +3600,11 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
 
 /* Extra Small Phones (up to 480px) */
 @media (max-width: 480px) {
-    .nav-btn span {
+    .mobile-bottom-nav .nav-btn span {
         font-size: 8px !important;
     }
     
-    .nav-btn i {
+    .mobile-bottom-nav .nav-btn i {
         font-size: 15px !important;
     }
 
@@ -3597,18 +3681,18 @@ body.theme-aurora .theme-option.active { background: rgba(6, 182, 212, 0.08); bo
         padding: 4px 6px !important;
     }
 
-    .nav-tabs {
+    .mobile-bottom-nav {
         left: 4px !important;
         right: 4px !important;
         width: calc(100% - 8px) !important;
         padding: 5px 2px !important;
     }
 
-    .nav-btn span {
+    .mobile-bottom-nav .nav-btn span {
         font-size: 7.5px !important;
     }
 
-    .nav-btn i {
+    .mobile-bottom-nav .nav-btn i {
         font-size: 14px !important;
     }
 
