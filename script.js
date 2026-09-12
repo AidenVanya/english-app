@@ -295,6 +295,9 @@ function setupTabListeners() {
 function switchTab(tabId) {
     if (activeTab === tabId) return;
 
+    // Reset scroll position on tab switch for mobile
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
     // Hide old active content
     const oldContent = document.getElementById(activeTab);
     const oldBtn = document.querySelector(`.nav-btn[data-tab="${activeTab}"]`);
@@ -2520,6 +2523,11 @@ function selectGrammarTopic(id) {
     
     // Render examples slides
     renderGrammarExamples();
+
+    // On mobile devices, smoothly scroll down to display panel
+    if (window.innerWidth <= 768 && displayPanel) {
+        displayPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 function renderGrammarExamples() {
