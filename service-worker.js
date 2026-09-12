@@ -1,9 +1,10 @@
-const CACHE_NAME = 'lexigoo-cache-v5';
+const CACHE_NAME = 'lexigoo-cache-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './script.js',
+  './manifest.json',
   './words_db.js',
   './tenses_db.js',
   './words_de_db.js',

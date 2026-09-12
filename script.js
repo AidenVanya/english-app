@@ -83,7 +83,25 @@ function initApp() {
 
     // ThreeUI 3D Hero Shader Background
     initHero3DBackground();
+
+    // Lock screen orientation to portrait on mobile/PWA
+    lockPortraitOrientation();
 }
+
+// Lock device orientation to portrait if supported by mobile browser / PWA
+function lockPortraitOrientation() {
+    try {
+        if (window.screen && window.screen.orientation && typeof window.screen.orientation.lock === "function") {
+            window.screen.orientation.lock("portrait-primary").catch(() => {
+                window.screen.orientation.lock("portrait").catch(() => {});
+            });
+        }
+    } catch (e) {
+        // Silently ignore if unsupported
+    }
+}
+window.addEventListener("click", lockPortraitOrientation, { once: true, passive: true });
+window.addEventListener("touchstart", lockPortraitOrientation, { once: true, passive: true });
 
 // Helper for localStorage keys with migration from legacy linguapulse_ and yeliz_ prefixes
 function getAppStorage(key) {
