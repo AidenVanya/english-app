@@ -80,6 +80,9 @@ function initApp() {
     
     // Dynamic greeting based on hours
     setGreeting();
+
+    // ThreeUI 3D Hero Shader Background
+    initHero3DBackground();
 }
 
 // Helper for localStorage keys with migration from legacy linguapulse_ and yeliz_ prefixes
@@ -345,14 +348,18 @@ function switchTab(tabId) {
     // Specific tab loading logic
     if (tabId === "home-tab") {
         renderDashboard();
-    } else if (tabId === "cards-tab") {
-        if (preventAutoShuffle) {
-            preventAutoShuffle = false; // Reset flag
-        } else {
-            filterFlashcards(true); // Shuffle automatically on open
+        if (window.hero3DController) window.hero3DController.resume();
+    } else {
+        if (window.hero3DController) window.hero3DController.pause();
+        if (tabId === "cards-tab") {
+            if (preventAutoShuffle) {
+                preventAutoShuffle = false; // Reset flag
+            } else {
+                filterFlashcards(true); // Shuffle automatically on open
+            }
+        } else if (tabId === "list-tab") {
+            renderDictionaryList();
         }
-    } else if (tabId === "list-tab") {
-        renderDictionaryList();
     }
 }
 
@@ -2636,7 +2643,233 @@ function setupGrammarListeners() {
 }
 
 // ==========================================================================
-// 16. App Bootstrap Execution
+// 16. ThreeUI 3D Hero WebGL Background (Axiom Ribbon Field Shader)
+// Sourced from ThreeUI Community (MengTo/threeui by Meng To & DesignCode)
+// Native WebGL GLSL implementation optimized for LexiGoo PWA & mobile
+// ==========================================================================
+function initHero3DBackground() {
+    const card = document.querySelector(".welcome-card");
+    const canvas = document.getElementById("hero-3d-canvas");
+    if (!card || !canvas) return;
+
+    let gl = null;
+    try {
+        gl = canvas.getContext("webgl", { alpha: true, antialias: false, premultipliedAlpha: false });
+    } catch (e) {
+        console.warn("WebGL not supported for Hero 3D background:", e);
+        return;
+    }
+    if (!gl) return;
+
+    const vsSource = `
+        attribute vec2 position;
+        void main() {
+            gl_Position = vec4(position, 0.0, 1.0);
+        }
+    `;
+
+    const fsSource = `
+        precision highp float;
+        uniform vec2 resolution;
+        uniform float time;
+        uniform vec2 pointer;
+
+        float hash(vec2 p) {
+            p = fract(p * vec2(123.34, 456.21));
+            p += dot(p, p + 45.32);
+            return fract(p.x * p.y);
+        }
+
+        float ribbon(vec2 uv, float offset, float width, float phase) {
+            float y = 0.55 + 0.20 * sin((uv.x * 2.15) + phase) + 0.045 * sin((uv.x * 7.0) - phase * 0.7);
+            float d = abs(uv.y - y - offset);
+            return exp(-(d * d) / width);
+        }
+
+        void main() {
+            vec2 uv = gl_FragCoord.xy / resolution.xy;
+            vec2 p = uv;
+            p.x *= resolution.x / resolution.y;
+
+            float t = time * 0.22;
+            float drift = (pointer.x - 0.5) * 0.06;
+
+            float rightFade = smoothstep(0.28, 0.72, uv.x);
+            float centerDark = 1.0 - smoothstep(0.0, 0.88, distance(uv, vec2(0.18, 0.48)));
+
+            float r1 = ribbon(vec2(uv.x + drift, uv.y), 0.03, 0.0065, t + 0.9);
+            float r2 = ribbon(vec2(uv.x - drift * 0.7, uv.y), -0.23, 0.0085, t + 3.25);
+            float r3 = ribbon(vec2(uv.x + drift * 0.4, uv.y), 0.25, 0.014, t + 1.85);
+
+            float glow = r1 * 1.14 + r2 * 1.05 + r3 * 0.48;
+
+            vec3 teal = vec3(0.17, 0.83, 0.75);
+            vec3 cyan = vec3(0.22, 0.82, 0.96);
+            vec3 indigo = vec3(0.39, 0.38, 0.92);
+            vec3 purple = vec3(0.66, 0.33, 0.98);
+            vec3 blue = vec3(0.23, 0.51, 0.96);
+
+            vec3 col = vec3(0.0);
+            col += cyan * r1 * 0.92;
+            col += teal * r1 * 0.62;
+            col += indigo * r3 * 0.42;
+            col += blue * r2 * 0.66;
+            col += purple * (r2 + r3) * 0.30;
+
+            float bloom = exp(-pow(distance(uv, vec2(0.76, 0.40 + 0.035 * sin(t))), 2.0) / 0.050);
+            bloom += exp(-pow(distance(uv, vec2(0.71, 0.75 + 0.025 * cos(t))), 2.0) / 0.030);
+            col += vec3(0.42, 0.85, 1.0) * bloom * 0.34;
+
+            vec2 grid = fract(gl_FragCoord.xy / 7.0) - 0.5;
+            float dotShape = smoothstep(0.29, 0.11, length(grid));
+            float noise = hash(floor(gl_FragCoord.xy / 7.0));
+            float scan = 0.72 + 0.28 * sin((uv.x + uv.y) * 38.0 + time * 1.3);
+            float dots = dotShape * (0.48 + 0.52 * noise) * scan;
+
+            float micro = hash(gl_FragCoord.xy + time) * 0.035;
+            float alpha = clamp((glow * 1.55 + bloom * 0.50) * dots * rightFade, 0.0, 1.0);
+            alpha *= 1.0 - centerDark * 0.56;
+
+            vec3 base = vec3(0.005, 0.005, 0.005);
+            vec3 finalColor = mix(base, col, clamp(alpha * 1.55, 0.0, 1.0));
+            finalColor += micro * rightFade;
+
+            gl_FragColor = vec4(finalColor, clamp(alpha * 1.6, 0.0, 1.0));
+        }
+    `;
+
+    function compileShader(type, src) {
+        const shader = gl.createShader(type);
+        if (!shader) return null;
+        gl.shaderSource(shader, src);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            console.warn("Shader compilation failure:", gl.getShaderInfoLog(shader));
+            gl.deleteShader(shader);
+            return null;
+        }
+        return shader;
+    }
+
+    const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+    const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+    if (!vs || !fs) return;
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.warn("Shader program link failure:", gl.getProgramInfoLog(program));
+        return;
+    }
+    gl.useProgram(program);
+
+    const quadBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+        gl.STATIC_DRAW
+    );
+
+    const posAttr = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(posAttr);
+    gl.vertexAttribPointer(posAttr, 2, gl.FLOAT, false, 0, 0);
+
+    const resUni = gl.getUniformLocation(program, "resolution");
+    const timeUni = gl.getUniformLocation(program, "time");
+    const pointerUni = gl.getUniformLocation(program, "pointer");
+
+    let currPtrX = 0.72, currPtrY = 0.42;
+    let targetPtrX = 0.72, targetPtrY = 0.42;
+    let animFrameId = 0;
+    let isVisible = true;
+    const startTime = performance.now();
+
+    function updateResolution() {
+        const rect = card.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.max(1, Math.floor(rect.width * dpr));
+        const h = Math.max(1, Math.floor(rect.height * dpr));
+        if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+            gl.viewport(0, 0, w, h);
+            gl.uniform2f(resUni, w, h);
+        }
+    }
+
+    const handlePointerMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        targetPtrX = 0.72 + ((e.clientX - rect.left) / Math.max(rect.width, 1) - 0.72) * 1.0;
+        targetPtrY = 0.42 + (1 - (e.clientY - rect.top) / Math.max(rect.height, 1) - 0.42) * 1.0;
+    };
+
+    const handlePointerLeave = () => {
+        targetPtrX = 0.72;
+        targetPtrY = 0.42;
+    };
+
+    card.addEventListener("pointermove", handlePointerMove, { passive: true });
+    card.addEventListener("pointerleave", handlePointerLeave, { passive: true });
+
+    function render(timeNow) {
+        currPtrX += (targetPtrX - currPtrX) * 0.04;
+        currPtrY += (targetPtrY - currPtrY) * 0.04;
+
+        gl.uniform1f(timeUni, (timeNow - startTime) * 0.001);
+        gl.uniform2f(pointerUni, currPtrX, currPtrY);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        if (isVisible && !document.hidden && activeTab === "home-tab") {
+            animFrameId = requestAnimationFrame(render);
+        } else {
+            animFrameId = 0;
+        }
+    }
+
+    if ("IntersectionObserver" in window) {
+        const io = new IntersectionObserver(([entry]) => {
+            isVisible = entry.isIntersecting;
+            if (isVisible && !animFrameId && activeTab === "home-tab") {
+                animFrameId = requestAnimationFrame(render);
+            } else if (!isVisible && animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = 0;
+            }
+        });
+        io.observe(card);
+    }
+
+    if ("ResizeObserver" in window) {
+        const ro = new ResizeObserver(updateResolution);
+        ro.observe(card);
+    } else {
+        window.addEventListener("resize", updateResolution);
+    }
+
+    updateResolution();
+    animFrameId = requestAnimationFrame(render);
+
+    window.hero3DController = {
+        resume: () => {
+            if (!animFrameId && isVisible) {
+                updateResolution();
+                animFrameId = requestAnimationFrame(render);
+            }
+        },
+        pause: () => {
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = 0;
+            }
+        }
+    };
+}
+
+// ==========================================================================
+// 17. App Bootstrap Execution
 // ==========================================================================
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initApp);
