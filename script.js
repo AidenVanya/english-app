@@ -2585,8 +2585,6 @@ let audioCtx = null;
 let unlockedAchievements = [];
 let isAchievementsInitialized = false;
 let isAppReady = false;
-let currentAchCategoryFilter = "all";
-let currentAchSearchQuery = "";
 
 // Web Audio API Triumphant Chime Synthesizer (100% offline & client-side)
 function playAchievementSound() {
@@ -4143,9 +4141,6 @@ function setupAchievementsModal() {
     const openBtn = document.getElementById("open-all-badges-btn");
     const closeBtn = document.getElementById("close-achievements-modal-btn");
     const modalOverlay = document.getElementById("achievements-modal-overlay");
-    const searchInput = document.getElementById("ach-search-input");
-    const searchClear = document.getElementById("ach-search-clear");
-    const filterTabsContainer = document.getElementById("ach-filter-tabs");
 
     if (openBtn && modalOverlay) {
         openBtn.addEventListener("click", () => {
@@ -4175,39 +4170,9 @@ function setupAchievementsModal() {
             closeModal();
         }
     });
-
-    if (searchInput) {
-        searchInput.addEventListener("input", (e) => {
-            currentAchSearchQuery = e.target.value.trim().toLowerCase();
-            if (searchClear) {
-                searchClear.style.display = currentAchSearchQuery ? "block" : "none";
-            }
-            renderModalBadges();
-        });
-    }
-
-    if (searchClear && searchInput) {
-        searchClear.addEventListener("click", () => {
-            searchInput.value = "";
-            currentAchSearchQuery = "";
-            searchClear.style.display = "none";
-            renderModalBadges();
-        });
-    }
-
-    if (filterTabsContainer) {
-        filterTabsContainer.querySelectorAll(".ach-tab-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                filterTabsContainer.querySelectorAll(".ach-tab-btn").forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                currentAchCategoryFilter = btn.getAttribute("data-filter") || "all";
-                renderModalBadges();
-            });
-        });
-    }
 }
 
-// Render badges inside the pop-up modal gallery
+// Render badges inside the pop-up modal gallery (Direct presentation of all 58 badges)
 function renderModalBadges() {
     const grid = document.getElementById("ach-modal-badges-grid");
     if (!grid) return;
@@ -4222,50 +4187,15 @@ function renderModalBadges() {
     const mPercentEl = document.getElementById("m-badges-percent");
     const mProgLabel = document.getElementById("m-badges-progress-label");
     const mProgFill = document.getElementById("m-badges-progress-fill");
-    const tabUnlockedCount = document.getElementById("ach-tab-unlocked-count");
-    const tabLockedCount = document.getElementById("ach-tab-locked-count");
 
     if (mCountEl) mCountEl.textContent = unlockedCount + " / " + totalCount;
     if (mPercentEl) mPercentEl.textContent = percent + "%";
     if (mProgLabel) mProgLabel.textContent = unlockedCount + " / " + totalCount;
     if (mProgFill) mProgFill.style.width = percent + "%";
-    if (tabUnlockedCount) tabUnlockedCount.textContent = unlockedCount;
-    if (tabLockedCount) tabLockedCount.textContent = totalCount - unlockedCount;
-
-    // Filter achievements
-    let filtered = ACHIEVEMENTS_DATABASE.filter(ach => {
-        const isUnlocked = unlockedAchievements.includes(ach.id);
-        if (currentAchCategoryFilter === "unlocked") return isUnlocked;
-        if (currentAchCategoryFilter === "locked") return !isUnlocked;
-        if (currentAchCategoryFilter !== "all") return ach.category === currentAchCategoryFilter;
-        return true;
-    });
-
-    if (currentAchSearchQuery) {
-        const q = currentAchSearchQuery.toLowerCase();
-        filtered = filtered.filter(ach => {
-            const title = (ach.title[lang] || ach.title.tr || "").toLowerCase();
-            const desc = (ach.desc[lang] || ach.desc.tr || "").toLowerCase();
-            const how = (ach.howToUnlock[lang] || ach.howToUnlock.tr || "").toLowerCase();
-            const tier = getTierDisplayName(ach.tier, lang).toLowerCase();
-            const cat = getCategoryDisplayName(ach.category, lang).toLowerCase();
-            return title.includes(q) || desc.includes(q) || how.includes(q) || tier.includes(q) || cat.includes(q);
-        });
-    }
 
     grid.innerHTML = "";
 
-    if (filtered.length === 0) {
-        grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
-                <i class="fa-solid fa-magnifying-glass" style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
-                <p>${lang === 'en' ? 'No achievements match your filter.' : (lang === 'de' ? 'Keine Erfolge entsprechen deinen Filtern.' : 'Aramanızla eşleşen başarı rozeti bulunamadı.')}</p>
-            </div>
-        `;
-        return;
-    }
-
-    filtered.forEach(ach => {
+    ACHIEVEMENTS_DATABASE.forEach(ach => {
         const isUnlocked = unlockedAchievements.includes(ach.id);
         const title = ach.title[lang] || ach.title.tr || ach.title.en;
         const desc = ach.desc[lang] || ach.desc.tr || ach.desc.en;
@@ -4459,7 +4389,7 @@ const TRANSLATIONS = {
         "badge-custom-title": "Yazar",
         "badge-marathon-title": "Maratoncu",
         "badge-hunter-title": "Avcı",
-        "btn-view-all-badges": "Tümünü Göster",
+        "btn-view-all-badges": "Tüm Rozetleri İncele",
         "modal-badges-title": "Başarı Rozetleri Galerisi",
         "modal-badges-subtitle": "Tüm başarılar, kilit açma hedefleri ve kazanılan ödüller",
         "modal-stat-unlocked": "Kazanılan Rozet",
@@ -4556,7 +4486,7 @@ const TRANSLATIONS = {
         "badge-custom-title": "Author",
         "badge-marathon-title": "Marathoner",
         "badge-hunter-title": "Word Hunter",
-        "btn-view-all-badges": "View All",
+        "btn-view-all-badges": "View All Badges",
         "modal-badges-title": "Achievement Gallery",
         "modal-badges-subtitle": "All achievements, unlock objectives and earned milestones",
         "modal-stat-unlocked": "Unlocked Badges",
