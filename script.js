@@ -91,6 +91,11 @@ function initApp() {
 
     // Lock screen orientation to portrait on mobile/PWA
     lockPortraitOrientation();
+
+    // Enable achievement sounds and unlock banners after bootstrap is fully settled
+    setTimeout(() => {
+        isAppReady = true;
+    }, 1200);
 }
 
 // Lock device orientation to portrait if supported by mobile browser / PWA
@@ -2579,11 +2584,13 @@ function setupWodListeners() {
 let audioCtx = null;
 let unlockedAchievements = [];
 let isAchievementsInitialized = false;
+let isAppReady = false;
 let currentAchCategoryFilter = "all";
 let currentAchSearchQuery = "";
 
 // Web Audio API Triumphant Chime Synthesizer (100% offline & client-side)
 function playAchievementSound() {
+    if (!isAppReady) return;
     try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
@@ -2626,8 +2633,13 @@ function playAchievementSound() {
 
 // Side Banner Notification (Xbox/Steam style)
 function showAchievementUnlockNotification(ach) {
+    if (!isAppReady) return;
     const container = document.getElementById("achievement-toast-container");
     if (!container) return;
+
+    while (container.children.length >= 2) {
+        container.removeChild(container.firstChild);
+    }
 
     const lang = (typeof currentLang !== "undefined" && currentLang) ? currentLang : "tr";
     const title = ach.title[lang] || ach.title.tr || ach.title.en;
@@ -4317,9 +4329,7 @@ function renderHomeBadges() {
         "badge-first-step",
         "badge-hunter-25",
         "badge-streak-3",
-        "badge-quiz-novice",
         "badge-quiz-perfect",
-        "badge-aviation",
         "badge-custom-author",
         "badge-night-owl"
     ];
@@ -4333,17 +4343,22 @@ function renderHomeBadges() {
 
         const isUnlocked = unlockedAchievements.includes(ach.id);
         const title = ach.title[lang] || ach.title.tr || ach.title.en;
+        const tierName = getTierDisplayName(ach.tier, lang);
 
         const badgeEl = document.createElement("div");
-        badgeEl.className = 'badge-item ' + (isUnlocked ? '' : 'locked') + ' tier-' + ach.tier;
+        badgeEl.className = 'badge-item ' + (isUnlocked ? 'unlocked' : 'locked') + ' tier-' + ach.tier;
         badgeEl.id = ach.id;
         badgeEl.setAttribute("data-badge-id", ach.id);
         badgeEl.setAttribute("tabindex", "0");
         badgeEl.setAttribute("role", "button");
 
         badgeEl.innerHTML = `
-            <div class="badge-icon"><i class="${ach.icon}"></i></div>
-            <span>${title}</span>
+            <div class="badge-icon">
+                <i class="${ach.icon}"></i>
+                ${!isUnlocked ? '<span class="badge-lock-tag"><i class="fa-solid fa-lock"></i></span>' : ''}
+            </div>
+            <span class="badge-title">${title}</span>
+            <span class="badge-tier-indicator tier-${ach.tier}-badge">${tierName}</span>
         `;
 
         grid.appendChild(badgeEl);
@@ -4366,7 +4381,8 @@ function checkAchievements(suppressNotifications = false) {
 
     if (newlyUnlocked.length > 0) {
         setAppStorage("lexigoo_unlocked_achievements", JSON.stringify(unlockedAchievements));
-        if (!suppressNotifications) {
+        const shouldNotify = !suppressNotifications && isAppReady;
+        if (shouldNotify) {
             playAchievementSound();
             newlyUnlocked.forEach((ach, index) => {
                 setTimeout(() => {
@@ -4392,6 +4408,11 @@ function initAchievementsEngine() {
         unlockedAchievements = JSON.parse(getAppStorage("lexigoo_unlocked_achievements") || "[]");
     } catch(e) {
         unlockedAchievements = [];
+    }
+
+    const toastContainer = document.getElementById("achievement-toast-container");
+    if (toastContainer) {
+        toastContainer.innerHTML = "";
     }
 
     setupBadgeTooltips();
@@ -4438,7 +4459,7 @@ const TRANSLATIONS = {
         "badge-custom-title": "Yazar",
         "badge-marathon-title": "Maratoncu",
         "badge-hunter-title": "Avcı",
-        "btn-view-all-badges": "Tüm Rozetleri İncele (58 Rozet)",
+        "btn-view-all-badges": "Tümünü Göster",
         "modal-badges-title": "Başarı Rozetleri Galerisi",
         "modal-badges-subtitle": "Tüm başarılar, kilit açma hedefleri ve kazanılan ödüller",
         "modal-stat-unlocked": "Kazanılan Rozet",
@@ -4535,7 +4556,7 @@ const TRANSLATIONS = {
         "badge-custom-title": "Author",
         "badge-marathon-title": "Marathoner",
         "badge-hunter-title": "Word Hunter",
-        "btn-view-all-badges": "View All Badges (58 Badges)",
+        "btn-view-all-badges": "View All",
         "modal-badges-title": "Achievement Gallery",
         "modal-badges-subtitle": "All achievements, unlock objectives and earned milestones",
         "modal-stat-unlocked": "Unlocked Badges",
@@ -4632,7 +4653,7 @@ const TRANSLATIONS = {
         "badge-custom-title": "Autor",
         "badge-marathon-title": "Marathonläufer",
         "badge-hunter-title": "Wortjäger",
-        "btn-view-all-badges": "Alle Abzeichen ansehen (58 Abzeichen)",
+        "btn-view-all-badges": "Alle anzeigen",
         "modal-badges-title": "Erfolgsabzeichen-Galerie",
         "modal-badges-subtitle": "Alle Erfolge, Freischaltziele und verdienten Belohnungen",
         "modal-stat-unlocked": "Freigeschaltete Abzeichen",
