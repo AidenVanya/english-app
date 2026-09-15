@@ -147,21 +147,56 @@
                 <!-- Gamification Grid -->
                 <div class="gamification-grid">
                     <!-- 1. Daily Quests -->
+                    <!-- 1. Daily Quests (5 Quests) -->
                     <div class="gamified-panel glass-panel" id="quests-panel">
-                        <h3><i class="fa-solid fa-list-check icon-pink"></i> <span data-i18n="quests-title">Günlük Görevler</span></h3>
+                        <div class="panel-header-row">
+                            <h3><i class="fa-solid fa-list-check icon-pink"></i> <span data-i18n="quests-title">Günlük Görevler</span></h3>
+                            <div class="quests-badge-pill" id="quests-overall-badge">0/5</div>
+                        </div>
                         <p class="panel-subtitle" data-i18n="quests-subtitle">Her gün sıfırlanır, serini korumak için tamamla!</p>
+                        <div class="quests-mini-progress">
+                            <div class="quests-mini-fill" id="quests-overall-fill" style="width: 0%;"></div>
+                        </div>
                         <div class="quest-list">
+                            <!-- Görev 1: 10 Kelime Kartı -->
                             <div class="quest-item" id="quest-cards">
                                 <div class="quest-checkbox" id="qc-cards"><i class="fa-regular fa-circle"></i></div>
-                                <span class="quest-text" id="qt-cards">5 Kelime Kartı çalış (0/5)</span>
+                                <div class="quest-info">
+                                    <span class="quest-text" id="qt-cards">10 Kelime Kartı çalış (0/10)</span>
+                                </div>
+                                <span class="quest-pill" id="qp-cards">0/10</span>
                             </div>
+                            <!-- Görev 2: Quiz %70+ Başarı -->
                             <div class="quest-item" id="quest-quiz">
                                 <div class="quest-checkbox" id="qc-quiz"><i class="fa-regular fa-circle"></i></div>
-                                <span class="quest-text" id="qt-quiz">Bir İngilizce Quiz tamamla</span>
+                                <div class="quest-info">
+                                    <span class="quest-text" id="qt-quiz">Bir Quiz tamamla (%70+ Başarı)</span>
+                                </div>
+                                <span class="quest-pill" id="qp-quiz">0/1</span>
                             </div>
+                            <!-- Görev 3: Günün Kelimesi -->
                             <div class="quest-item" id="quest-wod">
                                 <div class="quest-checkbox" id="qc-wod"><i class="fa-regular fa-circle"></i></div>
-                                <span class="quest-text">Günün Kelimesini dinle</span>
+                                <div class="quest-info">
+                                    <span class="quest-text" id="qt-wod">Günün Kelimesini dinle</span>
+                                </div>
+                                <span class="quest-pill" id="qp-wod">0/1</span>
+                            </div>
+                            <!-- Görev 4: 3 Kelime Telaffuzu Dinle -->
+                            <div class="quest-item" id="quest-tts">
+                                <div class="quest-checkbox" id="qc-tts"><i class="fa-regular fa-circle"></i></div>
+                                <div class="quest-info">
+                                    <span class="quest-text" id="qt-tts">3 Farklı Kelimenin Telaffuzunu Dinle (0/3)</span>
+                                </div>
+                                <span class="quest-pill" id="qp-tts">0/3</span>
+                            </div>
+                            <!-- Görev 5: 2 Kelimeyi Öğrendim Olarak İşaretle -->
+                            <div class="quest-item" id="quest-learn">
+                                <div class="quest-checkbox" id="qc-learn"><i class="fa-regular fa-circle"></i></div>
+                                <div class="quest-info">
+                                    <span class="quest-text" id="qt-learn">2 Kelimeyi "Öğrendim" Olarak İşaretle (0/2)</span>
+                                </div>
+                                <span class="quest-pill" id="qp-learn">0/2</span>
                             </div>
                         </div>
                     </div>
@@ -670,6 +705,7 @@
 
                     <!-- C. Quiz Results Screen -->
                     <div class="quiz-screen glass-panel" id="quiz-results-screen">
+                        <canvas id="quiz-confetti-canvas" class="quiz-confetti-canvas"></canvas>
                         <div class="results-container">
                             <div class="result-icon-celebration" id="result-emoji">
                                 <i class="fa-solid fa-trophy text-gold"></i>

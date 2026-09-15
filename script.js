@@ -38,6 +38,10 @@ let lastActiveDate = "";
 let cardsStudiedCount = 0;
 let quizCompletedToday = false;
 let wodListenedToday = false;
+let ttsListenedTodayCount = 0;
+let ttsListenedWordsToday = [];
+let wordsLearnedTodayCount = 0;
+let allQuestsBonusCelebrated = false;
 let wordOfTheDay = null;
 
 // Grammar & Tenses State
@@ -703,6 +707,13 @@ function resetFlashcardState() {
 
 // Multi-Language Speech Synthesizer (English & German Support)
 function speakEnglishText(text, forcedLang = null) {
+    if (text && typeof text === "string") {
+        const clean = text.replace(/^["']|["']$/g, "").trim();
+        if (clean && clean.split(/\s+/).length <= 4) {
+            trackWordAudioListen(clean);
+        }
+    }
+
     if ("speechSynthesis" in window) {
         // Cancel active readings
         window.speechSynthesis.cancel();
@@ -727,6 +738,29 @@ function speakEnglishText(text, forcedLang = null) {
         window.speechSynthesis.speak(utterance);
     } else {
         showToast("Tarayıcınız ses sentezleme özelliğini desteklemiyor.", true);
+    }
+}
+
+// Track distinct word audio listen for daily quest 4
+function trackWordAudioListen(wordText) {
+    if (!wordText || typeof wordText !== "string") return;
+    const cleanWord = wordText.trim().toLowerCase();
+    if (!ttsListenedWordsToday.includes(cleanWord)) {
+        ttsListenedWordsToday.push(cleanWord);
+        ttsListenedTodayCount = ttsListenedWordsToday.length;
+        setAppStorage("tts_listened_words_today", JSON.stringify(ttsListenedWordsToday));
+        setAppStorage("tts_listened_today", ttsListenedTodayCount.toString());
+        
+        if (ttsListenedTodayCount === 3) {
+            const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+            const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
+            showToast(isEn ? "Daily Quest Completed: 3 Pronunciations Listened! ⚡" : (isDeUi ? "Tagesquest abgeschlossen: 3 Aussprachen angehört! ⚡" : "Günlük Görev Tamamlandı: 3 Kelime Telaffuzu Dinlendi! ⚡"));
+            incrementStreak();
+        }
+        
+        if (typeof checkDailyQuests === "function") {
+            checkDailyQuests();
+        }
     }
 }
 
@@ -1043,7 +1077,19 @@ function toggleWordLearned(wordId) {
     } else {
         // Add to states
         learnedWordIds.push(wordId);
+        wordsLearnedTodayCount++;
+        setAppStorage("words_learned_today", wordsLearnedTodayCount.toString());
+        
+        if (wordsLearnedTodayCount === 2) {
+            showToast(isEn ? "Daily Quest Completed: 2 Words Learned Today! ⚡" : (isDeUi ? "Tagesquest abgeschlossen: 2 Wörter heute gelernt! ⚡" : "Günlük Görev Tamamlandı: Bugün 2 Kelime Öğrenildi! ⚡"));
+            incrementStreak();
+        }
+        
         showToast(isEn ? "Great! Word marked as learned." : (isDeUi ? "Großartig! Wort als gelernt markiert." : "Harika! Kelime öğrenildi olarak işaretlendi."));
+        
+        if (typeof checkDailyQuests === "function") {
+            checkDailyQuests();
+        }
     }
     const storageKey = targetLang === "de" ? "learned_words_de" : "learned_words";
     setAppStorage(storageKey, JSON.stringify(learnedWordIds));
@@ -1671,11 +1717,12 @@ function loadQuizQuestion() {
     const questionLabelEl = document.querySelector("#quiz-question-screen .question-label");
     const choicesContainer = document.getElementById("quiz-choices-container");
     const nextBtn = document.getElementById("quiz-next-btn");
+    const questionBox = document.querySelector(".quiz-question-box");
 
     if (currentNumEl) currentNumEl.textContent = quizCurrentIndex + 1;
     if (totalNumEl) totalNumEl.textContent = quizQuestions.length;
     
-    // Progress fill update
+    // Progress fill update with smooth width transition
     if (progressFill) {
         const percent = ((quizCurrentIndex + 1) / quizQuestions.length) * 100;
         progressFill.style.width = percent + "%";
@@ -1699,15 +1746,24 @@ function loadQuizQuestion() {
             questionWordEl.style.fontWeight = "";
         }
     }
+
+    // Trigger entrance animation on question box
+    if (questionBox) {
+        questionBox.classList.remove("anim-question-in");
+        void questionBox.offsetWidth; // Force reflow
+        questionBox.classList.add("anim-question-in");
+    }
+
     if (nextBtn) nextBtn.disabled = true;
 
-    // Render choice cards
+    // Render choice cards with staggered spring entrance animation
     if (choicesContainer) {
         choicesContainer.innerHTML = "";
         
-        currentQ.choices.forEach(choiceText => {
+        currentQ.choices.forEach((choiceText, idx) => {
             const btn = document.createElement("button");
-            btn.className = "choice-card";
+            btn.className = "choice-card anim-choice-enter";
+            btn.style.animationDelay = `${idx * 0.06}s`;
             btn.textContent = choiceText;
             
             btn.addEventListener("click", () => {
@@ -1726,7 +1782,7 @@ function handleQuizAnswerSelection(selectedButton, selectedText, correctText) {
     
     quizSelectedAnswer = selectedText;
     const choicesContainer = document.getElementById("quiz-choices-container");
-    const choiceButtons = choicesContainer.querySelectorAll(".choice-card");
+    const choiceButtons = choicesContainer ? choicesContainer.querySelectorAll(".choice-card") : [];
     const nextBtn = document.getElementById("quiz-next-btn");
 
     // Disable all options
@@ -1734,29 +1790,35 @@ function handleQuizAnswerSelection(selectedButton, selectedText, correctText) {
         btn.classList.add("disabled");
         
         // Highlight correct translation in green regardless of user choice
-        if (btn.textContent === correctText) {
+        if (btn.textContent.trim() === correctText.trim()) {
             btn.classList.add("choice-correct");
         }
     });
 
     const activeQuestionScreen = document.getElementById("quiz-question-screen");
 
-    if (selectedText === correctText) {
-        // Correct answer selection
-        selectedButton.classList.add("choice-correct");
+    if (selectedText.trim() === correctText.trim()) {
+        // Correct answer selection - neon glow & pop bounce
+        selectedButton.classList.add("choice-correct", "choice-pop");
         quizScoreCorrect++;
         
         const correctScoreBadge = document.getElementById("quiz-score-correct");
-        if (correctScoreBadge) correctScoreBadge.textContent = quizScoreCorrect;
-        
-        // Short celebratory visual bounce on button
-        selectedButton.style.transform = "scale(1.03)";
-        setTimeout(() => selectedButton.style.transform = "scale(1)", 150);
+        if (correctScoreBadge) {
+            correctScoreBadge.textContent = quizScoreCorrect;
+            correctScoreBadge.style.transform = "scale(1.2)";
+            setTimeout(() => { correctScoreBadge.style.transform = "scale(1)"; }, 200);
+        }
     } else {
-        // Wrong answer selection
-        selectedButton.classList.add("choice-wrong");
+        // Wrong answer selection - crimson shake & pulse correct hint
+        selectedButton.classList.add("choice-wrong", "choice-shake");
         
-        // Add shake animation to the question card
+        choiceButtons.forEach(btn => {
+            if (btn.textContent.trim() === correctText.trim()) {
+                btn.classList.add("choice-hint-pulse");
+            }
+        });
+
+        // Add shake animation to the active question screen
         if (activeQuestionScreen) {
             activeQuestionScreen.classList.add("shake");
             setTimeout(() => {
@@ -1765,7 +1827,7 @@ function handleQuizAnswerSelection(selectedButton, selectedText, correctText) {
         }
     }
 
-    // Enable next button
+    // Enable next button with pulse
     if (nextBtn) nextBtn.disabled = false;
 }
 
@@ -1779,10 +1841,98 @@ function handleQuizNextQuestion() {
     }
 }
 
+// Lightweight Celebratory Confetti Particle Engine for Quiz Results
+function launchConfetti(canvasId, durationMs = 3000) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const parent = canvas.parentElement;
+    canvas.width = parent ? (parent.clientWidth || 360) : 360;
+    canvas.height = parent ? (parent.clientHeight || 460) : 460;
+
+    const colors = ["#6366f1", "#a855f7", "#ec4899", "#10b981", "#f59e0b", "#38bdf8", "#fbbf24"];
+    const particles = [];
+    const count = 75;
+
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: canvas.width / 2 + (Math.random() - 0.5) * 60,
+            y: canvas.height * 0.35,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.8) * 14 - 2,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            rotation: Math.random() * 360,
+            rotSpeed: (Math.random() - 0.5) * 12,
+            gravity: 0.32,
+            opacity: 1
+        });
+    }
+
+    const start = performance.now();
+    let animId;
+
+    function frame(now) {
+        const elapsed = now - start;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let activeCount = 0;
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += p.gravity;
+            p.rotation += p.rotSpeed;
+            p.opacity = Math.max(0, 1 - (elapsed / durationMs));
+
+            if (p.opacity > 0 && p.y < canvas.height + 25) {
+                activeCount++;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.opacity;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                ctx.restore();
+            }
+        });
+
+        if (activeCount > 0 && elapsed < durationMs) {
+            animId = requestAnimationFrame(frame);
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            cancelAnimationFrame(animId);
+        }
+    }
+    animId = requestAnimationFrame(frame);
+}
+
+// Smooth numeric counter animation
+function animateScoreCounter(elementId, targetPercent, durationMs = 1200) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    const start = performance.now();
+
+    function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / durationMs, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(ease * targetPercent);
+        el.textContent = `${current}%`;
+
+        if (progress < 1) {
+            requestAnimationFrame(tick);
+        } else {
+            el.textContent = `${targetPercent}%`;
+        }
+    }
+    requestAnimationFrame(tick);
+}
+
 function showQuizResults() {
     const correctValEl = document.getElementById("res-correct");
     const incorrectValEl = document.getElementById("res-incorrect");
-    const percentEl = document.getElementById("res-score-percent");
     const emojiEl = document.getElementById("result-emoji");
     const titleEl = document.getElementById("result-title");
     const descEl = document.getElementById("result-desc");
@@ -1796,7 +1946,9 @@ function showQuizResults() {
 
     if (correctValEl) correctValEl.textContent = quizScoreCorrect;
     if (incorrectValEl) incorrectValEl.textContent = incorrectVal;
-    if (percentEl) percentEl.textContent = scorePercent + "%";
+    
+    // Smooth animated score percentage counter
+    animateScoreCounter("res-score-percent", scorePercent);
 
     // Custom results summary styling
     const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
@@ -1804,7 +1956,7 @@ function showQuizResults() {
     const isDeTarget = targetLang === 'de';
 
     if (scorePercent >= 80) {
-        if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-trophy text-gold" style="font-size: 65px;"></i>`;
+        if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-trophy text-gold result-trophy-bounce" style="font-size: 65px;"></i>`;
         if (titleEl) titleEl.textContent = isEn ? "Awesome Job! 🎉" : (isDeUi ? "Großartig! 🎉" : "Harikasın! 🎉");
         if (descEl) {
             if (isEn) {
@@ -1818,7 +1970,7 @@ function showQuizResults() {
             }
         }
     } else if (scorePercent >= 50) {
-        if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-star-half-stroke" style="color: #f59e0b; font-size: 65px;"></i>`;
+        if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-star-half-stroke result-trophy-bounce" style="color: #f59e0b; font-size: 65px;"></i>`;
         if (titleEl) titleEl.textContent = isEn ? "Doing Great! 👍" : (isDeUi ? "Sehr gut! 👍" : "Çok İyi Gidiyorsun! 👍");
         if (descEl) {
             if (isEn) {
@@ -1846,9 +1998,22 @@ function showQuizResults() {
     showQuizScreen("quiz-results-screen");
     renderDashboard(); // Refresh stats on home tab
 
-    // Mark Quest completed
-    quizCompletedToday = true;
-    setAppStorage("quest_quiz", "true");
+    // Launch celebratory confetti when user achieves >= 70%
+    if (scorePercent >= 70) {
+        setTimeout(() => {
+            launchConfetti("quiz-confetti-canvas", 3200);
+        }, 150);
+    }
+
+    // Mark Quest 2 completed if scored at least 70%
+    if (scorePercent >= 70) {
+        if (!quizCompletedToday) {
+            quizCompletedToday = true;
+            setAppStorage("quest_quiz", "true");
+            showToast(isEn ? "Daily Quest Completed: Quiz Finished (70%+ Score)! ⚡" : (isDeUi ? "Tagesquest abgeschlossen: Quiz mit 70%+ bestanden! ⚡" : "Günlük Görev Tamamlandı: Quiz %70+ Başarıyla Tamamlandı! ⚡"));
+            incrementStreak();
+        }
+    }
     
     if (scorePercent === 100) {
         setAppStorage("perfect_quiz_unlocked", "true");
@@ -1859,7 +2024,6 @@ function showQuizResults() {
     }
 
     checkDailyQuests();
-    incrementStreak();
     checkAchievements();
 }
 
@@ -2038,14 +2202,22 @@ function loadGamificationState() {
     
     // Check if the date is different (new day)
     if (storedDate !== today) {
-        // Reset daily progress
+        // Reset daily progress for all 5 quests
         cardsStudiedCount = 0;
         quizCompletedToday = false;
         wodListenedToday = false;
+        ttsListenedTodayCount = 0;
+        ttsListenedWordsToday = [];
+        wordsLearnedTodayCount = 0;
+        allQuestsBonusCelebrated = false;
         
         setAppStorage("cards_studied_today", "0");
         setAppStorage("quest_quiz", "false");
         setAppStorage("quest_wod", "false");
+        setAppStorage("tts_listened_today", "0");
+        setAppStorage("tts_listened_words_today", "[]");
+        setAppStorage("words_learned_today", "0");
+        setAppStorage("quests_all_bonus", "false");
         
         // If they missed a day (difference is greater than 1 day), reset streak
         if (storedDate) {
@@ -2060,6 +2232,14 @@ function loadGamificationState() {
         cardsStudiedCount = parseInt(getAppStorage("cards_studied_today") || "0");
         quizCompletedToday = getAppStorage("quest_quiz") === "true";
         wodListenedToday = getAppStorage("quest_wod") === "true";
+        try {
+            ttsListenedWordsToday = JSON.parse(getAppStorage("tts_listened_words_today") || "[]");
+        } catch(e) {
+            ttsListenedWordsToday = [];
+        }
+        ttsListenedTodayCount = parseInt(getAppStorage("tts_listened_today") || ttsListenedWordsToday.length.toString());
+        wordsLearnedTodayCount = parseInt(getAppStorage("words_learned_today") || "0");
+        allQuestsBonusCelebrated = getAppStorage("quests_all_bonus") === "true";
     }
 }
 
@@ -2096,8 +2276,10 @@ function trackCardStudyProgress() {
     cardsStudiedCount++;
     setAppStorage("cards_studied_today", cardsStudiedCount.toString());
     
-    if (cardsStudiedCount === 5) {
-        showToast("Günlük Görev Tamamlandı: 5 Kart İncelendi! ⚡");
+    if (cardsStudiedCount === 10) {
+        const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+        const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
+        showToast(isEn ? "Daily Quest Completed: 10 Flashcards Studied! ⚡" : (isDeUi ? "Tagesquest abgeschlossen: 10 Karteikarten gelernt! ⚡" : "Günlük Görev Tamamlandı: 10 Kart İncelendi! ⚡"));
         incrementStreak();
     }
     
@@ -2108,76 +2290,114 @@ function checkDailyQuests() {
     const cardQuestItem = document.getElementById("quest-cards");
     const quizQuestItem = document.getElementById("quest-quiz");
     const wodQuestItem = document.getElementById("quest-wod");
+    const ttsQuestItem = document.getElementById("quest-tts");
+    const learnQuestItem = document.getElementById("quest-learn");
     
     const qcCards = document.getElementById("qc-cards");
     const qcQuiz = document.getElementById("qc-quiz");
     const qcWod = document.getElementById("qc-wod");
+    const qcTts = document.getElementById("qc-tts");
+    const qcLearn = document.getElementById("qc-learn");
     
     const qtCards = document.getElementById("qt-cards");
-    const qtQuiz = document.querySelector("#quest-quiz .quest-text");
-    const qtWod = document.querySelector("#quest-wod .quest-text");
+    const qtQuiz = document.getElementById("qt-quiz");
+    const qtWod = document.getElementById("qt-wod");
+    const qtTts = document.getElementById("qt-tts");
+    const qtLearn = document.getElementById("qt-learn");
+
+    const qpCards = document.getElementById("qp-cards");
+    const qpQuiz = document.getElementById("qp-quiz");
+    const qpWod = document.getElementById("qp-wod");
+    const qpTts = document.getElementById("qp-tts");
+    const qpLearn = document.getElementById("qp-learn");
+
+    const overallBadge = document.getElementById("quests-overall-badge");
+    const overallFill = document.getElementById("quests-overall-fill");
     
     const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
     const isDe = typeof currentLang !== 'undefined' && currentLang === 'de';
-    
-    // 1. Cards Quest (0/5)
+    const isDeTarget = typeof targetLang !== 'undefined' && targetLang === 'de';
+
+    // 1. Cards Quest (0/10)
+    const cardsCompleted = cardsStudiedCount >= 10;
     if (qtCards) {
-        if (isEn) {
-            qtCards.textContent = `Study 5 Flashcards (${Math.min(5, cardsStudiedCount)}/5)`;
-        } else if (isDe) {
-            qtCards.textContent = `5 Karteikarten lernen (${Math.min(5, cardsStudiedCount)}/5)`;
-        } else {
-            qtCards.textContent = `5 Kelime Kartı çalış (${Math.min(5, cardsStudiedCount)}/5)`;
-        }
+        if (isEn) qtCards.textContent = `Study 10 Flashcards (${Math.min(10, cardsStudiedCount)}/10)`;
+        else if (isDe) qtCards.textContent = `10 Karteikarten lernen (${Math.min(10, cardsStudiedCount)}/10)`;
+        else qtCards.textContent = `10 Kelime Kartı çalış (${Math.min(10, cardsStudiedCount)}/10)`;
     }
+    if (qpCards) qpCards.textContent = `${Math.min(10, cardsStudiedCount)}/10`;
+    updateQuestItemUI(cardQuestItem, qcCards, cardsCompleted);
     
-    // 2. Quiz Quest
+    // 2. Quiz Quest (%70+ Başarı)
+    const quizCompleted = quizCompletedToday;
     if (qtQuiz) {
-        const isDeTarget = targetLang === "de";
-        if (isEn) {
-            qtQuiz.textContent = isDeTarget ? "Complete one German Quiz" : "Complete one English Quiz";
-        } else if (isDe) {
-            qtQuiz.textContent = isDeTarget ? "Ein Deutsch-Quiz abschließen" : "Ein Englisch-Quiz abschließen";
-        } else {
-            qtQuiz.textContent = isDeTarget ? "Bir Almanca Quiz tamamla" : "Bir İngilizce Quiz tamamla";
-        }
+        if (isEn) qtQuiz.textContent = isDeTarget ? "Complete one German Quiz (70%+ Score)" : "Complete one English Quiz (70%+ Score)";
+        else if (isDe) qtQuiz.textContent = isDeTarget ? "Ein Deutsch-Quiz abschließen (70%+ Punktzahl)" : "Ein Englisch-Quiz abschließen (70%+ Punktzahl)";
+        else qtQuiz.textContent = isDeTarget ? "Bir Almanca Quiz tamamla (%70+ Başarı)" : "Bir İngilizce Quiz tamamla (%70+ Başarı)";
     }
+    if (qpQuiz) qpQuiz.textContent = quizCompleted ? "1/1" : "0/1";
+    updateQuestItemUI(quizQuestItem, qcQuiz, quizCompleted);
     
     // 3. WOD Quest
+    const wodCompleted = wodListenedToday;
     if (qtWod) {
-        if (isEn) {
-            qtWod.textContent = "Listen to the Word of the Day";
-        } else if (isDe) {
-            qtWod.textContent = "Wort des Tages anhören";
+        if (isEn) qtWod.textContent = "Listen to the Word of the Day";
+        else if (isDe) qtWod.textContent = "Wort des Tages anhören";
+        else qtWod.textContent = "Günün Kelimesini dinle";
+    }
+    if (qpWod) qpWod.textContent = wodCompleted ? "1/1" : "0/1";
+    updateQuestItemUI(wodQuestItem, qcWod, wodCompleted);
+
+    // 4. TTS Listening Quest (0/3)
+    const ttsCompleted = ttsListenedTodayCount >= 3;
+    if (qtTts) {
+        if (isEn) qtTts.textContent = `Listen to 3 Word Pronunciations (${Math.min(3, ttsListenedTodayCount)}/3)`;
+        else if (isDe) qtTts.textContent = `Aussprache von 3 Wörtern anhören (${Math.min(3, ttsListenedTodayCount)}/3)`;
+        else qtTts.textContent = `3 Farklı Kelimenin Telaffuzunu Dinle (${Math.min(3, ttsListenedTodayCount)}/3)`;
+    }
+    if (qpTts) qpTts.textContent = `${Math.min(3, ttsListenedTodayCount)}/3`;
+    updateQuestItemUI(ttsQuestItem, qcTts, ttsCompleted);
+
+    // 5. Learn Words Quest (0/2)
+    const learnCompleted = wordsLearnedTodayCount >= 2;
+    if (qtLearn) {
+        if (isEn) qtLearn.textContent = `Mark 2 Words as Learned Today (${Math.min(2, wordsLearnedTodayCount)}/2)`;
+        else if (isDe) qtLearn.textContent = `Heute 2 Wörter als gelernt markieren (${Math.min(2, wordsLearnedTodayCount)}/2)`;
+        else qtLearn.textContent = `2 Kelimeyi "Öğrendim" Olarak İşaretle (${Math.min(2, wordsLearnedTodayCount)}/2)`;
+    }
+    if (qpLearn) qpLearn.textContent = `${Math.min(2, wordsLearnedTodayCount)}/2`;
+    updateQuestItemUI(learnQuestItem, qcLearn, learnCompleted);
+
+    // Overall Progress
+    const completedCount = [cardsCompleted, quizCompleted, wodCompleted, ttsCompleted, learnCompleted].filter(Boolean).length;
+    if (overallBadge) {
+        overallBadge.textContent = `${completedCount}/5`;
+        if (completedCount === 5) {
+            overallBadge.classList.add("all-completed");
         } else {
-            qtWod.textContent = "Günün Kelimesini dinle";
+            overallBadge.classList.remove("all-completed");
         }
     }
-    
-    if (cardsStudiedCount >= 5) {
-        if (cardQuestItem) cardQuestItem.classList.add("completed");
-        if (qcCards) qcCards.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-    } else {
-        if (cardQuestItem) cardQuestItem.classList.remove("completed");
-        if (qcCards) qcCards.innerHTML = '<i class="fa-regular fa-circle"></i>';
+    if (overallFill) {
+        overallFill.style.width = `${(completedCount / 5) * 100}%`;
     }
-    
-    // 2. Quiz Quest Status
-    if (quizCompletedToday) {
-        if (quizQuestItem) quizQuestItem.classList.add("completed");
-        if (qcQuiz) qcQuiz.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-    } else {
-        if (quizQuestItem) quizQuestItem.classList.remove("completed");
-        if (qcQuiz) qcQuiz.innerHTML = '<i class="fa-regular fa-circle"></i>';
+
+    // Celebration when all 5 are completed
+    if (completedCount === 5 && !allQuestsBonusCelebrated) {
+        allQuestsBonusCelebrated = true;
+        setAppStorage("quests_all_bonus", "true");
+        showToast(isEn ? "Mastery! All 5 Daily Quests Completed Today! 🏆" : (isDe ? "Meisterleistung! Alle 5 Tagesquests abgeschlossen! 🏆" : "Harika! Bugünün 5 Günlük Görevinin Tümü Tamamlandı! 🏆"));
     }
-    
-    // 3. WOD Quest Status
-    if (wodListenedToday) {
-        if (wodQuestItem) wodQuestItem.classList.add("completed");
-        if (qcWod) qcWod.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+}
+
+function updateQuestItemUI(itemEl, checkEl, isCompleted) {
+    if (!itemEl) return;
+    if (isCompleted) {
+        itemEl.classList.add("completed");
+        if (checkEl) checkEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
     } else {
-        if (wodQuestItem) wodQuestItem.classList.remove("completed");
-        if (qcWod) qcWod.innerHTML = '<i class="fa-regular fa-circle"></i>';
+        itemEl.classList.remove("completed");
+        if (checkEl) checkEl.innerHTML = '<i class="fa-regular fa-circle"></i>';
     }
 }
 
