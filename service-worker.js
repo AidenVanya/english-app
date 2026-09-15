@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lexigoo-cache-v7';
+const CACHE_NAME = 'lexigoo-cache-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -44,6 +44,24 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  // Network-first for HTML navigation so updates reflect immediately
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   // Cache same-origin files and CDNs (Google Fonts, FontAwesome)
   const shouldCache = 

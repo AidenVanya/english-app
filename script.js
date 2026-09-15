@@ -192,7 +192,7 @@ function updateFormLabelsForTargetLang() {
     const isEnUi = currentLang === "en";
     const isDeUi = currentLang === "de";
 
-    // Table Header
+    // 1. Table Header
     const thWord = document.getElementById("th-target-word");
     if (thWord) {
         if (isDe) {
@@ -202,14 +202,153 @@ function updateFormLabelsForTargetLang() {
         }
     }
 
-    // Add Word Form labels & placeholders
+    // 2. Add Word Form labels & placeholders
+    const labelTargetText = document.getElementById("label-word-target-text");
+    const labelExTargetText = document.getElementById("label-word-example-target-text");
     const enInput = document.getElementById("word-en");
     const exEnInput = document.getElementById("word-example-en");
+    
+    if (labelTargetText) {
+        if (isDe) {
+            labelTargetText.textContent = isEnUi ? "German Word" : (isDeUi ? "Deutsches Wort" : "Almanca Kelime");
+        } else {
+            labelTargetText.textContent = isEnUi ? "English Word" : (isDeUi ? "Englisches Wort" : "İngilizce Kelime");
+        }
+    }
+    if (labelExTargetText) {
+        if (isDe) {
+            labelExTargetText.textContent = isEnUi ? "German Example (Optional)" : (isDeUi ? "Deutsches Beispiel (Optional)" : "Almanca Örnek (İsteğe Bağlı)");
+        } else {
+            labelExTargetText.textContent = isEnUi ? "English Example (Optional)" : (isDeUi ? "Englisches Beispiel (Optional)" : "İngilizce Örnek (İsteğe Bağlı)");
+        }
+    }
     if (enInput) {
-        enInput.placeholder = isDe ? "Örn: die Herausforderung" : "Örn: Serendipity";
+        enInput.placeholder = isDe 
+            ? (isEnUi ? "e.g., die Herausforderung" : (isDeUi ? "z. B. die Herausforderung" : "Örn: die Herausforderung"))
+            : (isEnUi ? "e.g., Serendipity" : (isDeUi ? "z. B. Serendipity" : "Örn: Serendipity"));
     }
     if (exEnInput) {
-        exEnInput.placeholder = isDe ? "Örn: Deutsch lernen macht Spaß." : "Örn: It happened by serendipity.";
+        exEnInput.placeholder = isDe 
+            ? (isEnUi ? "e.g., Deutsch lernen macht Spaß." : (isDeUi ? "z. B. Deutsch lernen macht Spaß." : "Örn: Deutsch lernen macht Spaß."))
+            : (isEnUi ? "e.g., It happened by serendipity." : (isDeUi ? "z. B. It happened by serendipity." : "Örn: It happened by serendipity."));
+    }
+
+    // 3. Flashcard Tips, Tag & Subtitle
+    const cardTipFrontText = document.getElementById("card-tip-front-text");
+    const cardTipBackText = document.getElementById("card-tip-back-text");
+    const cardBackTag = document.getElementById("card-back-tag");
+    const cardsTabDesc = document.getElementById("cards-tab-desc");
+
+    if (cardTipFrontText) {
+        cardTipFrontText.textContent = isEnUi ? "Click to flip" : (isDeUi ? "Klicken zum Umdrehen" : "Çevirmek için tıkla");
+    }
+    if (cardTipBackText) {
+        if (isDe) {
+            cardTipBackText.textContent = isEnUi ? "Click to return to German" : (isDeUi ? "Klicken, um zu Deutsch zurückzukehren" : "Almancaya dönmek için tıkla");
+        } else {
+            cardTipBackText.textContent = isEnUi ? "Click to return to English" : (isDeUi ? "Klicken, um zu Englisch zurückzukehren" : "İngilizceye dönmek için tıkla");
+        }
+    }
+    if (cardBackTag) {
+        cardBackTag.textContent = isEnUi ? "Turkish Meaning" : (isDeUi ? "Türkische Bedeutung" : "Türkçe Anlamı");
+    }
+    if (cardsTabDesc) {
+        if (isDe) {
+            cardsTabDesc.textContent = isEnUi 
+                ? "Click cards to reveal the Turkish meaning and listen to German pronunciation."
+                : (isDeUi ? "Klicke auf die Karten, um die Bedeutung zu sehen und die deutsche Aussprache anzuhören." : "Kartların üzerine tıklayarak Türkçe anlamını görebilir ve ses simgesi ile Almanca telaffuzunu dinleyebilirsin.");
+        } else {
+            cardsTabDesc.textContent = isEnUi 
+                ? "Click cards to reveal the Turkish meaning and listen to English pronunciation."
+                : (isDeUi ? "Klicke auf die Karten, um die Bedeutung zu sehen und die englische Aussprache anzuhören." : "Kartların üzerine tıklayarak Türkçe anlamını görebilir ve ses simgesi ile İngilizce telaffuzunu dinleyebilirsin.");
+        }
+    }
+
+    // 4. Dictionary Search Placeholder & Subtitle
+    const listSearch = document.getElementById("list-search");
+    const listTabDesc = document.getElementById("list-tab-desc");
+    if (listSearch) {
+        if (isDe) {
+            listSearch.placeholder = isEnUi ? "Search in German or Turkish..." : (isDeUi ? "Auf Deutsch oder Türkisch suchen..." : "Almanca veya Türkçe arama yapın...");
+        } else {
+            listSearch.placeholder = isEnUi ? "Search in English or Turkish..." : (isDeUi ? "Auf Englisch oder Türkisch suchen..." : "İngilizce veya Türkçe arama yapın...");
+        }
+    }
+    if (listTabDesc) {
+        if (isDe) {
+            listTabDesc.textContent = isEnUi 
+                ? "Search through 640+ German words, filter by categories (Numbers, Tourism, Aviation...) and listen to pronunciations."
+                : (isDeUi ? "Durchsuche über 640 deutsche Wörter, filtere nach Kategorien und höre dir die Aussprache an." : "Sistemde yüklü olan 640'tan fazla Almanca kelimeyi arayabilir, kullanım alanlarına (Sayılar, Havacılık, Turizm, Genel) göre filtreleyebilir ve telaffuzlarını dinleyebilirsiniz.");
+        } else {
+            listTabDesc.textContent = isEnUi 
+                ? "Search through 4000+ English words, filter by categories (Numbers, Tourism, Aviation...) and listen to pronunciations."
+                : (isDeUi ? "Durchsuche über 4000 englische Wörter, filtere nach Kategorien und höre dir die Aussprache an." : "Sistemde yüklü olan 4000'den fazla İngilizce kelimeyi arayabilir, kullanım alanlarına (Sayılar, Havacılık, Turizm, Genel) göre filtreleyebilir ve telaffuzlarını dinleyebilirsiniz.");
+        }
+    }
+
+    // 5. Grammar Tab Subtitle & Headings
+    const tensesSubtitle = document.getElementById("tenses-subtitle");
+    const grammarTensesHeading = document.getElementById("grammar-tenses-heading");
+    const grammarModalsHeading = document.getElementById("grammar-modals-heading");
+    if (tensesSubtitle) {
+        if (isDe) {
+            tensesSubtitle.textContent = isEnUi 
+                ? "Learn German grammar tenses (Zeiten) and modal verbs (Modalverben) with structural formulas and examples."
+                : (isDeUi ? "Lernen Sie deutsche Grammatikzeiten (Zeiten) und Modalverben mit Formeln und Beispielen." : "Almanca dilbilgisindeki temel zamanları (Zeiten) ve en çok kullanılan kipleri (Modalverben) detaylı formüller ve örneklerle öğrenin.");
+        } else {
+            tensesSubtitle.textContent = isEnUi 
+                ? "Learn core English tenses and modals with structural formulas and examples."
+                : (isDeUi ? "Lernen Sie die wichtigsten englischen Zeiten und Modalverben mit Formeln und Beispielen." : "İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.");
+        }
+    }
+    if (grammarTensesHeading) {
+        if (isDe) {
+            grammarTensesHeading.textContent = isEnUi ? "Tenses (Zeiten)" : (isDeUi ? "Zeiten (Grammatik)" : "Zamanlar (Zeiten)");
+        } else {
+            grammarTensesHeading.textContent = isEnUi ? "Tenses" : (isDeUi ? "Zeiten (Tenses)" : "Zamanlar (Tenses)");
+        }
+    }
+    if (grammarModalsHeading) {
+        if (isDe) {
+            grammarModalsHeading.textContent = isEnUi ? "Modals (Modalverben)" : (isDeUi ? "Modalverben" : "Kipler (Modalverben)");
+        } else {
+            grammarModalsHeading.textContent = isEnUi ? "Modals" : (isDeUi ? "Modale (Modals)" : "Kipler (Modals)");
+        }
+    }
+
+    // 6. Quiz Intro & Options
+    const quizIntroDesc = document.getElementById("quiz-intro-desc");
+    const quizOptToTr = document.getElementById("quiz-opt-to-tr");
+    const quizOptToTarget = document.getElementById("quiz-opt-to-target");
+    if (quizIntroDesc) {
+        if (isDe) {
+            quizIntroDesc.textContent = isEnUi 
+                ? "Test your knowledge with German/Turkish translations or context fill-in-the-blanks!"
+                : (isDeUi ? "Teste dein Wissen mit Deutsch/Türkisch-Übersetzungen oder Lückentexten!" : "Kelimelerin Türkçe/Almanca karşılıklarını veya cümle içindeki doğru kullanımlarını test et!");
+        } else {
+            quizIntroDesc.textContent = isEnUi 
+                ? "Test your knowledge with English/Turkish translations or context fill-in-the-blanks!"
+                : (isDeUi ? "Teste dein Wissen mit Englisch/Türkisch-Übersetzungen oder Lückentexten!" : "Kelimelerin Türkçe/İngilizce karşılıklarını veya cümle içindeki doğru kullanımlarını test et!");
+        }
+    }
+    if (quizOptToTr) {
+        if (isDe) {
+            quizOptToTr.textContent = isEnUi ? "German ➔ Turkish (Find Meaning)" : (isDeUi ? "Deutsch ➔ Türkisch (Bedeutung)" : "Almanca ➔ Türkçe (Anlamını Bul)");
+        } else {
+            quizOptToTr.textContent = isEnUi ? "English ➔ Turkish (Find Meaning)" : (isDeUi ? "Englisch ➔ Türkisch (Bedeutung)" : "İngilizce ➔ Türkçe (Anlamını Bul)");
+        }
+    }
+    if (quizOptToTarget) {
+        if (isDe) {
+            quizOptToTarget.textContent = isEnUi ? "Turkish ➔ German (Find Word)" : (isDeUi ? "Türkisch ➔ Deutsch (Wort finden)" : "Türkçe ➔ Almanca (Kelimeyi Bul)");
+        } else {
+            quizOptToTarget.textContent = isEnUi ? "Turkish ➔ English (Find Word)" : (isDeUi ? "Türkisch ➔ Englisch (Wort finden)" : "Türkçe ➔ İngilizce (Kelimeyi Bul)");
+        }
+    }
+
+    // 7. Refresh daily quests labels with targetLang awareness
+    if (typeof checkDailyQuests === "function") {
+        checkDailyQuests();
     }
 }
 
@@ -772,14 +911,17 @@ function displayCurrentCard() {
         currentCardIndex = 0;
     }
 
+    const isEnUi = typeof currentLang !== 'undefined' && currentLang === 'en';
+    const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
+
     if (filteredWords.length === 0) {
         if (cardEl) cardEl.style.pointerEvents = "none";
-        if (enEl) enEl.textContent = "Kelime Bulunamadı";
-        if (trEl) trEl.textContent = "Lütfen aramayı veya filtreyi değiştirin";
+        if (enEl) enEl.textContent = isEnUi ? "No Words Found" : (isDeUi ? "Keine Wörter gefunden" : "Kelime Bulunamadı");
+        if (trEl) trEl.textContent = isEnUi ? "Please change search or filter" : (isDeUi ? "Bitte Suche oder Filter anpassen" : "Lütfen aramayı veya filtreyi değiştirin");
         if (typeEl) typeEl.textContent = "";
-        if (exEnEl) exEnEl.textContent = "İpucu:";
-        if (exTrEl) exTrEl.textContent = "Kendi kelimelerinizi ekleyebilir veya diğer alanları filtreleyebilirsiniz.";
-        if (categoryEl) categoryEl.textContent = "BOŞ";
+        if (exEnEl) exEnEl.textContent = isEnUi ? "Tip:" : (isDeUi ? "Tipp:" : "İpucu:");
+        if (exTrEl) exTrEl.textContent = isEnUi ? "You can add custom words or select other categories." : (isDeUi ? "Sie können eigene Wörter hinzufügen oder andere Kategorien wählen." : "Kendi kelimelerinizi ekleyebilir veya diğer alanları filtreleyebilirsiniz.");
+        if (categoryEl) categoryEl.textContent = isEnUi ? "EMPTY" : (isDeUi ? "LEER" : "BOŞ");
         if (indexNumEl) indexNumEl.textContent = "0";
         if (totalNumEl) totalNumEl.textContent = "0";
         if (markLearnedBtn) markLearnedBtn.style.display = "none";
@@ -830,7 +972,7 @@ function displayCurrentCard() {
         if (exEnEl) exEnEl.textContent = `"${exSentence}"`;
         if (exTrEl) exTrEl.textContent = `"${word.exTr || ''}"`;
     } else {
-        if (exEnEl) exEnEl.textContent = "Örnek cümle yükleniyor... / Loading example...";
+        if (exEnEl) exEnEl.textContent = isEnUi ? "Loading example sentence..." : (isDeUi ? "Beispielsatz wird geladen..." : "Örnek cümle yükleniyor...");
         if (exTrEl) exTrEl.textContent = "";
         loadDynamicExampleSentence(word, exEnEl, exTrEl, "card");
     }
@@ -838,37 +980,37 @@ function displayCurrentCard() {
     // Category representation
     if (categoryEl) {
         if (word.id.startsWith("cust_")) {
-            categoryEl.textContent = "Benim Kelimem";
+            categoryEl.textContent = isEnUi ? "Custom Word" : (isDeUi ? "Eigenes Wort" : "Benim Kelimem");
         } else if (word.category.includes("Aviation")) {
-            categoryEl.textContent = "Havacılık";
+            categoryEl.textContent = isEnUi ? "Aviation" : (isDeUi ? "Luftfahrt" : "Havacılık");
         } else if (word.category.includes("Tourism")) {
-            categoryEl.textContent = "Turizm";
+            categoryEl.textContent = isEnUi ? "Tourism" : (isDeUi ? "Tourismus" : "Turizm");
         } else if (word.category.includes("Kitchen")) {
-            categoryEl.textContent = "Mutfak & Gastronomi";
+            categoryEl.textContent = isEnUi ? "Kitchen" : (isDeUi ? "Küche" : "Mutfak & Gastronomi");
         } else if (word.category.includes("Technology")) {
-            categoryEl.textContent = "Teknoloji & Yazılım";
+            categoryEl.textContent = isEnUi ? "Technology" : (isDeUi ? "Technologie" : "Teknoloji & Yazılım");
         } else if (word.category.includes("Business")) {
-            categoryEl.textContent = "İş & Ekonomi";
+            categoryEl.textContent = isEnUi ? "Business" : (isDeUi ? "Wirtschaft" : "İş & Ekonomi");
         } else if (word.category.includes("Medicine")) {
-            categoryEl.textContent = "Tıp & Sağlık";
+            categoryEl.textContent = isEnUi ? "Medicine" : (isDeUi ? "Medizin" : "Tıp & Sağlık");
         } else if (word.category.includes("Science")) {
-            categoryEl.textContent = "Bilim & Uzay";
+            categoryEl.textContent = isEnUi ? "Science" : (isDeUi ? "Wissenschaft" : "Bilim & Uzay");
         } else if (word.category.includes("Academic")) {
-            categoryEl.textContent = "Akademi & Eğitim";
+            categoryEl.textContent = isEnUi ? "Academic" : (isDeUi ? "Akademisch" : "Akademi & Eğitim");
         } else if (word.category.includes("Fashion")) {
-            categoryEl.textContent = "Moda & Tasarım";
+            categoryEl.textContent = isEnUi ? "Fashion" : (isDeUi ? "Mode" : "Moda & Tasarım");
         } else if (word.category.includes("Sports")) {
-            categoryEl.textContent = "Spor & Egzersiz";
+            categoryEl.textContent = isEnUi ? "Sports" : (isDeUi ? "Sport" : "Spor & Egzersiz");
         } else if (word.category.includes("Nature")) {
-            categoryEl.textContent = "Doğa & Çevre";
+            categoryEl.textContent = isEnUi ? "Nature" : (isDeUi ? "Natur" : "Doğa & Çevre");
         } else if (word.category.includes("Law")) {
-            categoryEl.textContent = "Hukuk & Adalet";
+            categoryEl.textContent = isEnUi ? "Law" : (isDeUi ? "Recht" : "Hukuk & Adalet");
         } else if (word.category.includes("Music")) {
-            categoryEl.textContent = "Müzik & Sanat";
+            categoryEl.textContent = isEnUi ? "Music & Art" : (isDeUi ? "Musik & Kunst" : "Müzik & Sanat");
         } else if (word.category.includes("Numbers")) {
-            categoryEl.textContent = "Sayılar (1-100)";
+            categoryEl.textContent = isEnUi ? "Numbers (1-100)" : (isDeUi ? "Zahlen (1-100)" : "Sayılar (1-100)");
         } else {
-            categoryEl.textContent = "Genel";
+            categoryEl.textContent = isEnUi ? "General" : (isDeUi ? "Allgemein" : "Genel");
         }
     }
 
@@ -880,11 +1022,11 @@ function displayCurrentCard() {
     const isLearned = learnedWordIds.includes(word.id);
     if (isLearned) {
         markLearnedBtn.classList.add("learned-active");
-        if (learnedBtnText) learnedBtnText.textContent = "Öğrenildi!";
+        if (learnedBtnText) learnedBtnText.textContent = isEnUi ? "Learned!" : (isDeUi ? "Gelernt!" : "Öğrenildi!");
         markLearnedBtn.querySelector("i").className = "fa-solid fa-circle-check";
     } else {
         markLearnedBtn.classList.remove("learned-active");
-        if (learnedBtnText) learnedBtnText.textContent = "Öğrendim Olarak İşaretle";
+        if (learnedBtnText) learnedBtnText.textContent = isEnUi ? "Mark as Learned" : (isDeUi ? "Als gelernt markieren" : "Öğrendim Olarak İşaretle");
         markLearnedBtn.querySelector("i").className = "fa-regular fa-circle-check";
     }
 }
@@ -892,16 +1034,19 @@ function displayCurrentCard() {
 // Toggle learned state function
 function toggleWordLearned(wordId) {
     const index = learnedWordIds.indexOf(wordId);
+    const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+    const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
     if (index > -1) {
         // Remove from learned
         learnedWordIds.splice(index, 1);
-        showToast("Kelime çalışılacaklar listesine geri alındı.");
+        showToast(isEn ? "Word moved back to study list." : (isDeUi ? "Wort zurück auf die Lernliste verschoben." : "Kelime çalışılacaklar listesine geri alındı."));
     } else {
         // Add to states
         learnedWordIds.push(wordId);
-        showToast("Harika! Kelime öğrenildi olarak işaretlendi.");
+        showToast(isEn ? "Great! Word marked as learned." : (isDeUi ? "Großartig! Wort als gelernt markiert." : "Harika! Kelime öğrenildi olarak işaretlendi."));
     }
-    setAppStorage("learned_words", JSON.stringify(learnedWordIds));
+    const storageKey = targetLang === "de" ? "learned_words_de" : "learned_words";
+    setAppStorage(storageKey, JSON.stringify(learnedWordIds));
     
     // Evaluate achievements when status changes
     if (typeof checkAchievements === 'function') {
@@ -1417,7 +1562,13 @@ function startQuizGame() {
 
         if (selectedType === "en-to-tr") {
             // Mode 1: Target Language to Turkish
-            questionText = isDe ? "Aşağıdaki Almanca kelimenin anlamı nedir?" : "Aşağıdaki İngilizce kelimenin anlamı nedir?";
+            if (currentLang === "en") {
+                questionText = isDe ? "What is the Turkish meaning of this German word?" : "What is the Turkish meaning of this English word?";
+            } else if (currentLang === "de") {
+                questionText = isDe ? "Was bedeutet dieses deutsche Wort auf Türkisch?" : "Was bedeutet dieses englische Wort auf Türkisch?";
+            } else {
+                questionText = isDe ? "Aşağıdaki Almanca kelimenin anlamı nedir?" : "Aşağıdaki İngilizce kelimenin anlamı nedir?";
+            }
             questionWord = correctTargetWord;
             correctAnswer = correctWord.tr;
             speakText = correctTargetWord;
@@ -1430,7 +1581,13 @@ function startQuizGame() {
             choices = [correctWord.tr, ...uniqueWrongTrs.slice(0, 3)];
         } else if (selectedType === "tr-to-en") {
             // Mode 2: Turkish to Target Language
-            questionText = isDe ? "Aşağıdaki Türkçe anlamın Almanca karşılığı nedir?" : "Aşağıdaki Türkçe anlamın İngilizce karşılığı nedir?";
+            if (currentLang === "en") {
+                questionText = isDe ? "What is the German word for the Turkish meaning below?" : "What is the English word for the Turkish meaning below?";
+            } else if (currentLang === "de") {
+                questionText = isDe ? "Was ist das deutsche Wort für folgende türkische Bedeutung?" : "Was ist das englische Wort für folgende türkische Bedeutung?";
+            } else {
+                questionText = isDe ? "Aşağıdaki Türkçe anlamın Almanca karşılığı nedir?" : "Aşağıdaki Türkçe anlamın İngilizce karşılığı nedir?";
+            }
             questionWord = correctWord.tr;
             correctAnswer = correctTargetWord;
             speakText = correctTargetWord; 
@@ -1443,7 +1600,13 @@ function startQuizGame() {
             choices = [correctTargetWord, ...uniqueWrongTargets.slice(0, 3)];
         } else if (selectedType === "sentence-fill") {
             // Mode 3: Sentence fill-in-the-blank
-            questionText = isDe ? "Cümledeki boşluğa uygun Almanca kelimeyi seçin:" : "Cümledeki boşluğa uygun İngilizce kelimeyi seçin:";
+            if (currentLang === "en") {
+                questionText = isDe ? "Choose the German word that fits the blank in the sentence:" : "Choose the English word that fits the blank in the sentence:";
+            } else if (currentLang === "de") {
+                questionText = isDe ? "Wähle das passende deutsche Wort für die Lücke im Satz:" : "Wähle das passende englische Wort für die Lücke im Satz:";
+            } else {
+                questionText = isDe ? "Cümledeki boşluğa uygun Almanca kelimeyi seçin:" : "Cümledeki boşluğa uygun İngilizce kelimeyi seçin:";
+            }
             
             const exSentence = (isDe ? (correctWord.exDe || correctWord.exEn) : (correctWord.exEn || correctWord.exDe)) || "";
             
@@ -1637,18 +1800,47 @@ function showQuizResults() {
 
     // Custom results summary styling
     const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+    const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
+    const isDeTarget = targetLang === 'de';
+
     if (scorePercent >= 80) {
         if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-trophy text-gold" style="font-size: 65px;"></i>`;
-        if (titleEl) titleEl.textContent = isEn ? "Awesome Job! 🎉" : "Harikasın! 🎉";
-        if (descEl) descEl.textContent = isEn ? "You learned the words perfectly! Keep studying like this." : "Kelimeleri mükemmel bir şekilde öğrenmişsin! İngilizce çalışmalarına bu şekilde devam et.";
+        if (titleEl) titleEl.textContent = isEn ? "Awesome Job! 🎉" : (isDeUi ? "Großartig! 🎉" : "Harikasın! 🎉");
+        if (descEl) {
+            if (isEn) {
+                descEl.textContent = "You learned the words perfectly! Keep studying like this.";
+            } else if (isDeUi) {
+                descEl.textContent = "Du hast die Wörter perfekt gelernt! Mach weiter so.";
+            } else {
+                descEl.textContent = isDeTarget 
+                    ? "Kelimeleri mükemmel bir şekilde öğrenmişsin! Almanca çalışmalarına bu şekilde devam et."
+                    : "Kelimeleri mükemmel bir şekilde öğrenmişsin! İngilizce çalışmalarına bu şekilde devam et.";
+            }
+        }
     } else if (scorePercent >= 50) {
         if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-star-half-stroke" style="color: #f59e0b; font-size: 65px;"></i>`;
-        if (titleEl) titleEl.textContent = isEn ? "Doing Great! 👍" : "Çok İyi Gidiyorsun! 👍";
-        if (descEl) descEl.textContent = isEn ? "A good result! Study the flashcards a bit more to secure a 100% score." : "Gayet güzel bir sonuç! Kelime kartlarına biraz daha çalışarak 100% skoru yakalayabilirsin.";
+        if (titleEl) titleEl.textContent = isEn ? "Doing Great! 👍" : (isDeUi ? "Sehr gut! 👍" : "Çok İyi Gidiyorsun! 👍");
+        if (descEl) {
+            if (isEn) {
+                descEl.textContent = "A good result! Study the flashcards a bit more to secure a 100% score.";
+            } else if (isDeUi) {
+                descEl.textContent = "Ein gutes Ergebnis! Lerne noch etwas mit den Karteikarten für 100%.";
+            } else {
+                descEl.textContent = "Gayet güzel bir sonuç! Kelime kartlarına biraz daha çalışarak 100% skoru yakalayabilirsin.";
+            }
+        }
     } else {
         if (emojiEl) emojiEl.innerHTML = `<i class="fa-solid fa-book-open" style="color: #38bdf8; font-size: 65px;"></i>`;
-        if (titleEl) titleEl.textContent = isEn ? "Let's Practice! 💪" : "Tekrar Çalışalım! 💪";
-        if (descEl) descEl.textContent = isEn ? "No problem at all. Flip the flashcards and practice with audio to achieve success!" : "Hiç sorun değil, kelime kartlarını çevirerek telaffuzleriyle birlikte tekrar ederek başarıya ulaşabilirsin!";
+        if (titleEl) titleEl.textContent = isEn ? "Let's Practice! 💪" : (isDeUi ? "Weiter üben! 💪" : "Tekrar Çalışalım! 💪");
+        if (descEl) {
+            if (isEn) {
+                descEl.textContent = "No problem at all. Flip the flashcards and practice with audio to achieve success!";
+            } else if (isDeUi) {
+                descEl.textContent = "Kein Problem! Drehe die Karten um und übe mit Audio, um dich zu verbessern.";
+            } else {
+                descEl.textContent = "Hiç sorun değil, kelime kartlarını çevirerek telaffuzlarıyla birlikte tekrar ederek başarıya ulaşabilirsin!";
+            }
+        }
     }
 
     showQuizScreen("quiz-results-screen");
@@ -1941,12 +2133,13 @@ function checkDailyQuests() {
     
     // 2. Quiz Quest
     if (qtQuiz) {
+        const isDeTarget = targetLang === "de";
         if (isEn) {
-            qtQuiz.textContent = "Complete one Quiz";
+            qtQuiz.textContent = isDeTarget ? "Complete one German Quiz" : "Complete one English Quiz";
         } else if (isDe) {
-            qtQuiz.textContent = "Ein Quiz abschließen";
+            qtQuiz.textContent = isDeTarget ? "Ein Deutsch-Quiz abschließen" : "Ein Englisch-Quiz abschließen";
         } else {
-            qtQuiz.textContent = "Bir İngilizce Quiz tamamla";
+            qtQuiz.textContent = isDeTarget ? "Bir Almanca Quiz tamamla" : "Bir İngilizce Quiz tamamla";
         }
     }
     
@@ -2011,23 +2204,26 @@ function determineWordOfTheDay() {
 
     if (enEl) enEl.textContent = targetWord;
     if (typeEl) {
+        const isEnUi = typeof currentLang !== 'undefined' && currentLang === 'en';
+        const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
         if (wordOfTheDay.id.startsWith("cust_")) {
-            typeEl.textContent = `(${wordOfTheDay.type})`;
+            typeEl.textContent = isEnUi ? "(Custom)" : (isDeUi ? "(Eigenes)" : `(${wordOfTheDay.type})`);
         } else {
-            let shortCat = "Genel";
-            if (wordOfTheDay.category.includes("Aviation")) shortCat = "Havacılık";
-            else if (wordOfTheDay.category.includes("Tourism")) shortCat = "Turizm";
-            else if (wordOfTheDay.category.includes("Kitchen")) shortCat = "Mutfak";
-            else if (wordOfTheDay.category.includes("Technology")) shortCat = "Teknoloji";
-            else if (wordOfTheDay.category.includes("Business")) shortCat = "İş & Eko";
-            else if (wordOfTheDay.category.includes("Medicine")) shortCat = "Tıp & Sağlık";
-            else if (wordOfTheDay.category.includes("Science")) shortCat = "Bilim & Uzay";
-            else if (wordOfTheDay.category.includes("Academic")) shortCat = "Akademi";
-            else if (wordOfTheDay.category.includes("Fashion")) shortCat = "Moda";
-            else if (wordOfTheDay.category.includes("Sports")) shortCat = "Spor";
-            else if (wordOfTheDay.category.includes("Nature")) shortCat = "Doğa";
-            else if (wordOfTheDay.category.includes("Law")) shortCat = "Hukuk";
-            else if (wordOfTheDay.category.includes("Music")) shortCat = "Müzik & Sanat";
+            let shortCat = isEnUi ? "General" : (isDeUi ? "Allgemein" : "Genel");
+            if (wordOfTheDay.category.includes("Aviation")) shortCat = isEnUi ? "Aviation" : (isDeUi ? "Luftfahrt" : "Havacılık");
+            else if (wordOfTheDay.category.includes("Tourism")) shortCat = isEnUi ? "Tourism" : (isDeUi ? "Tourismus" : "Turizm");
+            else if (wordOfTheDay.category.includes("Kitchen")) shortCat = isEnUi ? "Kitchen" : (isDeUi ? "Küche" : "Mutfak");
+            else if (wordOfTheDay.category.includes("Technology")) shortCat = isEnUi ? "Tech" : (isDeUi ? "Technik" : "Teknoloji");
+            else if (wordOfTheDay.category.includes("Business")) shortCat = isEnUi ? "Business" : (isDeUi ? "Wirtschaft" : "İş & Eko");
+            else if (wordOfTheDay.category.includes("Medicine")) shortCat = isEnUi ? "Medicine" : (isDeUi ? "Medizin" : "Tıp & Sağlık");
+            else if (wordOfTheDay.category.includes("Science")) shortCat = isEnUi ? "Science" : (isDeUi ? "Wiss." : "Bilim & Uzay");
+            else if (wordOfTheDay.category.includes("Academic")) shortCat = isEnUi ? "Academic" : (isDeUi ? "Akad." : "Akademi");
+            else if (wordOfTheDay.category.includes("Fashion")) shortCat = isEnUi ? "Fashion" : (isDeUi ? "Mode" : "Moda");
+            else if (wordOfTheDay.category.includes("Sports")) shortCat = isEnUi ? "Sports" : (isDeUi ? "Sport" : "Spor");
+            else if (wordOfTheDay.category.includes("Nature")) shortCat = isEnUi ? "Nature" : (isDeUi ? "Natur" : "Doğa");
+            else if (wordOfTheDay.category.includes("Law")) shortCat = isEnUi ? "Law" : (isDeUi ? "Recht" : "Hukuk");
+            else if (wordOfTheDay.category.includes("Music")) shortCat = isEnUi ? "Music" : (isDeUi ? "Musik" : "Müzik & Sanat");
+            else if (wordOfTheDay.category.includes("Numbers")) shortCat = isEnUi ? "Numbers" : (isDeUi ? "Zahlen" : "Sayılar");
             
             typeEl.textContent = `(${shortCat})`;
         }
@@ -2042,7 +2238,9 @@ function determineWordOfTheDay() {
         if (exEnEl) exEnEl.textContent = `"${exSentence}"`;
         if (exTrEl) exTrEl.textContent = `"${wordOfTheDay.exTr || ''}"`;
     } else {
-        if (exEnEl) exEnEl.textContent = isDe ? "Günün kelimesi örneği yükleniyor..." : "Loading Word of the Day example...";
+        const isEnUi = typeof currentLang !== 'undefined' && currentLang === 'en';
+        const isDeUi = typeof currentLang !== 'undefined' && currentLang === 'de';
+        if (exEnEl) exEnEl.textContent = isEnUi ? "Loading Word of the Day example..." : (isDeUi ? "Beispiel für das Wort des Tages wird geladen..." : "Günün kelimesi örneği yükleniyor...");
         if (exTrEl) exTrEl.textContent = "";
         
         loadDynamicExampleSentence(wordOfTheDay, exEnEl, exTrEl, "wod");
@@ -2246,7 +2444,33 @@ const TRANSLATIONS = {
         "drawer-lang-desc": "Uygulama arayüz dilini değiştirin:",
         "drawer-reset-title": "İlerleme Sıfırlama",
         "drawer-reset-desc": "Çalışma verilerinizi temizleyebilirsiniz (serileriniz, rozetleriniz ve kendi eklediğiniz kelimeler sıfırlanır):",
-        "drawer-reset-btn": "Tüm İlerlemeyi Sıfırla"
+        "drawer-reset-btn": "Tüm İlerlemeyi Sıfırla",
+        "greeting-welcome": "Hoş Geldiniz! ✨",
+        "cards-title": "Kelime Kartları ile Pratik",
+        "list-title": "Tüm Kelimeler & Sözlük",
+        "add-word-title": "Yeni Kelime Ekle",
+        "label-word-tr": "Türkçe Anlamı",
+        "label-word-category": "Kategori / Tür",
+        "label-word-example-tr": "Türkçe Çeviri (İsteğe Bağlı)",
+        "btn-save-word": "Listeme Ekle",
+        "th-meaning": "Türkçe Anlamı",
+        "th-category": "Kategori",
+        "th-actions": "İşlemler",
+        "btn-prev": "Önceki",
+        "btn-next": "Sonraki",
+        "btn-shuffle": "Karıştır",
+        "quiz-title": "Bilgini Sına!",
+        "quiz-subtitle": "Öğrendiğin kelimeleri farklı modlarda test et. Test uzunluğunu ve soru çeşidini seçebilirsin.",
+        "quiz-intro-title": "Kelime Yarışı Başlıyor!",
+        "quiz-source-label": "Soru Kaynağı ve Alanı:",
+        "quiz-type-label": "Soru Türü:",
+        "quiz-count-label": "Soru Sayısı:",
+        "btn-start-quiz": "Testi Başlat",
+        "btn-quit-quiz": "Testten Çık",
+        "btn-next-question": "Sonraki Soru",
+        "btn-retry-quiz": "Yeniden Dene",
+        "btn-home-return": "Ana Sayfaya Dön",
+        "grammar-empty-text": "Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin."
     },
     en: {
         "nav-home": "Home",
@@ -2311,7 +2535,33 @@ const TRANSLATIONS = {
         "drawer-lang-desc": "Toggle the interface language:",
         "drawer-reset-title": "Reset Progress",
         "drawer-reset-desc": "Clean up your learning data (streaks, badges, and custom words will be deleted):",
-        "drawer-reset-btn": "Reset All Progress"
+        "drawer-reset-btn": "Reset All Progress",
+        "greeting-welcome": "Welcome! ✨",
+        "cards-title": "Flashcards Practice",
+        "list-title": "All Words & Dictionary",
+        "add-word-title": "Add New Word",
+        "label-word-tr": "Turkish Meaning",
+        "label-word-category": "Category / Type",
+        "label-word-example-tr": "Turkish Translation (Optional)",
+        "btn-save-word": "Add to My List",
+        "th-meaning": "Turkish Meaning",
+        "th-category": "Category",
+        "th-actions": "Actions",
+        "btn-prev": "Previous",
+        "btn-next": "Next",
+        "btn-shuffle": "Shuffle",
+        "quiz-title": "Test Your Knowledge!",
+        "quiz-subtitle": "Test vocabulary in various modes. Pick length and question type.",
+        "quiz-intro-title": "Word Race Begins!",
+        "quiz-source-label": "Question Source & Category:",
+        "quiz-type-label": "Question Type:",
+        "quiz-count-label": "Number of Questions:",
+        "btn-start-quiz": "Start Quiz",
+        "btn-quit-quiz": "Quit Quiz",
+        "btn-next-question": "Next Question",
+        "btn-retry-quiz": "Try Again",
+        "btn-home-return": "Return to Home",
+        "grammar-empty-text": "Select a grammar topic from the list on the left."
     },
     de: {
         "nav-home": "Startseite",
@@ -2376,7 +2626,33 @@ const TRANSLATIONS = {
         "drawer-lang-desc": "Ändere die Sprache der Benutzeroberfläche:",
         "drawer-reset-title": "Fortschritt zurücksetzen",
         "drawer-reset-desc": "Lösche deine Lerndaten (Serien, Abzeichen und eigene Wörter werden entfernt):",
-        "drawer-reset-btn": "Gesamten Fortschritt zurücksetzen"
+        "drawer-reset-btn": "Gesamten Fortschritt zurücksetzen",
+        "greeting-welcome": "Willkommen! ✨",
+        "cards-title": "Karteikarten-Praxis",
+        "list-title": "Alle Wörter & Wörterbuch",
+        "add-word-title": "Neues Wort Hinzufügen",
+        "label-word-tr": "Türkische Bedeutung",
+        "label-word-category": "Kategorie / Wortart",
+        "label-word-example-tr": "Türkische Übersetzung (Optional)",
+        "btn-save-word": "Zu meiner Liste hinzufügen",
+        "th-meaning": "Türkische Bedeutung",
+        "th-category": "Kategorie",
+        "th-actions": "Aktionen",
+        "btn-prev": "Zurück",
+        "btn-next": "Weiter",
+        "btn-shuffle": "Mischen",
+        "quiz-title": "Teste dein Wissen!",
+        "quiz-subtitle": "Teste deinen Wortschatz in verschiedenen Modi. Wähle Testlänge und Fragetyp.",
+        "quiz-intro-title": "Das Wörter-Rennen beginnt!",
+        "quiz-source-label": "Fragenquelle & Kategorie:",
+        "quiz-type-label": "Fragetyp:",
+        "quiz-count-label": "Anzahl der Fragen:",
+        "btn-start-quiz": "Quiz starten",
+        "btn-quit-quiz": "Quiz beenden",
+        "btn-next-question": "Nächste Frage",
+        "btn-retry-quiz": "Erneut versuchen",
+        "btn-home-return": "Zurück zur Startseite",
+        "grammar-empty-text": "Wählen Sie ein Grammatikthema aus der linken Liste."
     }
 };
 
@@ -2427,6 +2703,8 @@ function applyLanguage(lang) {
     checkDailyQuests(); // Refresh quests labels
     updateFormLabelsForTargetLang();
     renderDashboard(); // Refresh localized stats labels and units
+    displayCurrentCard(); // Refresh current card texts
+    renderDictionaryList(); // Refresh dictionary list texts
 }
 
 function trackWodListening() {

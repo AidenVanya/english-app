@@ -93,7 +93,7 @@
                     <div class="welcome-header">
                         <div class="welcome-text">
                             <span class="greeting-subtitle" id="greeting-time">İyi günler,</span>
-                            <h1 class="greeting-title">Welcome! ✨</h1>
+                            <h1 class="greeting-title" data-i18n="greeting-welcome">Welcome! ✨</h1>
                             <p class="motivational-quote" id="daily-quote">"The beautiful thing about learning is that no one can take it away from you."</p>
                             <span class="quote-author" id="daily-quote-author">- B.B. King</span>
                         </div>
@@ -157,7 +157,7 @@
                             </div>
                             <div class="quest-item" id="quest-quiz">
                                 <div class="quest-checkbox" id="qc-quiz"><i class="fa-regular fa-circle"></i></div>
-                                <span class="quest-text">Bir İngilizce Quiz tamamla</span>
+                                <span class="quest-text" id="qt-quiz">Bir İngilizce Quiz tamamla</span>
                             </div>
                             <div class="quest-item" id="quest-wod">
                                 <div class="quest-checkbox" id="qc-wod"><i class="fa-regular fa-circle"></i></div>
@@ -279,8 +279,8 @@
             <!-- 2. FLASHCARDS TAB -->
             <section class="tab-content" id="cards-tab">
                 <div class="section-header">
-                    <h2>Kelime Kartları ile Pratik</h2>
-                    <p>Kartların üzerine tıklayarak Türkçe anlamını görebilir ve ses simgesi ile İngilizce telaffuzunu dinleyebilirsin.</p>
+                    <h2 data-i18n="cards-title">Kelime Kartları ile Pratik</h2>
+                    <p id="cards-tab-desc">Kartların üzerine tıklayarak Türkçe anlamını görebilir ve ses simgesi ile İngilizce telaffuzunu dinleyebilirsin.</p>
                 </div>
 
                 <!-- Filters & Search Bar -->
@@ -289,7 +289,7 @@
                         <select id="card-category-select" class="styled-select">
                             <option value="all">Tüm Alanlar</option>
                             <option value="General">Genel Kelimeler</option>
-                            <option value="Numbers (Sayılar)">Sayılar (1-100 Sayma)</option>
+                            <option value="Numbers (Sayılar)">🔢 Sayılar (1-100 Sayma)</option>
                             <option value="Aviation (Havacılık)">Havacılık Kelimeleri</option>
                             <option value="Tourism (Turizm)">Turizm Kelimeleri</option>
                             <option value="Kitchen (Mutfak)">Mutfak & Gastronomi</option>
@@ -331,12 +331,12 @@
                                         <i class="fa-solid fa-volume-high"></i>
                                     </button>
                                 </div>
-                                <span class="card-tip"><i class="fa-solid fa-rotate"></i> Çevirmek için tıkla</span>
+                                <span class="card-tip" id="card-tip-front"><i class="fa-solid fa-rotate"></i> <span id="card-tip-front-text">Çevirmek için tıkla</span></span>
                             </div>
 
                             <!-- Back of the Card -->
                             <div class="card-face card-back">
-                                <span class="card-tag">Türkçe Anlamı</span>
+                                <span class="card-tag" id="card-back-tag">Türkçe Anlamı</span>
                                 <div class="card-translation-area">
                                     <h2 class="translation-text" id="card-word-tr">Zorluk, Meydan Okuma</h2>
                                 </div>
@@ -349,7 +349,7 @@
                                     </div>
                                     <p class="example-tr" id="card-example-tr">"İngilizce öğrenmek güzel bir meydan okumadır."</p>
                                 </div>
-                                <span class="card-tip"><i class="fa-solid fa-rotate"></i> İngilizceye dönmek için tıkla</span>
+                                <span class="card-tip" id="card-tip-back"><i class="fa-solid fa-rotate"></i> <span id="card-tip-back-text">İngilizceye dönmek için tıkla</span></span>
                             </div>
                         </div>
                     </div>
@@ -360,7 +360,7 @@
                             <i class="fa-solid fa-arrow-left"></i>
                         </button>
                         <button class="control-btn" id="shuffle-card-btn" title="Kelimeleri Karıştır">
-                            <i class="fa-solid fa-shuffle"></i> <span>Karıştır</span>
+                            <i class="fa-solid fa-shuffle"></i> <span id="shuffle-btn-text" data-i18n="btn-shuffle">Karıştır</span>
                         </button>
                         <div class="card-indicator">
                             <span id="current-card-num">1</span> / <span id="total-cards-num">10</span>
@@ -382,8 +382,8 @@
             <!-- 3. ALL WORDS LIST TAB (NEW) -->
             <section class="tab-content" id="list-tab">
                 <div class="section-header">
-                    <h2>Tüm Kelimeler & Sözlük</h2>
-                    <p>Sistemde yüklü olan 3800'den fazla kelimeyi arayabilir, kullanım alanlarına (Havacılık, Turizm, Genel) göre filtreleyebilir ve telaffuzlarını dinleyebilirsiniz.</p>
+                    <h2 data-i18n="list-title">Tüm Kelimeler & Sözlük</h2>
+                    <p id="list-tab-desc">Sistemde yüklü olan 3800'den fazla kelimeyi arayabilir, kullanım alanlarına (Havacılık, Turizm, Genel) göre filtreleyebilir ve telaffuzlarını dinleyebilirsiniz.</p>
                 </div>
 
                 <!-- Controls & Filters for List -->
@@ -392,7 +392,7 @@
                         <select id="list-category-select" class="styled-select">
                             <option value="all">Tüm Alanlar</option>
                             <option value="General">Genel Kelimeler</option>
-                            <option value="Numbers (Sayılar)">Sayılar (1-100 Sayma)</option>
+                            <option value="Numbers (Sayılar)">🔢 Sayılar (1-100 Sayma)</option>
                             <option value="Aviation (Havacılık)">Havacılık Kelimeleri</option>
                             <option value="Tourism (Turizm)">Turizm Kelimeleri</option>
                             <option value="Kitchen (Mutfak)">Mutfak & Gastronomi</option>
@@ -423,21 +423,21 @@
                 <!-- Collapsible Add Word Panel -->
                 <div class="add-word-panel glass-panel" id="collapsible-add-word-panel">
                     <div class="panel-header">
-                        <h3><i class="fa-solid fa-circle-plus"></i> Yeni Kelime Ekle</h3>
+                        <h3 data-i18n="add-word-title"><i class="fa-solid fa-circle-plus"></i> Yeni Kelime Ekle</h3>
                         <button class="drawer-close-btn" id="close-add-word-panel-btn">&times;</button>
                     </div>
                     
                     <form id="add-word-form" onsubmit="event.preventDefault();">
                         <div class="form-group">
-                            <label for="word-en"><i class="fa-solid fa-font"></i> İngilizce Kelime</label>
+                            <label for="word-en" id="label-word-target"><i class="fa-solid fa-font"></i> <span id="label-word-target-text">İngilizce Kelime</span></label>
                             <input type="text" id="word-en" placeholder="Örn: Serendipity" required autocomplete="off">
                         </div>
                         <div class="form-group">
-                            <label for="word-tr"><i class="fa-solid fa-language"></i> Türkçe Anlamı</label>
+                            <label for="word-tr" data-i18n="label-word-tr"><i class="fa-solid fa-language"></i> Türkçe Anlamı</label>
                             <input type="text" id="word-tr" placeholder="Örn: Şans eseri bulma" required autocomplete="off">
                         </div>
                         <div class="form-group">
-                            <label for="word-category"><i class="fa-solid fa-tags"></i> Kategori / Tür</label>
+                            <label for="word-category" data-i18n="label-word-category"><i class="fa-solid fa-tags"></i> Kategori / Tür</label>
                             <select id="word-category">
                                 <option value="Noun (İsim)">Noun (İsim)</option>
                                 <option value="Verb (Fiil)">Verb (Fiil)</option>
@@ -447,16 +447,16 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="word-example-en"><i class="fa-solid fa-quote-left"></i> İngilizce Örnek (İsteğe Bağlı)</label>
+                            <label for="word-example-en" id="label-word-example-target"><i class="fa-solid fa-quote-left"></i> <span id="label-word-example-target-text">İngilizce Örnek (İsteğe Bağlı)</span></label>
                             <input type="text" id="word-example-en" placeholder="Örn: It happened by serendipity.">
                         </div>
                         <div class="form-group">
-                            <label for="word-example-tr"><i class="fa-solid fa-quote-right"></i> Türkçe Çeviri (İsteğe Bağlı)</label>
+                            <label for="word-example-tr" data-i18n="label-word-example-tr"><i class="fa-solid fa-quote-right"></i> Türkçe Çeviri (İsteğe Bağlı)</label>
                             <input type="text" id="word-example-tr" placeholder="Örn: Şans eseri gerçekleşti.">
                         </div>
                         <div class="form-group">
                             <button type="submit" class="btn btn-primary" id="save-word-btn">
-                                <i class="fa-solid fa-floppy-disk"></i> Listeme Ekle
+                                <i class="fa-solid fa-floppy-disk"></i> <span data-i18n="btn-save-word">Listeme Ekle</span>
                             </button>
                         </div>
                     </form>
@@ -468,10 +468,10 @@
                         <table class="words-table">
                             <thead>
                                 <tr>
-                                    <th>İngilizce</th>
-                                    <th>Türkçe Anlamı</th>
-                                    <th>Kategori</th>
-                                    <th style="text-align: center; width: 140px;">İşlemler</th>
+                                    <th id="th-target-word">İngilizce</th>
+                                    <th data-i18n="th-meaning">Türkçe Anlamı</th>
+                                    <th data-i18n="th-category">Kategori</th>
+                                    <th style="text-align: center; width: 140px;" data-i18n="th-actions">İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody id="words-table-body">
@@ -483,11 +483,11 @@
                     <!-- Pagination Controls -->
                     <div class="pagination-container">
                         <button class="control-btn pagination-btn" id="list-prev-page">
-                            <i class="fa-solid fa-chevron-left"></i> Önceki
+                            <i class="fa-solid fa-chevron-left"></i> <span data-i18n="btn-prev">Önceki</span>
                         </button>
                         <span class="pagination-info" id="list-page-info">Sayfa 1 / 78</span>
                         <button class="control-btn pagination-btn" id="list-next-page">
-                            Sonraki <i class="fa-solid fa-chevron-right"></i>
+                            <span data-i18n="btn-next">Sonraki</span> <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
@@ -499,7 +499,7 @@
             <section class="tab-content" id="tenses-tab">
                 <div class="section-header">
                     <h2 data-i18n="tenses-title">Zamanlar & Modallar</h2>
-                    <p data-i18n="tenses-subtitle">İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.</p>
+                    <p id="tenses-subtitle" data-i18n="tenses-subtitle">İngilizce dilbilgisindeki 12 temel zamanı (Tenses) ve en çok kullanılan kipleri (Modals) detaylı formüller ve örneklerle öğrenin.</p>
                 </div>
 
                 <div class="grammar-layout">
@@ -510,13 +510,13 @@
                         </div>
                         <div class="grammar-categories">
                             <div class="grammar-cat-group">
-                                <h4>Zamanlar (Tenses)</h4>
+                                <h4 id="grammar-tenses-heading">Zamanlar (Tenses)</h4>
                                 <div class="grammar-topics-list" id="tenses-list-container">
                                     <!-- Rendered dynamically via JS -->
                                 </div>
                             </div>
                             <div class="grammar-cat-group" style="margin-top: 15px;">
-                                <h4>Kipler (Modals)</h4>
+                                <h4 id="grammar-modals-heading">Kipler (Modals)</h4>
                                 <div class="grammar-topics-list" id="modals-list-container">
                                     <!-- Rendered dynamically via JS -->
                                 </div>
@@ -528,7 +528,7 @@
                     <div class="grammar-main glass-panel">
                         <div id="grammar-empty-state" class="empty-state">
                             <i class="fa-solid fa-book-open" style="font-size: 40px; color: var(--color-primary-light); margin-bottom: 12px;"></i>
-                            <p>Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin.</p>
+                            <p data-i18n="grammar-empty-text">Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin.</p>
                         </div>
                         
                         <div id="grammar-content-display" style="display: none;">
@@ -570,8 +570,8 @@
             <!-- 6. QUIZ TAB -->
             <section class="tab-content" id="quiz-tab">
                 <div class="section-header">
-                    <h2>Bilgini Sına!</h2>
-                    <p>Öğrendiğin kelimeleri farklı modlarda test et. Test uzunluğunu ve soru çeşidini seçebilirsin.</p>
+                    <h2 data-i18n="quiz-title">Bilgini Sına!</h2>
+                    <p data-i18n="quiz-subtitle">Öğrendiğin kelimeleri farklı modlarda test et. Test uzunluğunu ve soru çeşidini seçebilirsin.</p>
                 </div>
 
                 <!-- Quiz Start / Screen Wrapper -->
@@ -581,15 +581,15 @@
                     <div class="quiz-screen glass-panel active" id="quiz-start-screen">
                         <div class="quiz-intro">
                             <i class="fa-solid fa-rocket quiz-intro-icon"></i>
-                            <h3>Kelime Yarışı Başlıyor!</h3>
-                            <p>Kelimelerin Türkçe/İngilizce karşılıklarını veya cümle içindeki doğru kullanımlarını test et!</p>
+                            <h3 data-i18n="quiz-intro-title">Kelime Yarışı Başlıyor!</h3>
+                            <p id="quiz-intro-desc">Kelimelerin Türkçe/İngilizce karşılıklarını veya cümle içindeki doğru kullanımlarını test et!</p>
                             
                             <div class="quiz-setup" style="width: 100%; display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; max-width: 400px; margin-top: 10px;">
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="quiz-source-select"><i class="fa-solid fa-folder"></i> Soru Kaynağı ve Alanı:</label>
+                                    <label for="quiz-source-select" data-i18n="quiz-source-label"><i class="fa-solid fa-folder"></i> Soru Kaynağı ve Alanı:</label>
                                     <select id="quiz-source-select" class="styled-select" style="width: 100%;">
                                         <option value="all">Tüm Kelimeler (Genel + Sayılar + Havacılık...)</option>
-                                        <option value="Numbers (Sayılar)">Sadece Sayılar (1-100 Sayma)</option>
+                                        <option value="Numbers (Sayılar)">🔢 Sadece Sayılar (1-100 Sayma)</option>
                                         <option value="Aviation (Havacılık)">Sadece Havacılık Kelimeleri</option>
                                         <option value="Tourism (Turizm)">Sadece Turizm Kelimeleri</option>
                                         <option value="Kitchen (Mutfak)">Sadece Mutfak & Gastronomi</option>
@@ -607,15 +607,15 @@
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="quiz-type-select"><i class="fa-solid fa-sliders"></i> Soru Türü:</label>
+                                    <label for="quiz-type-select" data-i18n="quiz-type-label"><i class="fa-solid fa-sliders"></i> Soru Türü:</label>
                                     <select id="quiz-type-select" class="styled-select" style="width: 100%;">
-                                        <option value="en-to-tr">İngilizce ➔ Türkçe (Anlamını Bul)</option>
-                                        <option value="tr-to-en">Türkçe ➔ İngilizce (Kelimeyi Bul)</option>
+                                        <option value="en-to-tr" id="quiz-opt-to-tr">İngilizce ➔ Türkçe (Anlamını Bul)</option>
+                                        <option value="tr-to-en" id="quiz-opt-to-target">Türkçe ➔ İngilizce (Kelimeyi Bul)</option>
                                         <option value="sentence-fill">Boşluk Doldurma (Cümle İçi Kullanım)</option>
                                     </select>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label for="quiz-count-select"><i class="fa-solid fa-list-ol"></i> Soru Sayısı:</label>
+                                    <label for="quiz-count-select" data-i18n="quiz-count-label"><i class="fa-solid fa-list-ol"></i> Soru Sayısı:</label>
                                     <select id="quiz-count-select" class="styled-select" style="width: 100%;">
                                         <option value="10">10 Soru (Pratik)</option>
                                         <option value="20">20 Soru (Klasik)</option>
@@ -625,7 +625,7 @@
                             </div>
                             
                             <button class="btn btn-primary btn-lg" id="start-quiz-btn" style="margin-top: 15px;">
-                                <i class="fa-solid fa-play"></i> Testi Başlat
+                                <i class="fa-solid fa-play"></i> <span data-i18n="btn-start-quiz">Testi Başlat</span>
                             </button>
                         </div>
                     </div>
@@ -660,10 +660,10 @@
                         <!-- Quiz Navigation Controls -->
                         <div class="quiz-controls">
                             <button class="btn btn-secondary" id="quiz-quit-btn">
-                                <i class="fa-solid fa-right-from-bracket"></i> Testten Çık
+                                <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="btn-quit-quiz">Testten Çık</span>
                             </button>
                             <button class="btn btn-primary" id="quiz-next-btn" disabled>
-                                Sonraki Soru <i class="fa-solid fa-arrow-right"></i>
+                                <span data-i18n="btn-next-question">Sonraki Soru</span> <i class="fa-solid fa-arrow-right"></i>
                             </button>
                         </div>
                     </div>
@@ -694,10 +694,10 @@
 
                             <div class="results-actions">
                                 <button class="btn btn-primary" id="quiz-retry-btn">
-                                    <i class="fa-solid fa-rotate-left"></i> Yeniden Dene
+                                    <i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn-retry-quiz">Yeniden Dene</span>
                                 </button>
                                 <button class="btn btn-secondary" onclick="switchTab('home-tab')">
-                                    <i class="fa-solid fa-house"></i> Ana Sayfaya Dön
+                                    <i class="fa-solid fa-house"></i> <span data-i18n="btn-home-return">Ana Sayfaya Dön</span>
                                 </button>
                             </div>
                         </div>
