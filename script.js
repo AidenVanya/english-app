@@ -31,6 +31,7 @@ let quizQuestions = [];
 let quizCurrentIndex = 0;
 let quizScoreCorrect = 0;
 let quizSelectedAnswer = null;
+let quizStartTime = 0;
 
 // Gamification & Streaks State
 let streakCount = 0;
@@ -562,6 +563,10 @@ function setupFlashcardListeners() {
             isCardFlipped = !isCardFlipped;
             if (isCardFlipped) {
                 flashcardEl.classList.add("flipped");
+                const cur = parseInt(getAppStorage("total_cards_studied") || "0") + 1;
+                setAppStorage("total_cards_studied", cur.toString());
+                if (typeof logStudyActivity === "function") logStudyActivity();
+                if (typeof checkAchievements === "function") checkAchievements();
             } else {
                 flashcardEl.classList.remove("flipped");
             }
@@ -614,6 +619,7 @@ function setupFlashcardListeners() {
             sentence = sentence.replace(/^["']|["']$/g, "").trim();
             if (sentence) {
                 speakEnglishText(sentence);
+                if (typeof trackSentenceAudioListen === "function") trackSentenceAudioListen();
             }
         }
     };
@@ -666,6 +672,9 @@ function setupFlashcardListeners() {
                 filteredWords = shuffleArray([...filteredWords]);
                 currentCardIndex = 0;
                 displayCurrentCard();
+                const shuffles = parseInt(getAppStorage("total_card_shuffles") || "0") + 1;
+                setAppStorage("total_card_shuffles", shuffles.toString());
+                if (typeof checkAchievements === "function") checkAchievements();
                 showToast(currentLang === 'en' ? "Words shuffled! 🔀" : (currentLang === 'de' ? "Wörter gemischt! 🔀" : "Kelimeler karıştırıldı! 🔀"));
             }
         });
@@ -745,6 +754,13 @@ function speakEnglishText(text, forcedLang = null) {
 function trackWordAudioListen(wordText) {
     if (!wordText || typeof wordText !== "string") return;
     const cleanWord = wordText.trim().toLowerCase();
+
+    // Track total audio listened for achievements
+    const curAudio = parseInt(getAppStorage("total_audio_listened") || "0") + 1;
+    setAppStorage("total_audio_listened", curAudio.toString());
+    if (typeof logStudyActivity === "function") logStudyActivity();
+    if (typeof checkAchievements === "function") checkAchievements();
+
     if (!ttsListenedWordsToday.includes(cleanWord)) {
         ttsListenedWordsToday.push(cleanWord);
         ttsListenedTodayCount = ttsListenedWordsToday.length;
@@ -1095,6 +1111,9 @@ function toggleWordLearned(wordId) {
     setAppStorage(storageKey, JSON.stringify(learnedWordIds));
     
     // Evaluate achievements when status changes
+    if (typeof logStudyActivity === 'function') {
+        logStudyActivity();
+    }
     if (typeof checkAchievements === 'function') {
         checkAchievements();
     }
@@ -1454,6 +1473,8 @@ function setupFormListener() {
         loadDataFromStorage();
         renderDashboard();
         renderDictionaryList();
+        if (typeof logStudyActivity === "function") logStudyActivity();
+        if (typeof checkAchievements === "function") checkAchievements();
         
         // Reset form inputs
         form.reset();
@@ -1696,6 +1717,7 @@ function startQuizGame() {
     quizCurrentIndex = 0;
     quizScoreCorrect = 0;
     quizSelectedAnswer = null;
+    quizStartTime = Date.now();
 
     // Reset correct count text
     const correctScoreBadge = document.getElementById("quiz-score-correct");
@@ -2015,12 +2037,36 @@ function showQuizResults() {
         }
     }
     
+    // Update quiz metrics for achievements
+    const totalQ = parseInt(getAppStorage("total_quizzes_completed") || "0") + 1;
+    setAppStorage("total_quizzes_completed", totalQ.toString());
+
     if (scorePercent === 100) {
         setAppStorage("perfect_quiz_unlocked", "true");
+        const perfCount = parseInt(getAppStorage("perfect_quiz_count") || "0") + 1;
+        setAppStorage("perfect_quiz_count", perfCount.toString());
+        if (typeof targetLang !== "undefined" && targetLang === "de") {
+            setAppStorage("german_quiz_master", "true");
+        }
+        if (totalQuestions >= 30) {
+            setAppStorage("marathon_perfect_quiz", "true");
+        }
     }
 
     if (totalQuestions >= 30) {
         setAppStorage("marathon_quiz_unlocked", "true");
+    }
+
+    if (quizStartTime && totalQuestions >= 10) {
+        const elapsedSec = (Date.now() - quizStartTime) / 1000;
+        const avgPerQ = elapsedSec / totalQuestions;
+        if (avgPerQ <= 4.0 && scorePercent >= 80) {
+            setAppStorage("speed_quiz_unlocked", "true");
+        }
+    }
+
+    if (typeof logStudyActivity === "function") {
+        logStudyActivity();
     }
 
     checkDailyQuests();
@@ -2189,7 +2235,12 @@ function initGamification() {
     loadGamificationState();
     determineWordOfTheDay();
     checkDailyQuests();
-    checkAchievements();
+    if (typeof initAchievementsEngine === "function") {
+        initAchievementsEngine();
+    }
+    if (typeof checkAchievements === "function") {
+        checkAchievements(true);
+    }
     setupWodListeners();
 }
 
@@ -2386,7 +2437,17 @@ function checkDailyQuests() {
     if (completedCount === 5 && !allQuestsBonusCelebrated) {
         allQuestsBonusCelebrated = true;
         setAppStorage("quests_all_bonus", "true");
+        const today = getTodayDateString();
+        let questDays = [];
+        try {
+            questDays = JSON.parse(getAppStorage("completed_quest_days") || "[]");
+        } catch(e) { questDays = []; }
+        if (!questDays.includes(today)) {
+            questDays.push(today);
+            setAppStorage("completed_quest_days", JSON.stringify(questDays));
+        }
         showToast(isEn ? "Mastery! All 5 Daily Quests Completed Today! 🏆" : (isDe ? "Meisterleistung! Alle 5 Tagesquests abgeschlossen! 🏆" : "Harika! Bugünün 5 Günlük Görevinin Tümü Tamamlandı! 🏆"));
+        if (typeof checkAchievements === "function") checkAchievements();
     }
 }
 
@@ -2512,90 +2573,1833 @@ function setupWodListeners() {
     }
 }
 
-function checkAchievements() {
-    // Badge 1: First Step (Mark 1 word as learned)
-    const badgeFirstStep = document.getElementById("badge-first-step");
-    if (badgeFirstStep) {
-        if (learnedWordIds.length >= 1) {
-            badgeFirstStep.classList.remove("locked");
-        } else {
-            badgeFirstStep.classList.add("locked");
+// ==========================================================================
+// 12. Complete 58-Badge Achievements & Trophy System
+// ==========================================================================
+let audioCtx = null;
+let unlockedAchievements = [];
+let isAchievementsInitialized = false;
+let currentAchCategoryFilter = "all";
+let currentAchSearchQuery = "";
+
+// Web Audio API Triumphant Chime Synthesizer (100% offline & client-side)
+function playAchievementSound() {
+    try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        if (!audioCtx) {
+            audioCtx = new AudioContextClass();
         }
+        if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+        // Warm celebratory chime chord: C5, E5, G5, C6
+        const notes = [
+            { freq: 523.25, time: 0.0, dur: 0.20, vol: 0.18 },
+            { freq: 659.25, time: 0.11, dur: 0.22, vol: 0.20 },
+            { freq: 783.99, time: 0.22, dur: 0.24, vol: 0.22 },
+            { freq: 1046.50, time: 0.35, dur: 0.60, vol: 0.26 }
+        ];
+
+        notes.forEach(n => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(n.freq, now + n.time);
+
+            gain.gain.setValueAtTime(0.0001, now + n.time);
+            gain.gain.exponentialRampToValueAtTime(n.vol, now + n.time + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + n.time + n.dur);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now + n.time);
+            osc.stop(now + n.time + n.dur + 0.05);
+        });
+    } catch(err) {
+        console.warn("AudioContext error:", err);
     }
-    
-    // Badge 2: Aviation Explorer (Mark 5 aviation words as learned)
-    const badgeAviation = document.getElementById("badge-aviation");
-    if (badgeAviation) {
-        const aviationCount = wordsList.filter(w => w.category.includes("Aviation") && learnedWordIds.includes(w.id)).length;
-        if (aviationCount >= 5) {
-            badgeAviation.classList.remove("locked");
-        } else {
-            badgeAviation.classList.add("locked");
+}
+
+// Side Banner Notification (Xbox/Steam style)
+function showAchievementUnlockNotification(ach) {
+    const container = document.getElementById("achievement-toast-container");
+    if (!container) return;
+
+    const lang = (typeof currentLang !== "undefined" && currentLang) ? currentLang : "tr";
+    const title = ach.title[lang] || ach.title.tr || ach.title.en;
+    const desc = ach.desc[lang] || ach.desc.tr || ach.desc.en;
+    const tierName = getTierDisplayName(ach.tier, lang);
+
+    const banner = document.createElement("div");
+    banner.className = 'ach-toast-banner tier-' + ach.tier;
+    banner.innerHTML = `
+        <div class="ach-toast-icon tier-${ach.tier}">
+            <i class="${ach.icon}"></i>
+        </div>
+        <div class="ach-toast-body">
+            <div class="ach-toast-label">
+                <i class="fa-solid fa-trophy text-gold"></i>
+                <span>${lang === 'en' ? 'Achievement Unlocked!' : (lang === 'de' ? 'Erfolg freigeschaltet!' : 'Başarım Açıldı!')}</span>
+                <span class="ach-toast-tier tier-${ach.tier}-badge">${tierName}</span>
+            </div>
+            <div class="ach-toast-title">${title}</div>
+            <div class="ach-toast-desc">${desc}</div>
+        </div>
+        <button class="ach-toast-close" aria-label="Kapat">&times;</button>
+    `;
+
+    const closeBtn = banner.querySelector(".ach-toast-close");
+    const dismiss = () => {
+        banner.classList.add("fade-out");
+        setTimeout(() => {
+            if (banner.parentNode) banner.remove();
+        }, 400);
+    };
+
+    if (closeBtn) closeBtn.addEventListener("click", dismiss);
+    container.appendChild(banner);
+
+    setTimeout(dismiss, 5500);
+}
+
+// Helper display names for tiers and categories
+function getTierDisplayName(tier, lang) {
+    const names = {
+        bronze: { tr: "Bronz", en: "Bronze", de: "Bronze" },
+        silver: { tr: "Gümüş", en: "Silver", de: "Silber" },
+        gold: { tr: "Altın", en: "Gold", de: "Gold" },
+        platinum: { tr: "Platin", en: "Platinum", de: "Platin" },
+        legendary: { tr: "Efsanevi", en: "Legendary", de: "Legendär" }
+    };
+    return (names[tier] && names[tier][lang]) || tier;
+}
+
+function getCategoryDisplayName(cat, lang) {
+    const cats = {
+        general: { tr: "Temel & Sözlük", en: "General & Vocab", de: "Grundlagen & Wortschatz" },
+        streak: { tr: "Seri & Sadakat", en: "Streak & Habit", de: "Serie & Treue" },
+        quiz: { tr: "Quiz & Sınav", en: "Quiz & Knowledge", de: "Quiz & Prüfung" },
+        category: { tr: "Uzmanlık Alanları", en: "Domain Mastery", de: "Fachbereiche" },
+        custom: { tr: "Özel Kelimeler", en: "Custom Words", de: "Eigene Wörter" },
+        audio: { tr: "Ses & Fonetik", en: "Audio & Pronunciation", de: "Audio & Phonetik" },
+        cards: { tr: "Kart & Hafıza", en: "Cards & Memory", de: "Karten & Gedächtnis" },
+        special: { tr: "Özel Görevler", en: "Special Feats", de: "Spezielle Aufgaben" }
+    };
+    return (cats[cat] && cats[cat][lang]) || cat;
+}
+
+// Metric evaluator for all 58 achievements
+function getAchievementMetric(type) {
+    switch(type) {
+        case "learned_words":
+            return (typeof learnedWordIds !== "undefined" && learnedWordIds) ? learnedWordIds.length : 0;
+        case "level_a1":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.level === "A1" || w.level === "A2" || (!w.level && w.category && w.category.includes("Basic"))) && learnedWordIds.includes(w.id)).length;
+        case "level_b1":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.level === "B1" || w.level === "B2" || (!w.level && w.category && w.category.includes("Intermediate"))) && learnedWordIds.includes(w.id)).length;
+        case "level_c1":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.level === "C1" || w.level === "C2" || (!w.level && w.category && (w.category.includes("Advanced") || w.category.includes("İleri")))) && learnedWordIds.includes(w.id)).length;
+        case "streak":
+            return typeof streakCount !== "undefined" ? streakCount : 0;
+        case "quest_days": {
+            try {
+                return JSON.parse(getAppStorage("completed_quest_days") || "[]").length;
+            } catch(e) { return 0; }
         }
+        case "quizzes_completed":
+            return parseInt(getAppStorage("total_quizzes_completed") || "0");
+        case "perfect_quiz":
+            return (getAppStorage("perfect_quiz_unlocked") === "true" || parseInt(getAppStorage("perfect_quiz_count") || "0") >= 1) ? 1 : 0;
+        case "perfect_quiz_count":
+            return parseInt(getAppStorage("perfect_quiz_count") || "0");
+        case "marathon_quiz":
+            return getAppStorage("marathon_quiz_unlocked") === "true" ? 1 : 0;
+        case "marathon_perfect_quiz":
+            return getAppStorage("marathon_perfect_quiz") === "true" ? 1 : 0;
+        case "speed_quiz":
+            return getAppStorage("speed_quiz_unlocked") === "true" ? 1 : 0;
+        case "german_quiz_master":
+            return getAppStorage("german_quiz_master") === "true" ? 1 : 0;
+        case "cat_aviation":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Aviation") || w.category.includes("Havacılık") || w.category.includes("Luftfahrt"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_tourism":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Tourism") || w.category.includes("Turizm") || w.category.includes("Tourismus") || w.category.includes("Travel"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_business":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Business") || w.category.includes("İş") || w.category.includes("Wirtschaft") || w.category.includes("Finance") || w.category.includes("Finans"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_tech":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Tech") || w.category.includes("Yazılım") || w.category.includes("IT") || w.category.includes("Informatik") || w.category.includes("Software"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_medical":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Med") || w.category.includes("Sağlık") || w.category.includes("Tıp") || w.category.includes("Gesundheit") || w.category.includes("Health"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_numbers":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Number") || w.category.includes("Sayı") || w.category.includes("Zahl"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_nature":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Nature") || w.category.includes("Doğa") || w.category.includes("Natur") || w.category.includes("Environment") || w.category.includes("Çevre"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_law":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Law") || w.category.includes("Hukuk") || w.category.includes("Recht") || w.category.includes("Legal"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_art":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Art") || w.category.includes("Sanat") || w.category.includes("Kunst") || w.category.includes("Culture") || w.category.includes("Kültür"))) && learnedWordIds.includes(w.id)).length;
+        case "cat_culinary":
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            return wordsList.filter(w => (w.category && (w.category.includes("Food") || w.category.includes("Yemek") || w.category.includes("Mutfak") || w.category.includes("Küche") || w.category.includes("Culinary") || w.category.includes("Gastronomy"))) && learnedWordIds.includes(w.id)).length;
+        case "multi_cat": {
+            if (typeof wordsList === "undefined" || !wordsList) return 0;
+            const learned = wordsList.filter(w => learnedWordIds.includes(w.id));
+            const catMap = {};
+            learned.forEach(w => {
+                if (w.category) {
+                    const primaryCat = w.category.split(/[,/]/)[0].trim();
+                    catMap[primaryCat] = (catMap[primaryCat] || 0) + 1;
+                }
+            });
+            return Object.values(catMap).filter(count => count >= 5).length;
+        }
+        case "custom_words":
+            return (typeof customWords !== "undefined" && customWords) ? customWords.length : 0;
+        case "audio_listened":
+            return parseInt(getAppStorage("total_audio_listened") || "0");
+        case "wod_days": {
+            try {
+                return JSON.parse(getAppStorage("wod_listened_days") || "[]").length;
+            } catch(e) { return 0; }
+        }
+        case "sentence_audio":
+            return parseInt(getAppStorage("total_sentence_audio") || "0");
+        case "cards_studied":
+            return parseInt(getAppStorage("total_cards_studied") || "0");
+        case "cards_shuffled":
+            return parseInt(getAppStorage("total_card_shuffles") || "0");
+        case "night_owl":
+            return getAppStorage("study_night_owl") === "true" ? 1 : 0;
+        case "early_bird":
+            return getAppStorage("study_early_bird") === "true" ? 1 : 0;
+        case "weekend_warrior":
+            return getAppStorage("study_weekend_warrior") === "true" ? 1 : 0;
+        default:
+            return 0;
     }
-    
-    // Badge 3: Quiz Perfect (Score 100% on a quiz)
-    const badgeQuiz = document.getElementById("badge-quiz-perfect");
-    if (badgeQuiz) {
-        const isPerfect = getAppStorage("perfect_quiz_unlocked") === "true";
-        if (isPerfect) {
-            badgeQuiz.classList.remove("locked");
-        } else {
-            badgeQuiz.classList.add("locked");
-        }
-    }
-    
-    // Badge 4: Consistent Star (3 days streak)
-    const badgeStreak = document.getElementById("badge-streak-3");
-    if (badgeStreak) {
-        if (streakCount >= 3) {
-            badgeStreak.classList.remove("locked");
-        } else {
-            badgeStreak.classList.add("locked");
-        }
+}
+
+// Activity logger to catch Night Owl, Early Bird, Weekend Warrior
+function logStudyActivity() {
+    const now = new Date();
+    const hour = now.getHours();
+    const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+    const today = getTodayDateString();
+
+    // Night Owl: 00:00 - 04:59
+    if (hour >= 0 && hour < 5) {
+        setAppStorage("study_night_owl", "true");
     }
 
-    // Badge 5: Tourism Explorer (Mark 5 tourism words as learned)
-    const badgeTourism = document.getElementById("badge-tourism");
-    if (badgeTourism) {
-        const tourismCount = wordsList.filter(w => w.category.includes("Tourism") && learnedWordIds.includes(w.id)).length;
-        if (tourismCount >= 5) {
-            badgeTourism.classList.remove("locked");
-        } else {
-            badgeTourism.classList.add("locked");
-        }
+    // Early Bird: 05:00 - 07:30
+    if ((hour === 5) || (hour === 6) || (hour === 7 && now.getMinutes() <= 30)) {
+        setAppStorage("study_early_bird", "true");
     }
 
-    // Badge 6: Author Badge (Add 3 custom words)
-    const badgeCustom = document.getElementById("badge-custom-author");
-    if (badgeCustom) {
-        if (customWords.length >= 3) {
-            badgeCustom.classList.remove("locked");
-        } else {
-            badgeCustom.classList.add("locked");
-        }
-    }
-
-    // Badge 7: Streak Marathoner
-    const badgeMarathon = document.getElementById("badge-streak-7");
-    if (badgeMarathon) {
-        if (streakCount >= 7) {
-            badgeMarathon.classList.remove("locked");
-        } else {
-            badgeMarathon.classList.add("locked");
-        }
-    }
-
-    // Badge 8: Word Hunter (Learn 25 words)
-    const badgeHunter = document.getElementById("badge-hunter-25");
-    if (badgeHunter) {
-        if (learnedWordIds.length >= 25) {
-            badgeHunter.classList.remove("locked");
-        } else {
-            badgeHunter.classList.add("locked");
+    // Weekend Warrior: Both Saturday & Sunday
+    if (day === 6) {
+        setAppStorage("study_weekend_sat", today);
+    } else if (day === 0) {
+        const satDate = getAppStorage("study_weekend_sat");
+        if (satDate) {
+            const diffDays = Math.floor((new Date(today) - new Date(satDate)) / 86400000);
+            if (diffDays === 1) {
+                setAppStorage("study_weekend_warrior", "true");
+            }
         }
     }
 }
+
+function trackSentenceAudioListen() {
+    const cur = parseInt(getAppStorage("total_sentence_audio") || "0") + 1;
+    setAppStorage("total_sentence_audio", cur.toString());
+    logStudyActivity();
+    if (typeof checkAchievements === "function") {
+        checkAchievements();
+    }
+}
+
+// Complete 58-badge achievements engine test
+const ACHIEVEMENTS_RAW = [
+    // 1-10: General & Vocabulary Milestones
+    {
+        id: "badge-first-step",
+        tier: "bronze",
+        category: "general",
+        icon: "fa-solid fa-shoe-prints",
+        title: { tr: "İlk Adım", en: "First Step", de: "Erster Schritt" },
+        desc: {
+            tr: "Kelime öğrenme yolculuğuna ilk adımını attın.",
+            en: "Took your very first step in vocabulary.",
+            de: "Den allerersten Schritt auf der Vokabelreise gemacht."
+        },
+        howToUnlock: {
+            tr: "Herhangi 1 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark any 1 word as learned.",
+            de: "1 beliebiges Wort als gelernt markieren."
+        },
+        target: 1,
+        type: "learned_words"
+    },
+    {
+        id: "badge-hunter-25",
+        tier: "bronze",
+        category: "general",
+        icon: "fa-solid fa-bullseye",
+        title: { tr: "Kelime Avcısı", en: "Word Hunter", de: "Wortjäger" },
+        desc: {
+            tr: "Kelime dağarcığını genişletme konusunda ilk ciddi viraj.",
+            en: "Reached your first major milestone.",
+            de: "Den ersten großen Meilenstein erreicht."
+        },
+        howToUnlock: {
+            tr: "25 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 25 words as learned.",
+            de: "25 Wörter als gelernt markieren."
+        },
+        target: 25,
+        type: "learned_words"
+    },
+    {
+        id: "badge-vocab-50",
+        tier: "silver",
+        category: "general",
+        icon: "fa-solid fa-book-open-reader",
+        title: { tr: "Çırak Kelimebaz", en: "Word Apprentice", de: "Vokabel-Lehrling" },
+        desc: {
+            tr: "50 kelimeyi hafızana kazıyarak temelini sağlamlaştırdın.",
+            en: "Solidified your foundation with 50 words.",
+            de: "50 Wörter gelernt und das Fundament gefestigt."
+        },
+        howToUnlock: {
+            tr: "50 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 50 words as learned.",
+            de: "50 Wörter als gelernt markieren."
+        },
+        target: 50,
+        type: "learned_words"
+    },
+    {
+        id: "badge-vocab-100",
+        tier: "silver",
+        category: "general",
+        icon: "fa-solid fa-award",
+        title: { tr: "Yüzlük Kulüp", en: "Centurion Scholar", de: "Hunderter-Club" },
+        desc: {
+            tr: "100 kelime barajını aşarak büyük bir adım attın!",
+            en: "Crossed the 100-word milestone!",
+            de: "Die 100-Wörter-Marke geknackt!"
+        },
+        howToUnlock: {
+            tr: "100 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 100 words as learned.",
+            de: "100 Wörter als gelernt markieren."
+        },
+        target: 100,
+        type: "learned_words"
+    },
+    {
+        id: "badge-vocab-250",
+        tier: "gold",
+        category: "general",
+        icon: "fa-solid fa-gem",
+        title: { tr: "Sözlük Fatihi", en: "Lexicon Conqueror", de: "Lexikon-Eroberer" },
+        desc: {
+            tr: "250 kelimelik zengin bir hazineye sahipsin.",
+            en: "Command a rich vocabulary of 250 words.",
+            de: "Beherrsche einen reichen Schatz von 250 Wörtern."
+        },
+        howToUnlock: {
+            tr: "250 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 250 words as learned.",
+            de: "250 Wörter als gelernt markieren."
+        },
+        target: 250,
+        type: "learned_words"
+    },
+    {
+        id: "badge-vocab-500",
+        tier: "platinum",
+        category: "general",
+        icon: "fa-solid fa-crown",
+        title: { tr: "Dil Bilgesi", en: "Polyglot Sage", de: "Sprachweiser" },
+        desc: {
+            tr: "500 kelime! Artık dilde akıcı diyaloglar kurabilirsin.",
+            en: "500 words! You can converse with true confidence.",
+            de: "500 Wörter! Du kannst selbstbewusst sprechen."
+        },
+        howToUnlock: {
+            tr: "500 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 500 words as learned.",
+            de: "500 Wörter als gelernt markieren."
+        },
+        target: 500,
+        type: "learned_words"
+    },
+    {
+        id: "badge-vocab-1000",
+        tier: "legendary",
+        category: "general",
+        icon: "fa-solid fa-dragon",
+        title: { tr: "Sözlük Anıtı", en: "Living Lexicon", de: "Lebendes Lexikon" },
+        desc: {
+            tr: "1000 kelimelik devasa bir bilgi havuzu. Tam bir efsanesin!",
+            en: "1000 words mastered. A monumental linguistic achievement!",
+            de: "1000 Wörter gemeistert. Ein legendärer Erfolg!"
+        },
+        howToUnlock: {
+            tr: "1000 kelimeyi 'Öğrendim' olarak işaretle.",
+            en: "Mark 1000 words as learned.",
+            de: "1000 Wörter als gelernt markieren."
+        },
+        target: 1000,
+        type: "learned_words"
+    },
+    {
+        id: "badge-level-a1",
+        tier: "bronze",
+        category: "general",
+        icon: "fa-solid fa-seedling",
+        title: { tr: "A1 Temelleri", en: "A1 Foundation", de: "A1 Fundament" },
+        desc: {
+            tr: "Başlangıç seviyesindeki en temel kalıplara hakim oldun.",
+            en: "Mastered fundamental beginner vocabulary.",
+            de: "Grundlegenden A1-Wortschatz gemeistert."
+        },
+        howToUnlock: {
+            tr: "A1/A2 seviyesinde en az 30 kelime öğren.",
+            en: "Learn at least 30 A1/A2 level words.",
+            de: "Mindestens 30 Wörter der Stufe A1/A2 lernen."
+        },
+        target: 30,
+        type: "level_a1"
+    },
+    {
+        id: "badge-level-b1",
+        tier: "silver",
+        category: "general",
+        icon: "fa-solid fa-mountain",
+        title: { tr: "B1 Zirvesi", en: "B1 Ascender", de: "B1 Gipfelstürmer" },
+        desc: {
+            tr: "Orta seviye kelimeleri fethederek kendini aşmaya başladın.",
+            en: "Climbed into intermediate language mastery.",
+            de: "In die Mittelstufe aufgestiegen."
+        },
+        howToUnlock: {
+            tr: "B1/B2 seviyesinde en az 30 kelime öğren.",
+            en: "Learn at least 30 B1/B2 level words.",
+            de: "Mindestens 30 Wörter der Stufe B1/B2 lernen."
+        },
+        target: 30,
+        type: "level_b1"
+    },
+    {
+        id: "badge-level-c1",
+        tier: "gold",
+        category: "general",
+        icon: "fa-solid fa-chess-queen",
+        title: { tr: "C1 Eliti", en: "C1 Mastermind", de: "C1 Meistergeist" },
+        desc: {
+            tr: "İleri düzey akademik ve profesyonel kelimeleri çözdün.",
+            en: "Cracked advanced academic and professional vocabulary.",
+            de: "Fortgeschrittenen Wortschatz geknackt."
+        },
+        howToUnlock: {
+            tr: "C1/C2 veya Advanced seviyesinde 20 kelime öğren.",
+            en: "Learn 20 advanced (C1/C2) words.",
+            de: "20 fortgeschrittene Wörter (C1/C2) lernen."
+        },
+        target: 20,
+        type: "level_c1"
+    },
+
+    // 11-18: Streaks & Habit Badges
+    {
+        id: "badge-streak-3",
+        tier: "bronze",
+        category: "streak",
+        icon: "fa-solid fa-fire",
+        title: { tr: "İstikrarlı", en: "Consistent", de: "Beständig" },
+        desc: {
+            tr: "3 gün boyunca hiç aksatmadan çalışarak alışkanlık kazandın.",
+            en: "Studied 3 consecutive days without missing.",
+            de: "3 aufeinanderfolgende Tage ohne Pause gelernt."
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 3 güne çıkar.",
+            en: "Reach a 3-day study streak.",
+            de: "Erreiche eine 3-Tage-Lernserie."
+        },
+        target: 3,
+        type: "streak"
+    },
+    {
+        id: "badge-streak-7",
+        tier: "silver",
+        category: "streak",
+        icon: "fa-solid fa-fire-flame-curved",
+        title: { tr: "Haftalık Maraton", en: "Weekly Dynamo", de: "Wöchentlicher Dynamo" },
+        desc: {
+            tr: "Tam bir hafta boyunca her gün öğrenmeye devam ettin!",
+            en: "A whole week of relentless daily learning!",
+            de: "Eine ganze Woche ununterbrochen gelernt!"
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 7 güne çıkar.",
+            en: "Reach a 7-day study streak.",
+            de: "Erreiche eine 7-Tage-Lernserie."
+        },
+        target: 7,
+        type: "streak"
+    },
+    {
+        id: "badge-streak-14",
+        tier: "gold",
+        category: "streak",
+        icon: "fa-solid fa-bolt-lightning",
+        title: { tr: "İki Haftalık Azim", en: "Fortnight Fortitude", de: "Zweiwöchige Ausdauer" },
+        desc: {
+            tr: "14 gün kesintisiz odaklanma. Artık bu senin bir parçan.",
+            en: "14 consecutive days of sheer dedication.",
+            de: "14 aufeinanderfolgende Tage purer Hingabe."
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 14 güne çıkar.",
+            en: "Reach a 14-day study streak.",
+            de: "Erreiche eine 14-Tage-Lernserie."
+        },
+        target: 14,
+        type: "streak"
+    },
+    {
+        id: "badge-streak-30",
+        tier: "platinum",
+        category: "streak",
+        icon: "fa-solid fa-calendar-check",
+        title: { tr: "Aylık Şampiyon", en: "Monthly Titan", de: "Monatlicher Titan" },
+        desc: {
+            tr: "30 günlük efsanevi seri! Disiplinin zirvesindesin.",
+            en: "30 straight days of unstoppable learning habit!",
+            de: "30 Tage unaufhaltsame Lerndisziplin!"
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 30 güne çıkar.",
+            en: "Reach a 30-day study streak.",
+            de: "Erreiche eine 30-Tage-Lernserie."
+        },
+        target: 30,
+        type: "streak"
+    },
+    {
+        id: "badge-streak-60",
+        tier: "legendary",
+        category: "streak",
+        icon: "fa-solid fa-shield-halved",
+        title: { tr: "Demir İrade", en: "Iron Will", de: "Eiserner Wille" },
+        desc: {
+            tr: "60 gün boyunca hiçbir şey seni yolundan alıkoyamadı.",
+            en: "60 unbroken days. Nothing can derail your focus.",
+            de: "60 Tage ungebrochene Serie. Nichts hält dich auf."
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 60 güne çıkar.",
+            en: "Reach a 60-day study streak.",
+            de: "Erreiche eine 60-Tage-Lernserie."
+        },
+        target: 60,
+        type: "streak"
+    },
+    {
+        id: "badge-streak-100",
+        tier: "legendary",
+        category: "streak",
+        icon: "fa-solid fa-infinity",
+        title: { tr: "Yüzyıllık Sadakat", en: "Centurion Legend", de: "Hundert-Tage-Legende" },
+        desc: {
+            tr: "100 günlük efsane! Bu rozeti sadece en kararlılar hak eder.",
+            en: "100 straight days. Only true masters achieve this!",
+            de: "100 Tage in Folge. Nur wahre Meister schaffen das!"
+        },
+        howToUnlock: {
+            tr: "Çalışma serisini 100 güne çıkar.",
+            en: "Reach a 100-day study streak.",
+            de: "Erreiche eine 100-Tage-Lernserie."
+        },
+        target: 100,
+        type: "streak"
+    },
+    {
+        id: "badge-quests-all-3",
+        tier: "silver",
+        category: "streak",
+        icon: "fa-solid fa-list-check",
+        title: { tr: "Görev Avcısı", en: "Quest Champion", de: "Quest-Champion" },
+        desc: {
+            tr: "Günün tüm 5 görevini 3 farklı günde eksiksiz bitirdin.",
+            en: "Completed all 5 daily quests on 3 different days.",
+            de: "Alle 5 Tagesquests an 3 verschiedenen Tagen erledigt."
+        },
+        howToUnlock: {
+            tr: "Tüm 5 günlük görevi 3 farklı günde tamamla.",
+            en: "Complete all 5 daily quests on 3 distinct days.",
+            de: "Schließe alle 5 Quests an 3 verschiedenen Tagen ab."
+        },
+        target: 3,
+        type: "quest_days"
+    },
+    {
+        id: "badge-quests-all-7",
+        tier: "gold",
+        category: "streak",
+        icon: "fa-solid fa-star-half-stroke",
+        title: { tr: "Haftalık Kusursuzluk", en: "Flawless Week", de: "Makellose Woche" },
+        desc: {
+            tr: "7 farklı günde 5'te 5 günlük görev başarısı gösterdin.",
+            en: "Completed every single daily quest on 7 different days.",
+            de: "An 7 verschiedenen Tagen jede Tagesquest gelöst."
+        },
+        howToUnlock: {
+            tr: "Tüm 5 günlük görevi 7 farklı günde tamamla.",
+            en: "Complete all 5 daily quests on 7 distinct days.",
+            de: "Schließe alle 5 Quests an 7 verschiedenen Tagen ab."
+        },
+        target: 7,
+        type: "quest_days"
+    },
+
+    // 19-29: Quiz Badges
+    {
+        id: "badge-quiz-novice",
+        tier: "bronze",
+        category: "quiz",
+        icon: "fa-solid fa-feather-pointed",
+        title: { tr: "Test Ateşi", en: "Quiz Spark", de: "Quiz-Funke" },
+        desc: {
+            tr: "İlk kelime testini başarıyla tamamlayarak yarışa katıldın.",
+            en: "Completed your very first vocabulary quiz.",
+            de: "Dein allererstes Vokabelquiz abgeschlossen."
+        },
+        howToUnlock: {
+            tr: "Herhangi bir quizi tamamla.",
+            en: "Complete any quiz.",
+            de: "Ein beliebiges Quiz abschließen."
+        },
+        target: 1,
+        type: "quizzes_completed"
+    },
+    {
+        id: "badge-quiz-5",
+        tier: "bronze",
+        category: "quiz",
+        icon: "fa-solid fa-graduation-cap",
+        title: { tr: "Sınav Kurdu", en: "Quiz Veteran", de: "Quiz-Veteran" },
+        desc: {
+            tr: "5 farklı test çözerek bilgilerini sınadın.",
+            en: "Tested yourself by finishing 5 quizzes.",
+            de: "Dich durch das Bestehen von 5 Quizzes getestet."
+        },
+        howToUnlock: {
+            tr: "Toplam 5 quizi başarıyla tamamla.",
+            en: "Complete 5 quizzes.",
+            de: "5 Quizzes erfolgreich abschließen."
+        },
+        target: 5,
+        type: "quizzes_completed"
+    },
+    {
+        id: "badge-quiz-20",
+        tier: "silver",
+        category: "quiz",
+        icon: "fa-solid fa-brain",
+        title: { tr: "Quiz Canavarı", en: "Quiz Beast", de: "Quiz-Bestie" },
+        desc: {
+            tr: "20 test tamamladın. Soru çözmek artık refleksin oldu.",
+            en: "Finished 20 quizzes with sharp reflexes.",
+            de: "20 Quizzes mit scharfen Reflexen abgeschlossen."
+        },
+        howToUnlock: {
+            tr: "Toplam 20 quiz tamamla.",
+            en: "Complete 20 quizzes.",
+            de: "20 Quizzes abschließen."
+        },
+        target: 20,
+        type: "quizzes_completed"
+    },
+    {
+        id: "badge-quiz-50",
+        tier: "gold",
+        category: "quiz",
+        icon: "fa-solid fa-trophy",
+        title: { tr: "Test İmparatoru", en: "Quiz Emperor", de: "Quiz-Imperator" },
+        desc: {
+            tr: "50 quiz tamamlayarak binlerce soruya meydan okudun.",
+            en: "50 quizzes conquered! Thousands of questions mastered.",
+            de: "50 Quizzes erobert! Tausende Fragen gemeistert."
+        },
+        howToUnlock: {
+            tr: "Toplam 50 quiz tamamla.",
+            en: "Complete 50 quizzes.",
+            de: "50 Quizzes abschließen."
+        },
+        target: 50,
+        type: "quizzes_completed"
+    },
+    {
+        id: "badge-quiz-perfect",
+        tier: "gold",
+        category: "quiz",
+        icon: "fa-solid fa-wand-magic-sparkles",
+        title: { tr: "Dahi", en: "Genius", de: "Genie" },
+        desc: {
+            tr: "Bir quizdeki tüm soruları sıfır hata ile bildin!",
+            en: "Scored 100% on a quiz with zero errors!",
+            de: "100% in einem Quiz ohne Fehler erzielt!"
+        },
+        howToUnlock: {
+            tr: "Bir quizden %100 tam puan al.",
+            en: "Score 100% on any quiz.",
+            de: "100% in einem beliebigen Quiz erreichen."
+        },
+        target: 1,
+        type: "perfect_quiz"
+    },
+    {
+        id: "badge-quiz-perfect-3",
+        tier: "silver",
+        category: "quiz",
+        icon: "fa-solid fa-clover",
+        title: { tr: "Üçlü Kusursuzluk", en: "Triple Perfection", de: "Dreifache Perfektion" },
+        desc: {
+            tr: "3 farklı quizde %100 tam puan aldın.",
+            en: "Achieved 100% perfection across 3 quizzes.",
+            de: "In 3 Quizzes volle 100% erzielt."
+        },
+        howToUnlock: {
+            tr: "3 farklı quizde %100 tam puan elde et.",
+            en: "Score 100% on 3 separate quizzes.",
+            de: "Erziele in 3 verschiedenen Tests 100%."
+        },
+        target: 3,
+        type: "perfect_quiz_count"
+    },
+    {
+        id: "badge-quiz-perfect-10",
+        tier: "gold",
+        category: "quiz",
+        icon: "fa-solid fa-crown",
+        title: { tr: "Yenilmez Zihin", en: "Invincible Mind", de: "Unbesiegbare Vernunft" },
+        desc: {
+            tr: "Tam 10 kez %100 tam puan alarak ustalığını kanıtladın.",
+            en: "Scored 100% in 10 different quizzes. Untouchable!",
+            de: "10-mal 100% erzielt. Unantastbar!"
+        },
+        howToUnlock: {
+            tr: "10 farklı quizde %100 tam puan elde et.",
+            en: "Score 100% on 10 separate quizzes.",
+            de: "In 10 verschiedenen Tests 100% erreichen."
+        },
+        target: 10,
+        type: "perfect_quiz_count"
+    },
+    {
+        id: "badge-marathon",
+        tier: "silver",
+        category: "quiz",
+        icon: "fa-solid fa-person-running",
+        title: { tr: "Demir Maratoncu", en: "Iron Marathoner", de: "Eisen-Marathonläufer" },
+        desc: {
+            tr: "30 soruluk uzun soluklu bir quizi tek nefeste tamamladın.",
+            en: "Completed a grueling 30-question marathon quiz.",
+            de: "Ein langes 30-Fragen-Marathon-Quiz abgeschlossen."
+        },
+        howToUnlock: {
+            tr: "30 soruluk bir quizi tamamla.",
+            en: "Finish a 30-question quiz.",
+            de: "Ein Quiz mit 30 Fragen beenden."
+        },
+        target: 1,
+        type: "marathon_quiz"
+    },
+    {
+        id: "badge-quiz-marathon-perfect",
+        tier: "platinum",
+        category: "quiz",
+        icon: "fa-solid fa-medal",
+        title: { tr: "Kusursuz Maraton", en: "Flawless Marathon", de: "Makelloser Marathon" },
+        desc: {
+            tr: "30 soruluk dev quizde 30'da 30 yaptın! Muazzam bir başarı!",
+            en: "Answered 30 out of 30 correctly in a marathon quiz!",
+            de: "30 von 30 in einem Marathon-Quiz richtig beantwortet!"
+        },
+        howToUnlock: {
+            tr: "30 soruluk bir quizden %100 tam puan al.",
+            en: "Score 100% on a 30-question quiz.",
+            de: "Erziele 100% in einem 30-Fragen-Quiz."
+        },
+        target: 1,
+        type: "marathon_perfect_quiz"
+    },
+    {
+        id: "badge-quiz-speed",
+        tier: "platinum",
+        category: "quiz",
+        icon: "fa-solid fa-bolt",
+        title: { tr: "Şimşek Refleks", en: "Lightning Reflex", de: "Blitzschneller Reflex" },
+        desc: {
+            tr: "Bir testi soru başına 4 saniyenin altında yüksek puanla bitirdin.",
+            en: "Blazed through a quiz under 4s per question with high score.",
+            de: "Ein Quiz in unter 4 Sekunden pro Frage gemeistert."
+        },
+        howToUnlock: {
+            tr: "En az 10 soruluk bir quizi soru başına ortalama 4 saniyenin altında ve %80+ başarıyla bitir.",
+            en: "Finish a 10+ question quiz averaging under 4s/question with 80%+ score.",
+            de: "Ein 10+ Fragen Quiz mit durchschnittlich unter 4s pro Frage und 80%+ abschließen."
+        },
+        target: 1,
+        type: "speed_quiz"
+    },
+    {
+        id: "badge-quiz-german",
+        tier: "gold",
+        category: "quiz",
+        icon: "fa-solid fa-flag",
+        title: { tr: "Almanca Üstadı", en: "German Master", de: "Deutsch-Meister" },
+        desc: {
+            tr: "Almanca modundaki bir quizde tam isabet sağlayarak 100 aldın.",
+            en: "Aced a German quiz with 100% accuracy.",
+            de: "Ein Deutsch-Quiz mit 100% Genauigkeit gemeistert."
+        },
+        howToUnlock: {
+            tr: "Almanca modunda bir quizden %100 tam puan al.",
+            en: "Score 100% on a German quiz.",
+            de: "Erziele 100% in einem Deutsch-Quiz."
+        },
+        target: 1,
+        type: "german_quiz_master"
+    },
+
+    // 30-40: Domain / Category Mastery
+    {
+        id: "badge-aviation",
+        tier: "silver",
+        category: "category",
+        icon: "fa-solid fa-plane-departure",
+        title: { tr: "Kaptan Pilot", en: "Captain", de: "Kapitän" },
+        desc: {
+            tr: "Havacılık ve uçuş terminolojisini göklere taşıdın.",
+            en: "Soared high with aviation vocabulary.",
+            de: "Mit Luftfahrt-Vokabular in die Lüfte gestiegen."
+        },
+        howToUnlock: {
+            tr: "Havacılık alanında en az 5 kelime öğren.",
+            en: "Learn at least 5 aviation words.",
+            de: "Mindestens 5 Luftfahrt-Wörter lernen."
+        },
+        target: 5,
+        type: "cat_aviation"
+    },
+    {
+        id: "badge-tourism",
+        tier: "silver",
+        category: "category",
+        icon: "fa-solid fa-compass",
+        title: { tr: "Gezgin Kaşif", en: "Global Explorer", de: "Weltenbummler" },
+        desc: {
+            tr: "Turizm ve seyahat kelimeleriyle dünyayı gezmeye hazırsın.",
+            en: "Ready to explore the world with tourism vocabulary.",
+            de: "Bereit, die Welt mit Reisevokabeln zu erkunden."
+        },
+        howToUnlock: {
+            tr: "Turizm / Seyahat alanında en az 5 kelime öğren.",
+            en: "Learn at least 5 tourism words.",
+            de: "Mindestens 5 Tourismus-Wörter lernen."
+        },
+        target: 5,
+        type: "cat_tourism"
+    },
+    {
+        id: "badge-cat-business",
+        tier: "silver",
+        category: "category",
+        icon: "fa-solid fa-briefcase",
+        title: { tr: "İş Dünyası Lideri", en: "Business Tycoon", de: "Wirtschafts-Pionier" },
+        desc: {
+            tr: "İş dünyası, finans ve toplantı terimlerini kavradın.",
+            en: "Mastered corporate, finance, and trade terms.",
+            de: "Wirtschafts- und Geschäftsbegriffe gemeistert."
+        },
+        howToUnlock: {
+            tr: "İş & Finans alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 business words.",
+            de: "Mindestens 10 Wirtschaftswörter lernen."
+        },
+        target: 10,
+        type: "cat_business"
+    },
+    {
+        id: "badge-cat-tech",
+        tier: "silver",
+        category: "category",
+        icon: "fa-solid fa-microchip",
+        title: { tr: "Teknoloji Gurusu", en: "Tech Guru", de: "Tech-Guru" },
+        desc: {
+            tr: "Yazılım, yapay zeka ve dijital dünya dilini söktün.",
+            en: "Decoded software, AI, and digital tech terms.",
+            de: "Software- und Technologiewörter entschlüsselt."
+        },
+        howToUnlock: {
+            tr: "Teknoloji & Yazılım alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 technology words.",
+            de: "Mindestens 10 Technikwörter lernen."
+        },
+        target: 10,
+        type: "cat_tech"
+    },
+    {
+        id: "badge-cat-medical",
+        tier: "silver",
+        category: "category",
+        icon: "fa-solid fa-stethoscope",
+        title: { tr: "Şifacı", en: "Healer Scholar", de: "Heiler" },
+        desc: {
+            tr: "Tıp, anatomi ve sağlık terimlerini dağarcığına kattın.",
+            en: "Absorbed medical and healthcare vocabulary.",
+            de: "Medizinischen Wortschatz angeeignet."
+        },
+        howToUnlock: {
+            tr: "Sağlık & Tıp alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 medical words.",
+            de: "Mindestens 10 Medizinwörter lernen."
+        },
+        target: 10,
+        type: "cat_medical"
+    },
+    {
+        id: "badge-cat-numbers",
+        tier: "bronze",
+        category: "category",
+        icon: "fa-solid fa-arrow-down-1-9",
+        title: { tr: "Sayılar Ustası", en: "Number Master", de: "Zahlen-Meister" },
+        desc: {
+            tr: "Sayma sayılarını ve rakamları eksiksiz öğrendin.",
+            en: "Mastered numbers and counting words.",
+            de: "Zahlen und Zählwörter fehlerfrei gelernt."
+        },
+        howToUnlock: {
+            tr: "Sayılar kategorisinde en az 15 kelime öğren.",
+            en: "Learn at least 15 number words.",
+            de: "Mindestens 15 Zahlenwörter lernen."
+        },
+        target: 15,
+        type: "cat_numbers"
+    },
+    {
+        id: "badge-cat-nature",
+        tier: "bronze",
+        category: "category",
+        icon: "fa-solid fa-leaf",
+        title: { tr: "Doğa Muhafızı", en: "Nature Warden", de: "Naturwächter" },
+        desc: {
+            tr: "Çevre, canlılar ve doğal dünyanın sözcüklerini öğrendin.",
+            en: "Learned the vocabulary of nature and ecology.",
+            de: "Natur- und Umweltbegriffe gelernt."
+        },
+        howToUnlock: {
+            tr: "Doğa & Çevre alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 nature words.",
+            de: "Mindestens 10 Naturwörter lernen."
+        },
+        target: 10,
+        type: "cat_nature"
+    },
+    {
+        id: "badge-cat-law",
+        tier: "gold",
+        category: "category",
+        icon: "fa-solid fa-scale-balanced",
+        title: { tr: "Adalet Terazisi", en: "Lawgiver", de: "Hüter des Rechts" },
+        desc: {
+            tr: "Hukuk, haklar ve adalet sisteminin zorlu terimlerini çözdün.",
+            en: "Mastered rigorous legal and judicial terms.",
+            de: "Schwierige juristische Fachbegriffe gemeistert."
+        },
+        howToUnlock: {
+            tr: "Hukuk & Adalet alanında en az 8 kelime öğren.",
+            en: "Learn at least 8 legal words.",
+            de: "Mindestens 8 Rechtsbegriffe lernen."
+        },
+        target: 8,
+        type: "cat_law"
+    },
+    {
+        id: "badge-cat-art",
+        tier: "bronze",
+        category: "category",
+        icon: "fa-solid fa-palette",
+        title: { tr: "Sanat Eleştirmeni", en: "Art Connoisseur", de: "Kunstkenner" },
+        desc: {
+            tr: "Sanat, müzik ve edebiyat dünyasının renkli kelimelerine hakim oldun.",
+            en: "Mastered cultural, musical, and artistic terms.",
+            de: "Kunst- und Kulturbegriffe angeeignet."
+        },
+        howToUnlock: {
+            tr: "Sanat & Kültür alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 art words.",
+            de: "Mindestens 10 Kunstwörter lernen."
+        },
+        target: 10,
+        type: "cat_art"
+    },
+    {
+        id: "badge-cat-culinary",
+        tier: "bronze",
+        category: "category",
+        icon: "fa-solid fa-utensils",
+        title: { tr: "Gurme Şef", en: "Gourmet Chef", de: "Gourmet-Koch" },
+        desc: {
+            tr: "Mutfak, lezzetler ve yemek kültürünün dilini öğrendin.",
+            en: "Speaks the delicious language of culinary arts.",
+            de: "Die Sprache der Küche und Kulinarik gelernt."
+        },
+        howToUnlock: {
+            tr: "Yemek & Mutfak alanında en az 10 kelime öğren.",
+            en: "Learn at least 10 culinary words.",
+            de: "Mindestens 10 Gastronomiewörter lernen."
+        },
+        target: 10,
+        type: "cat_culinary"
+    },
+    {
+        id: "badge-cat-multi-5",
+        tier: "platinum",
+        category: "category",
+        icon: "fa-solid fa-cubes",
+        title: { tr: "Rönesans İnsanı", en: "Renaissance Polymath", de: "Universalgelehrter" },
+        desc: {
+            tr: "5 farklı uzmanlık alanının her birinde en az 5 kelime öğrendin!",
+            en: "Mastered at least 5 words across 5 distinct domains!",
+            de: "In 5 verschiedenen Bereichen je 5 Wörter gelernt!"
+        },
+        howToUnlock: {
+            tr: "5 farklı kategorinin her birinden en az 5'er kelime öğren.",
+            en: "Learn 5+ words across 5 distinct categories.",
+            de: "In 5 Kategorien jeweils mindestens 5 Wörter lernen."
+        },
+        target: 5,
+        type: "multi_cat"
+    },
+
+    // 41-45: Custom Words & Personalization
+    {
+        id: "badge-custom-1",
+        tier: "bronze",
+        category: "custom",
+        icon: "fa-solid fa-pen",
+        title: { tr: "İlk Mürekkep", en: "First Ink", de: "Erste Tinte" },
+        desc: {
+            tr: "Kendi sözlüğüne ilk özel kelimeni ekledin.",
+            en: "Added your first custom word to the vocabulary.",
+            de: "Dein erstes eigenes Wort hinzugefügt."
+        },
+        howToUnlock: {
+            tr: "Kendi seçtiğin 1 kelimeyi listene ekle.",
+            en: "Add 1 custom word.",
+            de: "Füge 1 eigenes Wort hinzu."
+        },
+        target: 1,
+        type: "custom_words"
+    },
+    {
+        id: "badge-custom-author",
+        tier: "bronze",
+        category: "custom",
+        icon: "fa-solid fa-pen-nib",
+        title: { tr: "Kelime Yazarı", en: "Author", de: "Wortautor" },
+        desc: {
+            tr: "Kişisel listene 3 yeni kelime ekleyerek kendi sözlüğünü oluşturdun.",
+            en: "Crafted your personal vocabulary with 3 words.",
+            de: "3 eigene Wörter zu deiner Liste hinzugefügt."
+        },
+        howToUnlock: {
+            tr: "Kendi listene en az 3 kelime ekle.",
+            en: "Add at least 3 custom words.",
+            de: "Mindestens 3 eigene Wörter hinzufügen."
+        },
+        target: 3,
+        type: "custom_words"
+    },
+    {
+        id: "badge-custom-10",
+        tier: "silver",
+        category: "custom",
+        icon: "fa-solid fa-book-bookmark",
+        title: { tr: "Özel Kütüphane", en: "Curated Library", de: "Eigene Bibliothek" },
+        desc: {
+            tr: "10 özel kelime ekleyerek kişiselleştirilmiş bir arşiv kurdun.",
+            en: "Curated an archive of 10 personal words.",
+            de: "Ein Archiv aus 10 eigenen Wörtern kuratiert."
+        },
+        howToUnlock: {
+            tr: "Kendi listene en az 10 kelime ekle.",
+            en: "Add at least 10 custom words.",
+            de: "Mindestens 10 eigene Wörter hinzufügen."
+        },
+        target: 10,
+        type: "custom_words"
+    },
+    {
+        id: "badge-custom-25",
+        tier: "gold",
+        category: "custom",
+        icon: "fa-solid fa-feather",
+        title: { tr: "Sözlük Derleyicisi", en: "Lexicographer", de: "Lexikograf" },
+        desc: {
+            tr: "25 özel kelime! Kendi öğrenme materyalini kendin üretiyorsun.",
+            en: "25 custom words created! True self-directed learner.",
+            de: "25 eigene Wörter erstellt! Selbstbestimmtes Lernen."
+        },
+        howToUnlock: {
+            tr: "Kendi listene en az 25 kelime ekle.",
+            en: "Add at least 25 custom words.",
+            de: "Mindestens 25 eigene Wörter hinzufügen."
+        },
+        target: 25,
+        type: "custom_words"
+    },
+    {
+        id: "badge-custom-50",
+        tier: "platinum",
+        category: "custom",
+        icon: "fa-solid fa-scroll",
+        title: { tr: "Büyük Ansiklopedist", en: "Grand Encyclopedist", de: "Großenzyklopädist" },
+        desc: {
+            tr: "Tam 50 özel kelime! Adına bir sözlük basılsa yeridir.",
+            en: "50 custom words authored. A monumental collection!",
+            de: "50 eigene Wörter verfasst. Eine monumentale Sammlung!"
+        },
+        howToUnlock: {
+            tr: "Kendi listene en az 50 kelime ekle.",
+            en: "Add at least 50 custom words.",
+            de: "Mindestens 50 eigene Wörter hinzufügen."
+        },
+        target: 50,
+        type: "custom_words"
+    },
+
+    // 46-51: Audio & Pronunciation
+    {
+        id: "badge-audio-first",
+        tier: "bronze",
+        category: "audio",
+        icon: "fa-solid fa-volume-low",
+        title: { tr: "İlk Tını", en: "First Sound", de: "Erster Klang" },
+        desc: {
+            tr: "İlk kez ses motoruyla bir kelime telaffuzu dinledin.",
+            en: "Listened to your first word pronunciation.",
+            de: "Deine erste Vokabelaussprache angehört."
+        },
+        howToUnlock: {
+            tr: "Herhangi bir kelimenin ses telaffuzunu dinle.",
+            en: "Listen to any word's pronunciation.",
+            de: "Die Aussprache eines beliebigen Wortes anhören."
+        },
+        target: 1,
+        type: "audio_listened"
+    },
+    {
+        id: "badge-audio-25",
+        tier: "bronze",
+        category: "audio",
+        icon: "fa-solid fa-headphones",
+        title: { tr: "Keskin Kulak", en: "Sharp Ear", de: "Scharfes Ohr" },
+        desc: {
+            tr: "25 kelimenin telaffuzunu dinleyerek kulağını eğittin.",
+            en: "Trained your ear with 25 pronunciations.",
+            de: "Dein Gehör mit 25 Aussprachen geschult."
+        },
+        howToUnlock: {
+            tr: "Toplam 25 kelime seslendirmesi dinle.",
+            en: "Listen to 25 word pronunciations.",
+            de: "25 Vokabelaussprachen anhören."
+        },
+        target: 25,
+        type: "audio_listened"
+    },
+    {
+        id: "badge-audio-100",
+        tier: "silver",
+        category: "audio",
+        icon: "fa-solid fa-music",
+        title: { tr: "Fonetik Ustası", en: "Phonetic Virtuoso", de: "Phonetik-Meister" },
+        desc: {
+            tr: "100 kelimenin doğru vurgusunu ve tonlamasını dinledin.",
+            en: "Absorbed natural cadence and accent across 100 words.",
+            de: "Natürliche Betonung von 100 Wörtern verinnerlicht."
+        },
+        howToUnlock: {
+            tr: "Toplam 100 kelime seslendirmesi dinle.",
+            en: "Listen to 100 word pronunciations.",
+            de: "100 Vokabelaussprachen anhören."
+        },
+        target: 100,
+        type: "audio_listened"
+    },
+    {
+        id: "badge-audio-300",
+        tier: "gold",
+        category: "audio",
+        icon: "fa-solid fa-compact-disc",
+        title: { tr: "Akustik Okyanus", en: "Acoustic Ocean", de: "Akustischer Ozean" },
+        desc: {
+            tr: "300 kelime dinleyerek telaffuzda ana dil seviyesine yaklaştın.",
+            en: "Listened to 300 words. Pronunciation is second nature!",
+            de: "300 Wörter angehört. Aussprache fast muttersprachlich!"
+        },
+        howToUnlock: {
+            tr: "Toplam 300 kelime seslendirmesi dinle.",
+            en: "Listen to 300 word pronunciations.",
+            de: "300 Vokabelaussprachen anhören."
+        },
+        target: 300,
+        type: "audio_listened"
+    },
+    {
+        id: "badge-audio-wod-5",
+        tier: "silver",
+        category: "audio",
+        icon: "fa-solid fa-calendar-day",
+        title: { tr: "Günün Sadık Dinleyicisi", en: "Daily Listener", de: "Täglicher Hörer" },
+        desc: {
+            tr: "Günün Kelimesini 5 farklı günde sesli olarak dinledin.",
+            en: "Listened to the Word of the Day across 5 distinct days.",
+            de: "Das Wort des Tages an 5 verschiedenen Tagen angehört."
+        },
+        howToUnlock: {
+            tr: "Günün Kelimesini 5 farklı günde dinle.",
+            en: "Listen to the Word of the Day on 5 different days.",
+            de: "Wort des Tages an 5 verschiedenen Tagen anhören."
+        },
+        target: 5,
+        type: "wod_days"
+    },
+    {
+        id: "badge-audio-sentence-20",
+        tier: "silver",
+        category: "audio",
+        icon: "fa-solid fa-comment-dots",
+        title: { tr: "Cümle Ezgisi", en: "Sentence Cadence", de: "Satzmelodie" },
+        desc: {
+            tr: "20 örnek cümlenin sesli telaffuzunu dinledin.",
+            en: "Listened to 20 full contextual example sentences.",
+            de: "20 Beispielsätze vollständig angehört."
+        },
+        howToUnlock: {
+            tr: "Toplam 20 örnek cümle seslendirmesi dinle.",
+            en: "Listen to 20 example sentence audios.",
+            de: "20 Beispielsatzaussprachen anhören."
+        },
+        target: 20,
+        type: "sentence_audio"
+    },
+
+    // 52-55: Cards & Practice
+    {
+        id: "badge-cards-50",
+        tier: "bronze",
+        category: "cards",
+        icon: "fa-solid fa-clone",
+        title: { tr: "Kart Çevirici", en: "Card Flipper", de: "Karten-Umdreher" },
+        desc: {
+            tr: "3D kelime kartlarını 50 kez çevirerek pratik yaptın.",
+            en: "Flipped 3D smart cards 50 times in practice.",
+            de: "3D-Karten 50-mal gewendet und geübt."
+        },
+        howToUnlock: {
+            tr: "Kartlar sekmesinde en az 50 kez kart çevir veya incele.",
+            en: "Study or flip 50 flashcards.",
+            de: "50-mal Karten wenden oder lernen."
+        },
+        target: 50,
+        type: "cards_studied"
+    },
+    {
+        id: "badge-cards-200",
+        tier: "silver",
+        category: "cards",
+        icon: "fa-solid fa-layer-group",
+        title: { tr: "Hafıza Mimarı", en: "Memory Architect", de: "Gedächtnis-Architekt" },
+        desc: {
+            tr: "200 kelime kartı inceleyerek görsel hafızanı güçlendirdin.",
+            en: "Reviewed 200 flashcards, cementing visual recall.",
+            de: "200 Karten studiert und die Erinnerung gestärkt."
+        },
+        howToUnlock: {
+            tr: "Kartlar sekmesinde en az 200 kez kart incele.",
+            en: "Study 200 flashcards.",
+            de: "200 Karteikarten studieren."
+        },
+        target: 200,
+        type: "cards_studied"
+    },
+    {
+        id: "badge-cards-500",
+        tier: "gold",
+        category: "cards",
+        icon: "fa-solid fa-monument",
+        title: { tr: "Zihin Sarayı", en: "Mind Palace", de: "Gedankenpalast" },
+        desc: {
+            tr: "500 kart çalışmasıyla muazzam bir zihinsel kütüphane inşa ettin.",
+            en: "Built an unshakeable mental palace over 500 card sessions.",
+            de: "Mit 500 Kartenwiederholungen einen Gedankenpalast erbaut."
+        },
+        howToUnlock: {
+            tr: "Kartlar sekmesinde en az 500 kez kart incele.",
+            en: "Study 500 flashcards.",
+            de: "500 Karteikarten studieren."
+        },
+        target: 500,
+        type: "cards_studied"
+    },
+    {
+        id: "badge-cards-shuffle-10",
+        tier: "bronze",
+        category: "cards",
+        icon: "fa-solid fa-shuffle",
+        title: { tr: "Kaderi Karıştır", en: "Fate Shuffler", de: "Kartenmischer" },
+        desc: {
+            tr: "Kartları 10 kez karıştırarak ezberi bozdun ve beynini şaşırttın.",
+            en: "Shuffled decks 10 times to disrupt linear memorization.",
+            de: "Karten 10-mal gemischt, um das Gehirn herauszufordern."
+        },
+        howToUnlock: {
+            tr: "Kartlar sekmesinde 'Karıştır' butonuna 10 kez tıkla.",
+            en: "Click 'Shuffle' 10 times in Flashcards.",
+            de: "Klicke 10-mal auf 'Mischen' bei den Karten."
+        },
+        target: 10,
+        type: "cards_shuffled"
+    },
+
+    // 56-58: Special Challenges
+    {
+        id: "badge-night-owl",
+        tier: "gold",
+        category: "special",
+        icon: "fa-solid fa-moon",
+        title: { tr: "Gece Kuşu", en: "Night Owl", de: "Nachteule" },
+        desc: {
+            tr: "Herkes uyurken (00:00 - 05:00) dil öğrenme azmini sürdürdün.",
+            en: "Studied while the world slept (between 00:00 and 05:00).",
+            de: "Gelernt, während alle schliefen (zwischen 00:00 und 05:00 Uhr)."
+        },
+        howToUnlock: {
+            tr: "Gece saat 00:00 ile 05:00 arasında kelime öğren veya çalışma yap.",
+            en: "Study cards, learn words or take a quiz between 00:00 and 05:00.",
+            de: "Lerne zwischen 00:00 und 05:00 Uhr Wörter oder löse ein Quiz."
+        },
+        target: 1,
+        type: "night_owl"
+    },
+    {
+        id: "badge-early-bird",
+        tier: "silver",
+        category: "special",
+        icon: "fa-solid fa-sun",
+        title: { tr: "Erken Kalkan", en: "Early Bird", de: "Frühaufsteher" },
+        desc: {
+            tr: "Günün ilk ışıklarıyla (05:00 - 07:30) zihnini kelimelerle açtın.",
+            en: "Woke up early to learn with sunrise (05:00 - 07:30).",
+            de: "Mit dem Sonnenaufgang gelernt (05:00 - 07:30 Uhr)."
+        },
+        howToUnlock: {
+            tr: "Sabah saat 05:00 ile 07:30 arasında çalışma yap.",
+            en: "Study words or cards early in the morning between 05:00 and 07:30.",
+            de: "Lerne morgens zwischen 05:00 und 07:30 Uhr."
+        },
+        target: 1,
+        type: "early_bird"
+    },
+    {
+        id: "badge-weekend-warrior",
+        tier: "gold",
+        category: "special",
+        icon: "fa-solid fa-dumbbell",
+        title: { tr: "Hafta Sonu Savaşçısı", en: "Weekend Warrior", de: "Wochenend-Krieger" },
+        desc: {
+            tr: "Tatil günlerinde rehavete kapılmayıp hem Cumartesi hem Pazar çalıştın.",
+            en: "Studied actively on both Saturday and Sunday in a weekend.",
+            de: "Sowohl am Samstag als auch am Sonntag aktiv gelernt."
+        },
+        howToUnlock: {
+            tr: "Aynı hafta sonunun hem Cumartesi hem de Pazar günü aktif çalışma yap.",
+            en: "Study on both Saturday and Sunday in the same weekend.",
+            de: "Lerne am selben Wochenende sowohl samstags als auch sonntags."
+        },
+        target: 1,
+        type: "weekend_warrior"
+    }
+];
+
+const ACHIEVEMENTS_DATABASE = ACHIEVEMENTS_RAW.map(ach => ({
+    ...ach,
+    progress: function() {
+        const cur = (typeof getAchievementMetric === "function") ? getAchievementMetric(this.type) : 0;
+        const target = this.target;
+        return {
+            current: Math.min(cur, target),
+            target: target,
+            percent: Math.min(100, Math.round((cur / target) * 100))
+        };
+    },
+    check: function() {
+        const cur = (typeof getAchievementMetric === "function") ? getAchievementMetric(this.type) : 0;
+        return cur >= this.target;
+    }
+}));
+
+
+
+
+// Tooltip presentation controller
+function showBadgeTooltip(badgeId, targetEl, mouseEvent) {
+    const tooltip = document.getElementById("badge-hover-tooltip");
+    if (!tooltip) return;
+
+    const ach = ACHIEVEMENTS_DATABASE.find(a => a.id === badgeId);
+    if (!ach) return;
+
+    const isUnlocked = unlockedAchievements.includes(ach.id);
+    const lang = (typeof currentLang !== "undefined" && currentLang) ? currentLang : "tr";
+    const title = ach.title[lang] || ach.title.tr || ach.title.en;
+    const desc = ach.desc[lang] || ach.desc.tr || ach.desc.en;
+    const howTo = ach.howToUnlock[lang] || ach.howToUnlock.tr || ach.howToUnlock.en;
+    const tierName = getTierDisplayName(ach.tier, lang);
+    const categoryName = getCategoryDisplayName(ach.category, lang);
+    const prog = ach.progress();
+
+    const statusHtml = isUnlocked 
+        ? '<div class="badge-tooltip-status unlocked"><i class="fa-solid fa-circle-check"></i> ' + (lang === 'en' ? 'Unlocked & Achieved' : (lang === 'de' ? 'Erfolg freigeschaltet' : 'Kazanıldı!')) + '</div>'
+        : '<div class="badge-tooltip-status locked"><i class="fa-solid fa-lock"></i> ' + (lang === 'en' ? 'Locked' : (lang === 'de' ? 'Gesperrt' : 'Henüz Kazanılmadı')) + '</div>';
+
+    tooltip.innerHTML = `
+        <div class="badge-tooltip-header">
+            <span class="badge-tooltip-tier tier-${ach.tier}-badge">${tierName}</span>
+            <span class="badge-tooltip-cat">${categoryName}</span>
+        </div>
+        <div class="badge-tooltip-title-row">
+            <div class="badge-tooltip-icon tier-${ach.tier}">
+                <i class="${ach.icon}"></i>
+            </div>
+            <div>
+                <h4 class="badge-tooltip-title">${title}</h4>
+                <p class="badge-tooltip-lore">${desc}</p>
+            </div>
+        </div>
+        <div class="badge-tooltip-req">
+            <div class="badge-tooltip-req-title">
+                <i class="fa-solid fa-compass-drafting"></i> ${lang === 'en' ? 'How to Unlock' : (lang === 'de' ? 'Freischaltbedingung' : 'Nasıl Kazanılır?')}
+            </div>
+            <div class="badge-tooltip-req-text">${howTo}</div>
+        </div>
+        <div class="badge-tooltip-progress-box">
+            <div class="badge-tooltip-progress-row">
+                <span>${lang === 'en' ? 'Progress' : (lang === 'de' ? 'Fortschritt' : 'İlerleme')}</span>
+                <span>${prog.current} / ${prog.target} (${prog.percent}%)</span>
+            </div>
+            <div class="badge-tooltip-progress-bar">
+                <div class="badge-tooltip-progress-fill" style="width: ${prog.percent}%;"></div>
+            </div>
+        </div>
+        ${statusHtml}
+    `;
+
+    tooltip.classList.add("visible");
+    positionTooltip(tooltip, targetEl, mouseEvent);
+}
+
+function positionTooltip(tooltip, targetEl, mouseEvent) {
+    if (!tooltip || !targetEl) return;
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+    const margin = 12;
+
+    let left = 0;
+    let top = 0;
+
+    if (mouseEvent && mouseEvent.clientX) {
+        left = mouseEvent.clientX + margin;
+        top = mouseEvent.clientY + margin;
+    } else {
+        left = targetRect.left + (targetRect.width / 2) - (tooltipRect.width / 2);
+        top = targetRect.bottom + margin;
+    }
+
+    // Horizontal edge clamping
+    if (left + tooltipRect.width > window.innerWidth - 12) {
+        left = window.innerWidth - tooltipRect.width - 12;
+    }
+    if (left < 12) left = 12;
+
+    // Vertical edge clamping
+    if (top + tooltipRect.height > window.innerHeight - 12) {
+        top = (mouseEvent ? mouseEvent.clientY : targetRect.top) - tooltipRect.height - margin;
+    }
+    if (top < 12) top = 12;
+
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = top + 'px';
+}
+
+function hideBadgeTooltip() {
+    const tooltip = document.getElementById("badge-hover-tooltip");
+    if (tooltip) {
+        tooltip.classList.remove("visible");
+    }
+}
+
+function setupBadgeTooltips() {
+    const tooltip = document.getElementById("badge-hover-tooltip");
+    if (!tooltip) return;
+
+    let activeTarget = null;
+
+    document.addEventListener("mouseover", (e) => {
+        const badgeEl = e.target.closest(".badge-item, .ach-card");
+        if (badgeEl) {
+            const badgeId = badgeEl.getAttribute("data-badge-id") || badgeEl.id;
+            if (badgeId) {
+                activeTarget = badgeEl;
+                showBadgeTooltip(badgeId, badgeEl, e);
+            }
+        }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+        if (activeTarget && tooltip.classList.contains("visible")) {
+            positionTooltip(tooltip, activeTarget, e);
+        }
+    });
+
+    document.addEventListener("mouseout", (e) => {
+        const badgeEl = e.target.closest(".badge-item, .ach-card");
+        if (badgeEl && (!e.relatedTarget || !badgeEl.contains(e.relatedTarget))) {
+            activeTarget = null;
+            hideBadgeTooltip();
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        const badgeEl = e.target.closest(".badge-item, .ach-card");
+        if (badgeEl) {
+            const badgeId = badgeEl.getAttribute("data-badge-id") || badgeEl.id;
+            if (badgeId) {
+                if (tooltip.classList.contains("visible") && activeTarget === badgeEl) {
+                    activeTarget = null;
+                    hideBadgeTooltip();
+                } else {
+                    activeTarget = badgeEl;
+                    showBadgeTooltip(badgeId, badgeEl, null);
+                }
+                return;
+            }
+        }
+        if (!e.target.closest("#badge-hover-tooltip")) {
+            activeTarget = null;
+            hideBadgeTooltip();
+        }
+    });
+}
+
+// Achievements Gallery Modal Controller
+function setupAchievementsModal() {
+    const openBtn = document.getElementById("open-all-badges-btn");
+    const closeBtn = document.getElementById("close-achievements-modal-btn");
+    const modalOverlay = document.getElementById("achievements-modal-overlay");
+    const searchInput = document.getElementById("ach-search-input");
+    const searchClear = document.getElementById("ach-search-clear");
+    const filterTabsContainer = document.getElementById("ach-filter-tabs");
+
+    if (openBtn && modalOverlay) {
+        openBtn.addEventListener("click", () => {
+            renderModalBadges();
+            modalOverlay.classList.add("active");
+            document.body.style.overflow = "hidden";
+        });
+    }
+
+    const closeModal = () => {
+        if (modalOverlay) {
+            modalOverlay.classList.remove("active");
+            document.body.style.overflow = "";
+            hideBadgeTooltip();
+        }
+    };
+
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    if (modalOverlay) {
+        modalOverlay.addEventListener("click", (e) => {
+            if (e.target === modalOverlay) closeModal();
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modalOverlay && modalOverlay.classList.contains("active")) {
+            closeModal();
+        }
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            currentAchSearchQuery = e.target.value.trim().toLowerCase();
+            if (searchClear) {
+                searchClear.style.display = currentAchSearchQuery ? "block" : "none";
+            }
+            renderModalBadges();
+        });
+    }
+
+    if (searchClear && searchInput) {
+        searchClear.addEventListener("click", () => {
+            searchInput.value = "";
+            currentAchSearchQuery = "";
+            searchClear.style.display = "none";
+            renderModalBadges();
+        });
+    }
+
+    if (filterTabsContainer) {
+        filterTabsContainer.querySelectorAll(".ach-tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterTabsContainer.querySelectorAll(".ach-tab-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                currentAchCategoryFilter = btn.getAttribute("data-filter") || "all";
+                renderModalBadges();
+            });
+        });
+    }
+}
+
+// Render badges inside the pop-up modal gallery
+function renderModalBadges() {
+    const grid = document.getElementById("ach-modal-badges-grid");
+    if (!grid) return;
+
+    const unlockedCount = unlockedAchievements.length;
+    const totalCount = ACHIEVEMENTS_DATABASE.length;
+    const percent = Math.min(100, Math.round((unlockedCount / totalCount) * 100));
+    const lang = (typeof currentLang !== "undefined" && currentLang) ? currentLang : "tr";
+
+    // Update modal stats
+    const mCountEl = document.getElementById("m-badges-unlocked-count");
+    const mPercentEl = document.getElementById("m-badges-percent");
+    const mProgLabel = document.getElementById("m-badges-progress-label");
+    const mProgFill = document.getElementById("m-badges-progress-fill");
+    const tabUnlockedCount = document.getElementById("ach-tab-unlocked-count");
+    const tabLockedCount = document.getElementById("ach-tab-locked-count");
+
+    if (mCountEl) mCountEl.textContent = unlockedCount + " / " + totalCount;
+    if (mPercentEl) mPercentEl.textContent = percent + "%";
+    if (mProgLabel) mProgLabel.textContent = unlockedCount + " / " + totalCount;
+    if (mProgFill) mProgFill.style.width = percent + "%";
+    if (tabUnlockedCount) tabUnlockedCount.textContent = unlockedCount;
+    if (tabLockedCount) tabLockedCount.textContent = totalCount - unlockedCount;
+
+    // Filter achievements
+    let filtered = ACHIEVEMENTS_DATABASE.filter(ach => {
+        const isUnlocked = unlockedAchievements.includes(ach.id);
+        if (currentAchCategoryFilter === "unlocked") return isUnlocked;
+        if (currentAchCategoryFilter === "locked") return !isUnlocked;
+        if (currentAchCategoryFilter !== "all") return ach.category === currentAchCategoryFilter;
+        return true;
+    });
+
+    if (currentAchSearchQuery) {
+        const q = currentAchSearchQuery.toLowerCase();
+        filtered = filtered.filter(ach => {
+            const title = (ach.title[lang] || ach.title.tr || "").toLowerCase();
+            const desc = (ach.desc[lang] || ach.desc.tr || "").toLowerCase();
+            const how = (ach.howToUnlock[lang] || ach.howToUnlock.tr || "").toLowerCase();
+            const tier = getTierDisplayName(ach.tier, lang).toLowerCase();
+            const cat = getCategoryDisplayName(ach.category, lang).toLowerCase();
+            return title.includes(q) || desc.includes(q) || how.includes(q) || tier.includes(q) || cat.includes(q);
+        });
+    }
+
+    grid.innerHTML = "";
+
+    if (filtered.length === 0) {
+        grid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                <i class="fa-solid fa-magnifying-glass" style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                <p>${lang === 'en' ? 'No achievements match your filter.' : (lang === 'de' ? 'Keine Erfolge entsprechen deinen Filtern.' : 'Aramanızla eşleşen başarı rozeti bulunamadı.')}</p>
+            </div>
+        `;
+        return;
+    }
+
+    filtered.forEach(ach => {
+        const isUnlocked = unlockedAchievements.includes(ach.id);
+        const title = ach.title[lang] || ach.title.tr || ach.title.en;
+        const desc = ach.desc[lang] || ach.desc.tr || ach.desc.en;
+        const tierName = getTierDisplayName(ach.tier, lang);
+        const categoryName = getCategoryDisplayName(ach.category, lang);
+        const prog = ach.progress();
+
+        const card = document.createElement("div");
+        card.className = 'ach-card ' + (isUnlocked ? 'unlocked' : 'locked') + ' tier-' + ach.tier;
+        card.setAttribute("data-badge-id", ach.id);
+        card.setAttribute("tabindex", "0");
+        card.setAttribute("role", "button");
+
+        card.innerHTML = `
+            <div class="ach-card-top">
+                <span class="ach-card-category">${categoryName}</span>
+                <span class="ach-card-tier-pill tier-${ach.tier}-badge">${tierName}</span>
+            </div>
+            <div class="ach-card-icon tier-${ach.tier}">
+                <i class="${ach.icon}"></i>
+            </div>
+            <h4 class="ach-card-title">${title}</h4>
+            <p class="ach-card-desc">${desc}</p>
+            <div class="ach-card-progress-box">
+                <div class="ach-card-progress-row">
+                    <span>${lang === 'en' ? 'Progress' : (lang === 'de' ? 'Fortschritt' : 'İlerleme')}</span>
+                    <span>${prog.current} / ${prog.target}</span>
+                </div>
+                <div class="ach-card-progress-bar">
+                    <div class="ach-card-progress-fill" style="width: ${prog.percent}%;"></div>
+                </div>
+            </div>
+            <div class="ach-card-status-badge">
+                ${isUnlocked 
+                    ? '<i class="fa-solid fa-circle-check"></i> ' + (lang === 'en' ? 'Unlocked' : (lang === 'de' ? 'Freigeschaltet' : 'Kazanıldı'))
+                    : '<i class="fa-solid fa-lock"></i> ' + (lang === 'en' ? 'Locked' : (lang === 'de' ? 'Gesperrt' : 'Kilitli'))
+                }
+            </div>
+        `;
+
+        grid.appendChild(card);
+    });
+}
+
+// Render 8 featured badges on the home tab badges card
+function renderHomeBadges() {
+    const unlockedCount = unlockedAchievements.length;
+    const totalCount = ACHIEVEMENTS_DATABASE.length;
+    const percent = Math.min(100, Math.round((unlockedCount / totalCount) * 100));
+
+    const countPill = document.getElementById("home-badges-unlocked-count");
+    const miniFill = document.getElementById("home-badges-mini-fill");
+    const grid = document.getElementById("home-featured-badges-grid");
+
+    if (countPill) countPill.textContent = unlockedCount + " / " + totalCount;
+    if (miniFill) miniFill.style.width = percent + "%";
+
+    if (!grid) return;
+
+    const featuredIds = [
+        "badge-first-step",
+        "badge-hunter-25",
+        "badge-streak-3",
+        "badge-quiz-novice",
+        "badge-quiz-perfect",
+        "badge-aviation",
+        "badge-custom-author",
+        "badge-night-owl"
+    ];
+
+    const lang = (typeof currentLang !== "undefined" && currentLang) ? currentLang : "tr";
+    grid.innerHTML = "";
+
+    featuredIds.forEach(id => {
+        const ach = ACHIEVEMENTS_DATABASE.find(a => a.id === id);
+        if (!ach) return;
+
+        const isUnlocked = unlockedAchievements.includes(ach.id);
+        const title = ach.title[lang] || ach.title.tr || ach.title.en;
+
+        const badgeEl = document.createElement("div");
+        badgeEl.className = 'badge-item ' + (isUnlocked ? '' : 'locked') + ' tier-' + ach.tier;
+        badgeEl.id = ach.id;
+        badgeEl.setAttribute("data-badge-id", ach.id);
+        badgeEl.setAttribute("tabindex", "0");
+        badgeEl.setAttribute("role", "button");
+
+        badgeEl.innerHTML = `
+            <div class="badge-icon"><i class="${ach.icon}"></i></div>
+            <span>${title}</span>
+        `;
+
+        grid.appendChild(badgeEl);
+    });
+}
+
+// Core evaluation of all 58 achievements
+function checkAchievements(suppressNotifications = false) {
+    let newlyUnlocked = [];
+
+    ACHIEVEMENTS_DATABASE.forEach(ach => {
+        const isAlreadyUnlocked = unlockedAchievements.includes(ach.id);
+        if (!isAlreadyUnlocked) {
+            if (ach.check()) {
+                unlockedAchievements.push(ach.id);
+                newlyUnlocked.push(ach);
+            }
+        }
+    });
+
+    if (newlyUnlocked.length > 0) {
+        setAppStorage("lexigoo_unlocked_achievements", JSON.stringify(unlockedAchievements));
+        if (!suppressNotifications) {
+            playAchievementSound();
+            newlyUnlocked.forEach((ach, index) => {
+                setTimeout(() => {
+                    showAchievementUnlockNotification(ach);
+                }, index * 400);
+            });
+        }
+    }
+
+    renderHomeBadges();
+    const modal = document.getElementById("achievements-modal-overlay");
+    if (modal && modal.classList.contains("active")) {
+        renderModalBadges();
+    }
+}
+
+// Initialization of Achievements Engine
+function initAchievementsEngine() {
+    if (isAchievementsInitialized) return;
+    isAchievementsInitialized = true;
+
+    try {
+        unlockedAchievements = JSON.parse(getAppStorage("lexigoo_unlocked_achievements") || "[]");
+    } catch(e) {
+        unlockedAchievements = [];
+    }
+
+    setupBadgeTooltips();
+    setupAchievementsModal();
+    renderHomeBadges();
+}
+
+window.ACHIEVEMENTS_DATABASE = ACHIEVEMENTS_DATABASE;
 
 // ==========================================================================
 // 13. Localization & i18n Engine (Turkish / English / German Support)
@@ -2634,6 +4438,12 @@ const TRANSLATIONS = {
         "badge-custom-title": "Yazar",
         "badge-marathon-title": "Maratoncu",
         "badge-hunter-title": "Avcı",
+        "btn-view-all-badges": "Tüm Rozetleri İncele (58 Rozet)",
+        "modal-badges-title": "Başarı Rozetleri Galerisi",
+        "modal-badges-subtitle": "Tüm başarılar, kilit açma hedefleri ve kazanılan ödüller",
+        "modal-stat-unlocked": "Kazanılan Rozet",
+        "modal-stat-completion": "Tamamlanma Oranı",
+        "modal-overall-progress": "Genel Başarım İlerlemesi",
         "qa-title": "Bugün Ne Yapmak İstersin?",
         "qa-subtitle": "Öğrenme yolculuğuna devam etmek için aşağıdaki aktivitelerden birini seçerek anında başlayabilirsin.",
         "qa-search-title": "Kelimeleri Ara",
@@ -2725,6 +4535,12 @@ const TRANSLATIONS = {
         "badge-custom-title": "Author",
         "badge-marathon-title": "Marathoner",
         "badge-hunter-title": "Word Hunter",
+        "btn-view-all-badges": "View All Badges (58 Badges)",
+        "modal-badges-title": "Achievement Gallery",
+        "modal-badges-subtitle": "All achievements, unlock objectives and earned milestones",
+        "modal-stat-unlocked": "Unlocked Badges",
+        "modal-stat-completion": "Completion Rate",
+        "modal-overall-progress": "Overall Progress",
         "qa-title": "What would you like to do today?",
         "qa-subtitle": "Choose from the learning activities below to get started instantly.",
         "qa-search-title": "Search Dictionary",
@@ -2816,6 +4632,12 @@ const TRANSLATIONS = {
         "badge-custom-title": "Autor",
         "badge-marathon-title": "Marathonläufer",
         "badge-hunter-title": "Wortjäger",
+        "btn-view-all-badges": "Alle Abzeichen ansehen (58 Abzeichen)",
+        "modal-badges-title": "Erfolgsabzeichen-Galerie",
+        "modal-badges-subtitle": "Alle Erfolge, Freischaltziele und verdienten Belohnungen",
+        "modal-stat-unlocked": "Freigeschaltete Abzeichen",
+        "modal-stat-completion": "Abschlussrate",
+        "modal-overall-progress": "Gesamtfortschritt",
         "qa-title": "Was möchtest du heute tun?",
         "qa-subtitle": "Wähle eine der folgenden Aktivitäten, um sofort loszulegen.",
         "qa-search-title": "Wörterbuch durchsuchen",
@@ -2925,9 +4747,21 @@ function applyLanguage(lang) {
     renderDashboard(); // Refresh localized stats labels and units
     displayCurrentCard(); // Refresh current card texts
     renderDictionaryList(); // Refresh dictionary list texts
+    if (typeof renderHomeBadges === "function") renderHomeBadges();
+    if (typeof renderModalBadges === "function") renderModalBadges();
 }
 
 function trackWodListening() {
+    const today = getTodayDateString();
+    let wodDays = [];
+    try {
+        wodDays = JSON.parse(getAppStorage("wod_listened_days") || "[]");
+    } catch(e) { wodDays = []; }
+    if (!wodDays.includes(today)) {
+        wodDays.push(today);
+        setAppStorage("wod_listened_days", JSON.stringify(wodDays));
+    }
+    if (typeof logStudyActivity === "function") logStudyActivity();
     if (!wodListenedToday) {
         wodListenedToday = true;
         setAppStorage("quest_wod", "true");

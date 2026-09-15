@@ -229,42 +229,24 @@
 
                     <!-- 3. Achievements Cabinet -->
                     <div class="gamified-panel glass-panel" id="badges-panel">
-                        <h3><i class="fa-solid fa-medal icon-blue"></i> <span data-i18n="badges-title">Başarı Rozetleri</span></h3>
-                        <p class="panel-subtitle" data-i18n="badges-subtitle">Yolculuğunda kazandığın ödüller</p>
-                        <div class="badges-grid">
-                            <div class="badge-item locked" id="badge-first-step" title="İlk Adım: En az 1 kelimeyi öğrendim olarak işaretle.">
-                                <div class="badge-icon"><i class="fa-solid fa-shoe-prints"></i></div>
-                                <span data-i18n="badge-first-step-title">İlk Adım</span>
+                        <div class="panel-header-row">
+                            <div>
+                                <h3><i class="fa-solid fa-medal icon-blue"></i> <span data-i18n="badges-title">Başarı Rozetleri</span></h3>
+                                <p class="panel-subtitle" data-i18n="badges-subtitle">Yolculuğunda kazandığın ödüller ve hedefler</p>
                             </div>
-                            <div class="badge-item locked" id="badge-aviation" title="Kaptan: Havacılık alanında 5 kelime öğren.">
-                                <div class="badge-icon"><i class="fa-solid fa-plane"></i></div>
-                                <span data-i18n="badge-aviation-title">Kaptan</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-quiz-perfect" title="Dahi: Bir quizden 100% başarı elde et.">
-                                <div class="badge-icon"><i class="fa-solid fa-crown"></i></div>
-                                <span data-i18n="badge-quiz-title">Dahi</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-streak-3" title="İstikrarlı: Çalışma serisini 3 güne çıkar.">
-                                <div class="badge-icon"><i class="fa-solid fa-fire"></i></div>
-                                <span data-i18n="badge-streak-title">İstikrarlı</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-tourism" title="Gezgin: Turizm alanında 5 kelime öğren.">
-                                <div class="badge-icon"><i class="fa-solid fa-compass"></i></div>
-                                <span data-i18n="badge-tourism-title">Gezgin</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-custom-3" title="Yazar: Kendi eklediğin kelime sayısını 3'e ulaştır.">
-                                <div class="badge-icon"><i class="fa-solid fa-pen-nib"></i></div>
-                                <span data-i18n="badge-custom-title">Yazar</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-marathon" title="Maratoncu: 30 soruluk bir quizi tamamla.">
-                                <div class="badge-icon"><i class="fa-solid fa-bolt"></i></div>
-                                <span data-i18n="badge-marathon-title">Maratoncu</span>
-                            </div>
-                            <div class="badge-item locked" id="badge-hunter-25" title="Avcı: Toplamda 25 kelimeyi öğrendim olarak işaretle.">
-                                <div class="badge-icon"><i class="fa-solid fa-bullseye"></i></div>
-                                <span data-i18n="badge-hunter-title">Avcı</span>
-                            </div>
+                            <div class="badges-counter-pill" id="home-badges-unlocked-count">0 / 58</div>
                         </div>
+                        <div class="badges-mini-progress">
+                            <div class="badges-mini-fill" id="home-badges-mini-fill" style="width: 0%;"></div>
+                        </div>
+                        <div class="badges-grid" id="home-featured-badges-grid">
+                            <!-- Dynamically populated with featured badges -->
+                        </div>
+                        <button class="btn btn-secondary btn-block btn-all-badges" id="open-all-badges-btn" style="margin-top: 14px;">
+                            <i class="fa-solid fa-trophy text-gold"></i>
+                            <span data-i18n="btn-view-all-badges">Tüm Rozetleri İncele (58 Rozet)</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -766,6 +748,82 @@
     <div id="toast-notification" class="toast">
         <i class="fa-solid fa-circle-check toast-icon"></i>
         <span class="toast-message">Kelime başarıyla eklendi!</span>
+    </div>
+
+    <!-- Achievement Unlock Side Banner Container -->
+    <div id="achievement-toast-container" class="achievement-toast-container" aria-live="polite"></div>
+
+    <!-- Floating Badge Hover/Touch Card Tooltip -->
+    <div id="badge-hover-tooltip" class="badge-hover-tooltip" role="tooltip"></div>
+
+    <!-- Achievements Gallery Modal Popup -->
+    <div class="modal-overlay" id="achievements-modal-overlay">
+        <div class="achievements-modal glass-panel">
+            <div class="ach-modal-header">
+                <div class="ach-modal-title-group">
+                    <div class="ach-modal-icon-badge">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h2 data-i18n="modal-badges-title">Başarı Rozetleri Galerisi</h2>
+                        <p class="ach-modal-subtitle" data-i18n="modal-badges-subtitle">Tüm başarılar, kilit açma hedefleri ve kazanılan ödüller</p>
+                    </div>
+                </div>
+                <button class="ach-modal-close-btn" id="close-achievements-modal-btn" aria-label="Kapat">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Stats Overview Bar -->
+            <div class="ach-modal-stats">
+                <div class="ach-stat-card">
+                    <span class="ach-stat-value" id="m-badges-unlocked-count">0 / 58</span>
+                    <span class="ach-stat-label" data-i18n="modal-stat-unlocked">Kazanılan Rozet</span>
+                </div>
+                <div class="ach-stat-card">
+                    <span class="ach-stat-value" id="m-badges-percent">0%</span>
+                    <span class="ach-stat-label" data-i18n="modal-stat-completion">Tamamlanma Oranı</span>
+                </div>
+                <div class="ach-stat-progress-card">
+                    <div class="ach-progress-header">
+                        <span data-i18n="modal-overall-progress">Genel Başarım İlerlemesi</span>
+                        <span id="m-badges-progress-label">0 / 58</span>
+                    </div>
+                    <div class="ach-progress-bar">
+                        <div class="ach-progress-fill" id="m-badges-progress-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Category Filters -->
+            <div class="ach-modal-toolbar">
+                <div class="ach-search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="ach-search-input" placeholder="Rozet adı veya görev ara..." />
+                    <button class="ach-search-clear" id="ach-search-clear" style="display: none;">&times;</button>
+                </div>
+                <div class="ach-filter-tabs" id="ach-filter-tabs">
+                    <button class="ach-tab-btn active" data-filter="all">Tümü (58)</button>
+                    <button class="ach-tab-btn" data-filter="unlocked">Kazanılanlar (<span id="ach-tab-unlocked-count">0</span>)</button>
+                    <button class="ach-tab-btn" data-filter="locked">Kilitli (<span id="ach-tab-locked-count">58</span>)</button>
+                    <button class="ach-tab-btn" data-filter="general">Temel</button>
+                    <button class="ach-tab-btn" data-filter="streak">Seri</button>
+                    <button class="ach-tab-btn" data-filter="quiz">Quiz</button>
+                    <button class="ach-tab-btn" data-filter="category">Alanlar</button>
+                    <button class="ach-tab-btn" data-filter="custom">Özel</button>
+                    <button class="ach-tab-btn" data-filter="audio">Ses</button>
+                    <button class="ach-tab-btn" data-filter="cards">Kart</button>
+                    <button class="ach-tab-btn" data-filter="special">Meydan Okuma</button>
+                </div>
+            </div>
+
+            <!-- Badges Grid Container -->
+            <div class="ach-modal-body">
+                <div class="ach-badges-grid" id="ach-modal-badges-grid">
+                    <!-- Populated dynamically with all 58 badge cards -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Settings Drawer (Ayarlar & Tema Paneli) -->
