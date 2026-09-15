@@ -242,12 +242,29 @@ function updateFormLabelsForTargetLang() {
             ? (isEnUi ? "e.g., Deutsch lernen macht Spaß." : (isDeUi ? "z. B. Deutsch lernen macht Spaß." : "Örn: Deutsch lernen macht Spaß."))
             : (isEnUi ? "e.g., It happened by serendipity." : (isDeUi ? "z. B. It happened by serendipity." : "Örn: It happened by serendipity."));
     }
+    const trInput = document.getElementById("word-tr");
+    const exTrInput = document.getElementById("word-example-tr");
+    if (trInput) {
+        trInput.placeholder = isEnUi ? "e.g., Şans eseri bulma" : (isDeUi ? "z. B. Şans eseri bulma" : "Örn: Şans eseri bulma");
+    }
+    if (exTrInput) {
+        exTrInput.placeholder = isEnUi ? "e.g., Şans eseri gerçekleşti." : (isDeUi ? "z. B. Şans eseri gerçekleşti." : "Örn: Şans eseri gerçekleşti.");
+    }
 
     // 3. Flashcard Tips, Tag & Subtitle
     const cardTipFrontText = document.getElementById("card-tip-front-text");
     const cardTipBackText = document.getElementById("card-tip-back-text");
     const cardBackTag = document.getElementById("card-back-tag");
     const cardsTabDesc = document.getElementById("cards-tab-desc");
+    const cardSearch = document.getElementById("card-search");
+
+    if (cardSearch) {
+        if (isDe) {
+            cardSearch.placeholder = isEnUi ? "Search German or Turkish words..." : (isDeUi ? "Nach deutschen oder türkischen Wörtern suchen..." : "Almanca veya Türkçe kelime ara...");
+        } else {
+            cardSearch.placeholder = isEnUi ? "Search English or Turkish words..." : (isDeUi ? "Nach englischen oder türkischen Wörtern suchen..." : "İngilizce veya Türkçe kelime ara...");
+        }
+    }
 
     if (cardTipFrontText) {
         cardTipFrontText.textContent = isEnUi ? "Click to flip" : (isDeUi ? "Klicken zum Umdrehen" : "Çevirmek için tıkla");
@@ -260,7 +277,7 @@ function updateFormLabelsForTargetLang() {
         }
     }
     if (cardBackTag) {
-        cardBackTag.textContent = isEnUi ? "Turkish Meaning" : (isDeUi ? "Türkische Bedeutung" : "Türkçe Anlamı");
+        cardBackTag.textContent = isEnUi ? "Turkish Meaning" : (isDeUi ? "Türkische Bedeutung" : "Türkçe Karşılığı");
     }
     if (cardsTabDesc) {
         if (isDe) {
@@ -2635,6 +2652,9 @@ function showAchievementUnlockNotification(ach) {
     const container = document.getElementById("achievement-toast-container");
     if (!container) return;
 
+    // Play offline sound chime
+    playAchievementSound();
+
     while (container.children.length >= 2) {
         container.removeChild(container.firstChild);
     }
@@ -2664,6 +2684,7 @@ function showAchievementUnlockNotification(ach) {
 
     const closeBtn = banner.querySelector(".ach-toast-close");
     const dismiss = () => {
+        banner.classList.add("closing");
         banner.classList.add("fade-out");
         setTimeout(() => {
             if (banner.parentNode) banner.remove();
@@ -4004,41 +4025,38 @@ function showBadgeTooltip(badgeId, targetEl, mouseEvent) {
     const prog = ach.progress();
 
     const statusHtml = isUnlocked 
-        ? '<div class="badge-tooltip-status unlocked"><i class="fa-solid fa-circle-check"></i> ' + (lang === 'en' ? 'Unlocked & Achieved' : (lang === 'de' ? 'Erfolg freigeschaltet' : 'Kazanıldı!')) + '</div>'
-        : '<div class="badge-tooltip-status locked"><i class="fa-solid fa-lock"></i> ' + (lang === 'en' ? 'Locked' : (lang === 'de' ? 'Gesperrt' : 'Henüz Kazanılmadı')) + '</div>';
+        ? '<div class="tooltip-status status-unlocked"><i class="fa-solid fa-circle-check"></i> ' + (lang === 'en' ? 'Unlocked & Achieved' : (lang === 'de' ? 'Erfolg freigeschaltet' : 'Kazanıldı!')) + '</div>'
+        : '<div class="tooltip-status status-locked"><i class="fa-solid fa-lock"></i> ' + (lang === 'en' ? 'Locked' : (lang === 'de' ? 'Gesperrt' : 'Henüz Kazanılmadı')) + '</div>';
 
     tooltip.innerHTML = `
-        <div class="badge-tooltip-header">
-            <span class="badge-tooltip-tier tier-${ach.tier}-badge">${tierName}</span>
-            <span class="badge-tooltip-cat">${categoryName}</span>
-        </div>
-        <div class="badge-tooltip-title-row">
-            <div class="badge-tooltip-icon tier-${ach.tier}">
+        <div class="tooltip-header">
+            <div class="tooltip-icon tier-${ach.tier}">
                 <i class="${ach.icon}"></i>
             </div>
-            <div>
-                <h4 class="badge-tooltip-title">${title}</h4>
-                <p class="badge-tooltip-lore">${desc}</p>
+            <div class="tooltip-title-group">
+                <h4 class="tooltip-title">${title}</h4>
+                <div style="display: flex; gap: 6px; align-items: center; margin-top: 3px;">
+                    <span class="tooltip-tier-badge tier-${ach.tier}-badge">${tierName}</span>
+                    <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">${categoryName}</span>
+                </div>
             </div>
         </div>
-        <div class="badge-tooltip-req">
-            <div class="badge-tooltip-req-title">
-                <i class="fa-solid fa-compass-drafting"></i> ${lang === 'en' ? 'How to Unlock' : (lang === 'de' ? 'Freischaltbedingung' : 'Nasıl Kazanılır?')}
-            </div>
-            <div class="badge-tooltip-req-text">${howTo}</div>
+        <p class="tooltip-desc">${desc}</p>
+        <div class="tooltip-requirement">
+            <strong><i class="fa-solid fa-compass-drafting"></i> ${lang === 'en' ? 'How to Unlock' : (lang === 'de' ? 'Freischaltbedingung' : 'Nasıl Kazanılır?')}</strong>
+            ${howTo}
         </div>
-        <div class="badge-tooltip-progress-box">
-            <div class="badge-tooltip-progress-row">
-                <span>${lang === 'en' ? 'Progress' : (lang === 'de' ? 'Fortschritt' : 'İlerleme')}</span>
-                <span>${prog.current} / ${prog.target} (${prog.percent}%)</span>
-            </div>
-            <div class="badge-tooltip-progress-bar">
-                <div class="badge-tooltip-progress-fill" style="width: ${prog.percent}%;"></div>
-            </div>
+        <div class="tooltip-progress-row">
+            <span>${lang === 'en' ? 'Progress' : (lang === 'de' ? 'Fortschritt' : 'İlerleme')}</span>
+            <span>${prog.current} / ${prog.target} (${prog.percent}%)</span>
+        </div>
+        <div class="tooltip-progress-bar">
+            <div class="tooltip-progress-fill" style="width: ${prog.percent}%;"></div>
         </div>
         ${statusHtml}
     `;
 
+    tooltip.classList.add("active");
     tooltip.classList.add("visible");
     positionTooltip(tooltip, targetEl, mouseEvent);
 }
@@ -4079,6 +4097,7 @@ function positionTooltip(tooltip, targetEl, mouseEvent) {
 function hideBadgeTooltip() {
     const tooltip = document.getElementById("badge-hover-tooltip");
     if (tooltip) {
+        tooltip.classList.remove("active");
         tooltip.classList.remove("visible");
     }
 }

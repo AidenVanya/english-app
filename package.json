@@ -1,0 +1,18 @@
+{
+  "name": "lexigoo",
+  "version": "1.0.0",
+  "description": "LexiGoo - Çok Dilli Dil Öğrenme Platformu (PWA)",
+  "main": "script.js",
+  "scripts": {
+    "start": "npx serve ."
+  },
+  "keywords": [
+    "lexigoo",
+    "language-learning",
+    "pwa",
+    "flashcards",
+    "quiz"
+  ],
+  "author": "Kerem Akın Soyak",
+  "license": "MIT"
+}
