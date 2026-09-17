@@ -5353,6 +5353,31 @@ function scrollToLearningPath() {
     }
 }
 
+// Find the next active/unlocked lesson to start
+function getNextAvailableLesson() {
+    const currentDb = (typeof LESSONS_DATABASE !== "undefined" && LESSONS_DATABASE[targetLang]) 
+        ? LESSONS_DATABASE[targetLang] 
+        : [];
+    if (!currentDb || currentDb.length === 0) return null;
+
+    const completedList = getCompletedLessons(targetLang);
+    // Find the first uncompleted lesson
+    const nextLesson = currentDb.find(lesson => !completedList.includes(lesson.id));
+    // If all completed, return the first lesson for practice
+    return nextLesson || currentDb[0];
+}
+
+// Directly start the next available lesson
+function startNextAvailableLesson() {
+    const nextLesson = getNextAvailableLesson();
+    if (nextLesson) {
+        startLesson(nextLesson.id);
+        scrollToLearningPath();
+    } else {
+        showToast("Ders veritabanı yüklenemedi.");
+    }
+}
+
 // Load and save completed lesson IDs
 function getCompletedLessons(lang) {
     try {
@@ -5463,6 +5488,33 @@ function renderStreakHeroCard() {
         }
         if (streakGlow) {
             streakGlow.style.background = "radial-gradient(circle, rgba(249, 115, 22, 0.4) 0%, transparent 70%)";
+        }
+    }
+
+    // Update Big Action CTA Banner Button
+    const nextLesson = getNextAvailableLesson();
+    const ctaBanner = document.getElementById("btn-start-next-lesson");
+    const ctaTitle = document.getElementById("cta-banner-title");
+    const ctaSub = document.getElementById("cta-banner-subtitle");
+
+    if (ctaBanner && nextLesson) {
+        const isDeTarget = targetLang === "de";
+        const unitPrefix = isDeTarget ? "Lektion" : "Unit";
+
+        if (isTodayDone) {
+            ctaBanner.classList.add("completed-state");
+            if (ctaTitle) {
+                ctaTitle.textContent = isEn ? "CONTINUE PRACTICE" : (isDe ? "PRAXIS FORTSETZEN" : "PRATİĞE DEVAM ET");
+            }
+        } else {
+            ctaBanner.classList.remove("completed-state");
+            if (ctaTitle) {
+                ctaTitle.textContent = isEn ? "START TODAY'S LESSON" : (isDe ? "HEUTIGE LEKTION STARTEN" : "GÜNÜN DERSİNE BAŞLA");
+            }
+        }
+
+        if (ctaSub) {
+            ctaSub.textContent = `${unitPrefix} ${nextLesson.unit}: ${nextLesson.title} • 10 ${isEn ? "Questions" : (isDe ? "Fragen" : "Soru")}`;
         }
     }
 
@@ -5651,6 +5703,12 @@ function renderLearningPath() {
             nodeBtn.innerHTML = `<i class="fa-solid ${lesson.icon || 'fa-play'}"></i>`;
             nodeBtn.title = `${lesson.title} - Sıradaki Ders (Hemen Başla!)`;
 
+            // Floating Speech Bubble for instant clarity
+            const bubble = document.createElement("div");
+            bubble.className = "node-speech-bubble";
+            bubble.textContent = isEnUi ? "START!" : (isDeUi ? "START!" : "BAŞLA!");
+            nodeBtn.appendChild(bubble);
+
             // Crown badge on top
             const crown = document.createElement("div");
             crown.className = "node-crown-badge";
@@ -5701,6 +5759,15 @@ function setupLessonModalListeners() {
     const ttsPlayBtn = document.getElementById("lesson-tts-play-btn");
     const finishBtn = document.getElementById("v-finish-btn");
     const modalOverlay = document.getElementById("lesson-modal-overlay");
+    const startNextBtn = document.getElementById("btn-start-next-lesson");
+
+    // Connect Big Duolingo Start Next Lesson CTA Button
+    if (startNextBtn) {
+        startNextBtn.onclick = (e) => {
+            e.preventDefault();
+            startNextAvailableLesson();
+        };
+    }
 
     if (exitBtn) {
         exitBtn.addEventListener("click", () => {

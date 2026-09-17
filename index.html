@@ -122,12 +122,26 @@
                                 Serini başlatmak ve korumak için bugün aşağıdaki haritadan bir ders tamamla!
                             </p>
                         </div>
-                        <div class="streak-action-side">
-                            <button class="btn btn-primary btn-streak-cta" id="btn-jump-to-lesson" onclick="scrollToLearningPath()">
-                                <i class="fa-solid fa-play"></i> <span data-i18n="streak-btn-study">Derse Başla</span>
-                            </button>
-                        </div>
                     </div>
+
+                    <!-- Big Duolingo-style Start Next Lesson Banner Button -->
+                    <button class="streak-cta-banner" id="btn-start-next-lesson" type="button" title="Sıradaki Dersi Başlat">
+                        <div class="cta-banner-left">
+                            <div class="cta-banner-icon">
+                                <i class="fa-solid fa-play"></i>
+                            </div>
+                            <div class="cta-banner-text">
+                                <span class="cta-banner-title" id="cta-banner-title">GÜNÜN DERSİNE BAŞLA</span>
+                                <span class="cta-banner-sub" id="cta-banner-subtitle">Sıradaki: 1. Ders • 10 Soru</span>
+                            </div>
+                        </div>
+                        <div class="cta-banner-right">
+                            <span class="cta-xp-badge">+50 XP</span>
+                            <div class="cta-arrow-circle">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </button>
 
                     <!-- 7-Day Weekly Streak Tracker -->
                     <div class="streak-weekly-tracker">
