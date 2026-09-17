@@ -5372,11 +5372,13 @@ function startNextAvailableLesson() {
     const nextLesson = getNextAvailableLesson();
     if (nextLesson) {
         startLesson(nextLesson.id);
-        scrollToLearningPath();
     } else {
-        showToast("Ders veritabanı yüklenemedi.");
+        const lang = (typeof targetLang !== "undefined" && targetLang === "de") ? "de" : "en";
+        startLesson(`${lang}_lesson_1`);
     }
 }
+window.startNextAvailableLesson = startNextAvailableLesson;
+window._realStartNextAvailableLesson = startNextAvailableLesson;
 
 // Load and save completed lesson IDs
 function getCompletedLessons(lang) {
@@ -5834,12 +5836,29 @@ function setupLessonModalListeners() {
 }
 
 function startLesson(lessonId) {
-    const currentDb = (typeof LESSONS_DATABASE !== "undefined" && LESSONS_DATABASE[targetLang]) 
-        ? LESSONS_DATABASE[targetLang] 
+    const lang = (typeof targetLang !== "undefined" && targetLang) ? targetLang : "en";
+    let currentDb = (typeof LESSONS_DATABASE !== "undefined" && LESSONS_DATABASE[lang]) 
+        ? LESSONS_DATABASE[lang] 
         : [];
     
+    if (!currentDb || currentDb.length === 0) {
+        if (typeof LESSONS_DATABASE !== "undefined") {
+            currentDb = LESSONS_DATABASE.en || LESSONS_DATABASE.de || [];
+        }
+    }
+    
     activeLessonData = currentDb.find(l => l.id === lessonId);
-    if (!activeLessonData) return;
+    if (!activeLessonData && typeof LESSONS_DATABASE !== "undefined") {
+        const all = [...(LESSONS_DATABASE.en || []), ...(LESSONS_DATABASE.de || [])];
+        activeLessonData = all.find(l => l.id === lessonId);
+    }
+    if (!activeLessonData && currentDb.length > 0) {
+        activeLessonData = currentDb[0];
+    }
+    if (!activeLessonData) {
+        showToast("Ders bulunamadı.");
+        return;
+    }
 
     currentLessonIndex = 0;
     lessonQuestions = activeLessonData.questions || [];
@@ -5855,7 +5874,11 @@ function startLesson(lessonId) {
     const victoryView = document.getElementById("lesson-victory-view");
     const footer = document.getElementById("lesson-modal-footer");
 
-    if (modalOverlay) modalOverlay.classList.add("active");
+    if (modalOverlay) {
+        modalOverlay.style.setProperty("display", "flex", "important");
+        modalOverlay.classList.add("active");
+        document.body.style.overflow = "hidden";
+    }
     if (questionContainer) questionContainer.style.display = "flex";
     if (victoryView) victoryView.style.display = "none";
     if (footer) footer.style.display = "block";
@@ -5866,7 +5889,11 @@ function startLesson(lessonId) {
 
 function closeLessonModal() {
     const modalOverlay = document.getElementById("lesson-modal-overlay");
-    if (modalOverlay) modalOverlay.classList.remove("active");
+    if (modalOverlay) {
+        modalOverlay.classList.remove("active");
+        modalOverlay.style.setProperty("display", "none");
+        document.body.style.overflow = "";
+    }
     activeLessonData = null;
     currentLessonIndex = 0;
 }
@@ -6215,6 +6242,9 @@ window.renderStreakHeroCard = renderStreakHeroCard;
 window.renderLearningPath = renderLearningPath;
 window.scrollToLearningPath = scrollToLearningPath;
 window.startLesson = startLesson;
+window.startNextAvailableLesson = startNextAvailableLesson;
+window.getNextAvailableLesson = getNextAvailableLesson;
+window.closeLessonModal = closeLessonModal;
 window.recordStudyActivityDate = recordStudyActivityDate;
 window.getActivityDates = getActivityDates;
 window.playAudioTone = playAudioTone;
