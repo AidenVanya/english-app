@@ -5352,6 +5352,8 @@ function openLearningPathModal() {
     if (modalOverlay) {
         modalOverlay.style.setProperty("display", "flex", "important");
         modalOverlay.classList.add("active");
+        modalOverlay.style.opacity = "1";
+        modalOverlay.style.pointerEvents = "auto";
         document.body.style.overflow = "hidden";
     }
 }
@@ -5361,7 +5363,9 @@ function closeLearningPathModal() {
     const modalOverlay = document.getElementById("learning-path-modal-overlay");
     if (modalOverlay) {
         modalOverlay.classList.remove("active");
-        modalOverlay.style.setProperty("display", "none");
+        modalOverlay.style.setProperty("display", "none", "important");
+        modalOverlay.style.opacity = "0";
+        modalOverlay.style.pointerEvents = "none";
         document.body.style.overflow = "";
     }
 }
@@ -5947,6 +5951,8 @@ function startLesson(lessonId) {
     if (modalOverlay) {
         modalOverlay.style.setProperty("display", "flex", "important");
         modalOverlay.classList.add("active");
+        modalOverlay.style.opacity = "1";
+        modalOverlay.style.pointerEvents = "auto";
         document.body.style.overflow = "hidden";
     }
     if (questionContainer) questionContainer.style.display = "flex";
@@ -5961,7 +5967,9 @@ function closeLessonModal() {
     const modalOverlay = document.getElementById("lesson-modal-overlay");
     if (modalOverlay) {
         modalOverlay.classList.remove("active");
-        modalOverlay.style.setProperty("display", "none");
+        modalOverlay.style.setProperty("display", "none", "important");
+        modalOverlay.style.opacity = "0";
+        modalOverlay.style.pointerEvents = "none";
         document.body.style.overflow = "";
     }
     activeLessonData = null;

@@ -20,7 +20,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS with cache-busting -->
-    <link rel="stylesheet" href="style.css?v=2.3">
+    <link rel="stylesheet" href="style.css?v=2.4">
 
     <!-- Critical CSS for Hero CTA Banner and Duolingo Elements to ensure instant rendering -->
     <style>
@@ -258,6 +258,8 @@
                 if (modal) {
                     modal.style.setProperty("display", "flex", "important");
                     modal.classList.add("active");
+                    modal.style.opacity = "1";
+                    modal.style.pointerEvents = "auto";
                     document.body.style.overflow = "hidden";
                     if (typeof window.renderLearningPath === "function") window.renderLearningPath();
                 }
@@ -270,7 +272,9 @@
                 const modal = document.getElementById("learning-path-modal-overlay");
                 if (modal) {
                     modal.classList.remove("active");
-                    modal.style.setProperty("display", "none");
+                    modal.style.setProperty("display", "none", "important");
+                    modal.style.opacity = "0";
+                    modal.style.pointerEvents = "none";
                     document.body.style.overflow = "";
                 }
             }
@@ -1120,6 +1124,8 @@
                 </div>
             </div>
         </div>
+    </div>
+
     <!-- Duolingo-style Learning Path (Yol Haritası & Dersler) Modal Popup -->
     <div class="modal-overlay" id="learning-path-modal-overlay">
         <div class="learning-path-modal glass-panel" id="learning-path-modal">
@@ -1385,15 +1391,15 @@
     </div>
 
     <!-- English Databases -->
-    <script src="words_db.js?v=2.3"></script>
-    <script src="tenses_db.js?v=2.3"></script>
+    <script src="words_db.js?v=2.4"></script>
+    <script src="tenses_db.js?v=2.4"></script>
     <!-- German Databases (Almanca Veritabanları) -->
-    <script src="words_de_db.js?v=2.3"></script>
-    <script src="tenses_de_db.js?v=2.3"></script>
+    <script src="words_de_db.js?v=2.4"></script>
+    <script src="tenses_de_db.js?v=2.4"></script>
     <!-- Lessons Database (Ders & Harita Veritabanı) -->
-    <script src="lessons_db.js?v=2.3"></script>
+    <script src="lessons_db.js?v=2.4"></script>
     <!-- Custom JavaScript -->
-    <script src="script.js?v=2.3"></script>
+    <script src="script.js?v=2.4"></script>
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
