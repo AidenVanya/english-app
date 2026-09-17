@@ -104,6 +104,74 @@
                     </div>
                 </div>
 
+                <!-- Hero Streak & Habit Card (Seri ve Günlük Teşvik) -->
+                <div class="streak-hero-card glass-panel" id="streak-hero-card">
+                    <div class="streak-hero-main">
+                        <div class="streak-flame-wrapper">
+                            <div class="streak-flame-glow" id="streak-glow"></div>
+                            <i class="fa-solid fa-fire-flame-curved streak-flame-icon" id="streak-flame-icon"></i>
+                            <span class="streak-number-badge" id="streak-hero-count">0</span>
+                        </div>
+                        <div class="streak-hero-content">
+                            <div class="streak-hero-header">
+                                <span class="streak-badge-tag" id="streak-status-tag" data-i18n="streak-tag-active">🔥 Günlük Seri</span>
+                                <span class="streak-multiplier" id="streak-level-label">Başlangıç Seviyesi</span>
+                            </div>
+                            <h2 class="streak-hero-title" id="streak-hero-title">0 Günlük Seri!</h2>
+                            <p class="streak-hero-subtitle" id="streak-hero-msg" data-i18n="streak-msg-encourage">
+                                Serini başlatmak ve korumak için bugün aşağıdaki haritadan bir ders tamamla!
+                            </p>
+                        </div>
+                        <div class="streak-action-side">
+                            <button class="btn btn-primary btn-streak-cta" id="btn-jump-to-lesson" onclick="scrollToLearningPath()">
+                                <i class="fa-solid fa-play"></i> <span data-i18n="streak-btn-study">Derse Başla</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 7-Day Weekly Streak Tracker -->
+                    <div class="streak-weekly-tracker">
+                        <div class="weekly-tracker-header">
+                            <span class="weekly-title"><i class="fa-regular fa-calendar-check"></i> <span data-i18n="streak-weekly-title">Bu Haftaki İstikrarın</span></span>
+                            <span class="weekly-milestone" id="streak-milestone-text">Hedef: 3 Gün Serisi (0/3)</span>
+                        </div>
+                        <div class="weekly-days-row" id="weekly-days-row">
+                            <!-- Populated dynamically: Pzt, Sal, Çar, Per, Cum, Cmt, Paz -->
+                        </div>
+                        <div class="milestone-progress-bar">
+                            <div class="milestone-progress-fill" id="streak-milestone-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Duolingo-style Learning Path Section (Ders Haritası) -->
+                <div class="learning-path-section" id="learning-path-section">
+                    <div class="path-header glass-panel">
+                        <div class="path-header-info">
+                            <div class="path-unit-badge" id="path-lang-badge">
+                                <span class="path-flag" id="path-flag-icon">🇬🇧</span>
+                                <span id="path-lang-name">İngilizce Öğrenme Haritası</span>
+                            </div>
+                            <h2 class="path-title" data-i18n="path-title">Adım Adım Ders Haritası</h2>
+                            <p class="path-subtitle" data-i18n="path-subtitle">Her ders 10 interaktif sorudan oluşur. Dersleri tamamlayarak ilerle ve serini koru!</p>
+                        </div>
+                        <div class="path-progress-widget">
+                            <div class="path-progress-counter">
+                                <span class="path-progress-val" id="path-completed-count">0/10</span>
+                                <span class="path-progress-lbl" data-i18n="path-completed-lbl">Ders Tamamlandı</span>
+                            </div>
+                            <div class="path-mini-progress">
+                                <div class="path-mini-fill" id="path-overall-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duolingo Path Tree Container -->
+                    <div class="path-tree-wrapper" id="duolingo-path-tree">
+                        <!-- Populated dynamically with wavy lesson nodes and connectors -->
+                    </div>
+                </div>
+
                 <!-- Fast Stats Dashboard -->
                 <div class="stats-grid">
                     <div class="stat-card glass-panel">
@@ -806,6 +874,117 @@
         </div>
     </div>
 
+    <!-- Interactive Duolingo-style Lesson Runner Modal -->
+    <div class="modal-overlay" id="lesson-modal-overlay">
+        <div class="lesson-modal glass-panel" id="lesson-modal">
+            <!-- Lesson Header Bar -->
+            <div class="lesson-modal-header">
+                <button class="lesson-exit-btn" id="lesson-exit-btn" title="Dersten Çık" aria-label="Dersten Çık">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="lesson-progress-wrapper">
+                    <div class="lesson-progress-bar">
+                        <div class="lesson-progress-fill" id="lesson-progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <span class="lesson-step-indicator" id="lesson-step-indicator">1/10</span>
+                </div>
+                <div class="lesson-hearts-container" id="lesson-hearts-container" title="Kalan Canlar">
+                    <span class="heart active"><i class="fa-solid fa-heart"></i></span>
+                    <span class="heart active"><i class="fa-solid fa-heart"></i></span>
+                    <span class="heart active"><i class="fa-solid fa-heart"></i></span>
+                    <span class="heart active"><i class="fa-solid fa-heart"></i></span>
+                    <span class="heart active"><i class="fa-solid fa-heart"></i></span>
+                </div>
+            </div>
+
+            <!-- Lesson Active Question Area -->
+            <div class="lesson-modal-body" id="lesson-question-container">
+                <div class="lesson-question-type" id="lesson-question-type">
+                    <i class="fa-solid fa-lightbulb"></i> <span id="lesson-type-label">Kelime Anlamı</span>
+                </div>
+                
+                <h3 class="lesson-prompt-title" id="lesson-prompt-title">Soru yükleniyor...</h3>
+
+                <!-- Optional Audio & Speech Play Box -->
+                <div class="lesson-tts-box" id="lesson-tts-box" style="display: none;">
+                    <button class="lesson-tts-button" id="lesson-tts-play-btn" title="Telaffuzu Dinle">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                    <span class="lesson-tts-text" id="lesson-tts-text">Listen carefully</span>
+                </div>
+
+                <!-- Multiple Choice Grid (For choice, reverse_choice, listen, fill_blank) -->
+                <div class="lesson-options-grid" id="lesson-options-grid">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Word Bank Container (For word_order scrambled sentences) -->
+                <div class="lesson-word-bank-area" id="lesson-word-bank-area" style="display: none;">
+                    <div class="word-bank-slots" id="word-bank-target-slots">
+                        <!-- Selected chips -->
+                    </div>
+                    <div class="word-bank-divider"></div>
+                    <div class="word-bank-pool" id="word-bank-source-pool">
+                        <!-- Available word chips -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson Victory / Summary Screen (shown when all 10 questions finish) -->
+            <div class="lesson-modal-body lesson-victory-view" id="lesson-victory-view" style="display: none;">
+                <div class="victory-icon-burst">
+                    <i class="fa-solid fa-crown victory-crown-icon"></i>
+                </div>
+                <h2 class="victory-title" id="victory-title">Ders Tamamlandı! 🎉</h2>
+                <p class="victory-subtitle" id="victory-subtitle">Harika bir iş çıkardın! Günlük hedefine bir adım daha yaklaştın.</p>
+                
+                <!-- Big Streak Celebration Card inside victory -->
+                <div class="victory-streak-card">
+                    <div class="v-flame-icon"><i class="fa-solid fa-fire"></i></div>
+                    <div>
+                        <h4 id="v-streak-title">🔥 Günlük Serin Korundu!</h4>
+                        <p id="v-streak-desc">Tebrikler! Günlük çalışma hedefini tamamladın.</p>
+                    </div>
+                </div>
+
+                <div class="victory-stats-grid">
+                    <div class="v-stat-box">
+                        <span class="v-stat-val text-green" id="v-stat-score">10/10</span>
+                        <span class="v-stat-lbl">Doğru Cevap</span>
+                    </div>
+                    <div class="v-stat-box">
+                        <span class="v-stat-val text-gold" id="v-stat-xp">+50 XP</span>
+                        <span class="v-stat-lbl">Kazanılan Puan</span>
+                    </div>
+                    <div class="v-stat-box">
+                        <span class="v-stat-val text-purple" id="v-stat-accuracy">100%</span>
+                        <span class="v-stat-lbl">Başarı Oranı</span>
+                    </div>
+                </div>
+
+                <div class="victory-actions">
+                    <button class="btn btn-primary btn-block" id="v-finish-btn">
+                        <i class="fa-solid fa-arrow-right"></i> <span data-i18n="btn-continue-path">Haritaya Devam Et</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lesson Bottom Feedback Bar -->
+            <div class="lesson-modal-footer" id="lesson-modal-footer">
+                <div class="lesson-feedback-drawer" id="lesson-feedback-drawer">
+                    <div class="feedback-status" id="lesson-feedback-content">
+                        <!-- Populated with correct / incorrect feedback message -->
+                    </div>
+                </div>
+                <div class="lesson-footer-actions">
+                    <button class="btn btn-lesson-action" id="lesson-action-btn" disabled>
+                        <span id="lesson-action-btn-text">Kontrol Et</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Settings Drawer (Ayarlar & Tema Paneli) -->
     <div class="settings-drawer-overlay" id="settings-drawer-overlay"></div>
     <div class="settings-drawer" id="settings-drawer">
@@ -916,6 +1095,8 @@
     <!-- German Databases (Almanca Veritabanları) -->
     <script src="words_de_db.js"></script>
     <script src="tenses_de_db.js"></script>
+    <!-- Lessons Database (Ders & Harita Veritabanı) -->
+    <script src="lessons_db.js"></script>
     <!-- Custom JavaScript -->
     <script src="script.js"></script>
     <!-- PWA Service Worker Registration -->

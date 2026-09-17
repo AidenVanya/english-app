@@ -78,6 +78,7 @@ function initApp() {
     applySavedTheme();
     applySavedLanguage(); // Initialize interface language
     renderDashboard(); // Render initial total words, learned words, custom words, streak count
+    initStreakAndLessonsEngine(); // Duolingo Learning Path & Streak Engine
     filterFlashcards(false); // Prepare initial flashcards without shuffle
     renderDictionaryList();
     initGrammarTab(); // Load initial grammar sidebar options
@@ -181,6 +182,8 @@ function setTargetLanguage(lang, notify = true) {
     initGrammarTab();
     determineWordOfTheDay();
     updateFormLabelsForTargetLang();
+    if (typeof renderStreakHeroCard === "function") renderStreakHeroCard();
+    if (typeof renderLearningPath === "function") renderLearningPath();
     
     if (notify) {
         const isDe = targetLang === "de";
@@ -2328,6 +2331,9 @@ function getTodayDateString() {
 // Automatically increment streak when user finishes a quest/action on a new day
 function incrementStreak() {
     const today = getTodayDateString();
+    if (typeof recordStudyActivityDate === "function") {
+        recordStudyActivityDate(today);
+    }
     
     if (lastActiveDate !== today) {
         streakCount++;
@@ -2340,8 +2346,17 @@ function incrementStreak() {
         const streakEl = document.getElementById("stat-daily-streak");
         if (streakEl) streakEl.textContent = `${streakCount} Gün`;
         
-        showToast(`Günlük Seri Artırıldı! 🔥 ${streakCount} Gündür Çalışıyorsun!`);
+        const isEn = typeof currentLang !== 'undefined' && currentLang === 'en';
+        const isDe = typeof currentLang !== 'undefined' && currentLang === 'de';
+        const msg = isEn ? `Daily Streak Increased! 🔥 ${streakCount}-day Streak!` :
+            (isDe ? `Tägliche Serie erhöht! 🔥 ${streakCount} Tage in Folge!` :
+            `Günlük Seri Artırıldı! 🔥 ${streakCount} Gündür Çalışıyorsun!`);
+        showToast(msg);
         checkAchievements();
+    }
+
+    if (typeof renderStreakHeroCard === "function") {
+        renderStreakHeroCard();
     }
 }
 
@@ -4470,7 +4485,15 @@ const TRANSLATIONS = {
         "btn-next-question": "Sonraki Soru",
         "btn-retry-quiz": "Yeniden Dene",
         "btn-home-return": "Ana Sayfaya Dön",
-        "grammar-empty-text": "Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin."
+        "grammar-empty-text": "Öğrenmek istediğiniz dilbilgisi konusunu soldaki listeden seçin.",
+        "streak-tag-active": "🔥 Günlük Seri",
+        "streak-msg-encourage": "Serini başlatmak ve korumak için bugün aşağıdaki haritadan bir ders tamamla!",
+        "streak-btn-study": "Derse Başla",
+        "streak-weekly-title": "Bu Haftaki İstikrarın",
+        "path-title": "Adım Adım Ders Haritası",
+        "path-subtitle": "Her ders 10 interaktif sorudan oluşur. Dersleri tamamlayarak ilerle ve serini koru!",
+        "path-completed-lbl": "Ders Tamamlandı",
+        "btn-continue-path": "Haritaya Devam Et"
     },
     en: {
         "nav-home": "Home",
@@ -4567,7 +4590,15 @@ const TRANSLATIONS = {
         "btn-next-question": "Next Question",
         "btn-retry-quiz": "Try Again",
         "btn-home-return": "Return to Home",
-        "grammar-empty-text": "Select a grammar topic from the list on the left."
+        "grammar-empty-text": "Select a grammar topic from the list on the left.",
+        "streak-tag-active": "🔥 Daily Streak",
+        "streak-msg-encourage": "Complete a lesson from the roadmap below to start and protect your streak today!",
+        "streak-btn-study": "Start Lesson",
+        "streak-weekly-title": "Your Weekly Consistency",
+        "path-title": "Step-by-Step Learning Path",
+        "path-subtitle": "Each lesson consists of 10 interactive questions. Advance through the path to protect your streak!",
+        "path-completed-lbl": "Lessons Completed",
+        "btn-continue-path": "Continue on Path"
     },
     de: {
         "nav-home": "Startseite",
@@ -4664,7 +4695,15 @@ const TRANSLATIONS = {
         "btn-next-question": "Nächste Frage",
         "btn-retry-quiz": "Erneut versuchen",
         "btn-home-return": "Zurück zur Startseite",
-        "grammar-empty-text": "Wählen Sie ein Grammatikthema aus der linken Liste."
+        "grammar-empty-text": "Wählen Sie ein Grammatikthema aus der linken Liste.",
+        "streak-tag-active": "🔥 Tages-Serie",
+        "streak-msg-encourage": "Schließe heute eine Lektion auf der Karte ab, um deine Serie zu schützen!",
+        "streak-btn-study": "Lektion starten",
+        "streak-weekly-title": "Deine wöchentliche Beständigkeit",
+        "path-title": "Schritt-für-Schritt-Lernpfad",
+        "path-subtitle": "Jede Lektion besteht aus 10 interaktiven Fragen. Schließe sie ab und halte deine Serie am Leben!",
+        "path-completed-lbl": "Lektionen abgeschlossen",
+        "btn-continue-path": "Auf dem Pfad fortfahren"
     }
 };
 
@@ -4719,6 +4758,8 @@ function applyLanguage(lang) {
     renderDictionaryList(); // Refresh dictionary list texts
     if (typeof renderHomeBadges === "function") renderHomeBadges();
     if (typeof renderModalBadges === "function") renderModalBadges();
+    if (typeof renderStreakHeroCard === "function") renderStreakHeroCard();
+    if (typeof renderLearningPath === "function") renderLearningPath();
 }
 
 function trackWodListening() {
@@ -5194,11 +5235,930 @@ function initHero3DBackground() {
 }
 
 // ==========================================================================
-// 17. App Bootstrap Execution
+// 18. Duolingo Learning Path & Hero Streak Engine
+// ==========================================================================
+
+let lessonProgress = { en: [], de: [] };
+let activeLessonData = null;
+let currentLessonIndex = 0;
+let lessonQuestions = [];
+let lessonHearts = 5;
+let lessonCorrectCount = 0;
+let lessonSelectedOption = null;
+let lessonWordBankSelected = [];
+let lessonStepState = "answering"; // 'answering' or 'checked'
+let lessonAudioCtx = null;
+
+// Initialize Web Audio API synth safely upon first user interaction
+function getAudioContext() {
+    if (!lessonAudioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            lessonAudioCtx = new AudioContextClass();
+        }
+    }
+    if (lessonAudioCtx && lessonAudioCtx.state === "suspended") {
+        lessonAudioCtx.resume();
+    }
+    return lessonAudioCtx;
+}
+
+// Zero-dependency pure web synthesized chimes for instant responsive gamification feedback
+function playAudioTone(type) {
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === "success") {
+            // Cheerful ascending arpeggio chime (C5 -> E5 -> G5)
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+            osc.start(now);
+            osc.stop(now + 0.45);
+        } else if (type === "error") {
+            // Soft buzzer tone (D3 -> C3)
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.setValueAtTime(174.61, now + 0.12);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.38);
+        } else if (type === "victory") {
+            // Majestic victory fanfare synth
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+
+            osc.type = "triangle";
+            osc2.type = "sine";
+
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            osc.frequency.setValueAtTime(1046.50, now + 0.32); // High C6
+
+            osc2.frequency.setValueAtTime(261.63, now);
+            osc2.frequency.setValueAtTime(523.25, now + 0.32);
+
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+            gain2.gain.setValueAtTime(0.15, now);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+            osc.start(now);
+            osc2.start(now);
+            osc.stop(now + 0.75);
+            osc2.stop(now + 0.75);
+        }
+    } catch (e) {
+        // Silently ignore audio synthesis errors
+    }
+}
+
+// Activity History Helper
+function getActivityDates() {
+    try {
+        return JSON.parse(getAppStorage("activity_history_dates") || "[]");
+    } catch (e) {
+        return [];
+    }
+}
+
+function recordStudyActivityDate(dateStr) {
+    const dates = getActivityDates();
+    if (!dates.includes(dateStr)) {
+        dates.push(dateStr);
+        setAppStorage("activity_history_dates", JSON.stringify(dates));
+    }
+}
+
+// Smooth scroll down to learning path
+function scrollToLearningPath() {
+    const el = document.getElementById("learning-path-section");
+    if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+}
+
+// Load and save completed lesson IDs
+function getCompletedLessons(lang) {
+    try {
+        return JSON.parse(getAppStorage(`lesson_progress_${lang}`) || "[]");
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveCompletedLesson(lang, lessonId) {
+    const list = getCompletedLessons(lang);
+    if (!list.includes(lessonId)) {
+        list.push(lessonId);
+        setAppStorage(`lesson_progress_${lang}`, JSON.stringify(list));
+    }
+}
+
+// Main Engine Initializer
+function initStreakAndLessonsEngine() {
+    loadLessonProgress();
+    renderStreakHeroCard();
+    renderLearningPath();
+    setupLessonModalListeners();
+}
+
+function loadLessonProgress() {
+    lessonProgress.en = getCompletedLessons("en");
+    lessonProgress.de = getCompletedLessons("de");
+}
+
+// 1. Render Hero Streak & Habit Card
+function renderStreakHeroCard() {
+    const streakCountEl = document.getElementById("streak-hero-count");
+    const streakTitleEl = document.getElementById("streak-hero-title");
+    const streakStatusTag = document.getElementById("streak-status-tag");
+    const streakLevelLabel = document.getElementById("streak-level-label");
+    const streakHeroMsg = document.getElementById("streak-hero-msg");
+    const streakFlameIcon = document.getElementById("streak-flame-icon");
+    const streakGlow = document.getElementById("streak-glow");
+
+    if (!streakTitleEl) return;
+
+    const today = getTodayDateString();
+    const activityDates = getActivityDates();
+    const isTodayDone = lastActiveDate === today || activityDates.includes(today);
+
+    // Update streak count badges
+    if (streakCountEl) streakCountEl.textContent = streakCount.toString();
+    
+    // Localized Titles
+    const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+
+    if (streakTitleEl) {
+        if (streakCount === 0) {
+            streakTitleEl.textContent = isEn ? "Start Your Streak Today!" : (isDe ? "Starte deine Serie heute!" : "Serini Bugün Başlat!");
+        } else {
+            streakTitleEl.textContent = isEn ? `${streakCount}-Day Streak!` : (isDe ? `${streakCount}-Tage Serie!` : `${streakCount} Günlük Seri!`);
+        }
+    }
+
+    // Determine Level Name
+    let levelText = isEn ? "Novice Learner" : (isDe ? "Anfänger" : "Başlangıç Seviyesi");
+    if (streakCount >= 30) levelText = isEn ? "Master of Habits 🔥" : (isDe ? "Gewohnheitsmeister 🔥" : "Alışkanlık Ustası 🔥");
+    else if (streakCount >= 14) levelText = isEn ? "Unstoppable Force ⚡" : (isDe ? "Unaufhaltsam ⚡" : "Durdurulamaz Güç ⚡");
+    else if (streakCount >= 7) levelText = isEn ? "Champion Habit 🌟" : (isDe ? "Wochen-Champion 🌟" : "Haftalık Şampiyon 🌟");
+    else if (streakCount >= 3) levelText = isEn ? "Consistent Spark ✨" : (isDe ? "Konstanter Funke ✨" : "İstikrar Kıvılcımı ✨");
+
+    if (streakLevelLabel) streakLevelLabel.textContent = levelText;
+
+    // Today Status & Styling
+    if (isTodayDone) {
+        if (streakStatusTag) {
+            streakStatusTag.textContent = isEn ? "✅ Streak Safe" : (isDe ? "✅ Serie geschützt" : "✅ Seri Güvende");
+            streakStatusTag.style.background = "rgba(16, 185, 129, 0.2)";
+            streakStatusTag.style.color = "#34d399";
+            streakStatusTag.style.borderColor = "rgba(16, 185, 129, 0.4)";
+        }
+        if (streakHeroMsg) {
+            streakHeroMsg.textContent = isEn 
+                ? "Awesome work! Your daily streak is safe for today. Keep building the habit tomorrow!" 
+                : (isDe ? "Großartige Arbeit! Deine tägliche Serie ist für heute sicher. Mache morgen weiter!" 
+                : "Harikasın! Bugünün çalışma hedefini tamamladın ve serini güvenceye aldın. Yarın serini büyütmeye devam et!");
+        }
+        if (streakFlameIcon) {
+            streakFlameIcon.style.color = "#10b981";
+            streakFlameIcon.style.filter = "drop-shadow(0 0 14px rgba(16, 185, 129, 0.9))";
+        }
+        if (streakGlow) {
+            streakGlow.style.background = "radial-gradient(circle, rgba(16, 185, 129, 0.45) 0%, transparent 70%)";
+        }
+    } else {
+        if (streakStatusTag) {
+            streakStatusTag.textContent = isEn ? "🔥 Streak at Risk!" : (isDe ? "🔥 Serie in Gefahr!" : "🔥 Seri Tehlikede!");
+            streakStatusTag.style.background = "rgba(245, 158, 11, 0.2)";
+            streakStatusTag.style.color = "#fbbf24";
+            streakStatusTag.style.borderColor = "rgba(245, 158, 11, 0.4)";
+        }
+        if (streakHeroMsg) {
+            streakHeroMsg.textContent = isEn 
+                ? "Complete a lesson from the roadmap below to protect and grow your streak today!" 
+                : (isDe ? "Schließe heute eine Lektion auf der Karte ab, um deine Serie zu schützen!" 
+                : "Serini başlatmak ve korumak için bugün aşağıdaki haritadan bir ders tamamla! Zinciri kırma!");
+        }
+        if (streakFlameIcon) {
+            streakFlameIcon.style.color = "#f97316";
+            streakFlameIcon.style.filter = "drop-shadow(0 0 12px rgba(249, 115, 22, 0.85)) drop-shadow(0 0 24px rgba(239, 68, 68, 0.5))";
+        }
+        if (streakGlow) {
+            streakGlow.style.background = "radial-gradient(circle, rgba(249, 115, 22, 0.4) 0%, transparent 70%)";
+        }
+    }
+
+    // Render Weekly Days Row & Milestones
+    renderWeeklyTracker(activityDates, today, isTodayDone);
+}
+
+function renderWeeklyTracker(activityDates, todayStr, isTodayDone) {
+    const weeklyRow = document.getElementById("weekly-days-row");
+    const milestoneText = document.getElementById("streak-milestone-text");
+    const milestoneFill = document.getElementById("streak-milestone-fill");
+
+    if (!weeklyRow) return;
+    weeklyRow.innerHTML = "";
+
+    const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+
+    // Day short names
+    const dayNames = isEn 
+        ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] 
+        : (isDe ? ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"] : ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"]);
+
+    // Calculate last 7 days window ending today
+    const daysWindow = [];
+    const todayDate = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(todayDate);
+        d.setDate(d.getDate() - i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const dStr = `${y}-${m}-${day}`;
+        daysWindow.push({
+            dateStr: dStr,
+            dayName: dayNames[d.getDay()],
+            isToday: i === 0
+        });
+    }
+
+    // Populate circles
+    daysWindow.forEach(item => {
+        const isDone = activityDates.includes(item.dateStr) || (item.isToday && isTodayDone);
+        const col = document.createElement("div");
+        col.className = "weekly-day-box";
+
+        const label = document.createElement("span");
+        label.className = "day-label";
+        label.textContent = item.dayName;
+        if (item.isToday) {
+            label.style.color = "#818cf8";
+            label.style.fontWeight = "800";
+        }
+
+        const circle = document.createElement("div");
+        circle.className = "day-circle";
+
+        if (item.isToday) {
+            if (isDone) {
+                circle.classList.add("today-completed");
+                circle.innerHTML = '<i class="fa-solid fa-check"></i>';
+                circle.title = isEn ? "Today: Completed! 🎉" : (isDe ? "Heute: Abgeschlossen! 🎉" : "Bugün: Tamamlandı! 🎉");
+            } else {
+                circle.classList.add("today-active");
+                circle.innerHTML = '<i class="fa-solid fa-fire"></i>';
+                circle.title = isEn ? "Today: Complete a lesson to secure streak!" : (isDe ? "Heute: Lerne jetzt!" : "Bugün: Seriyi korumak için ders tamamla!");
+            }
+        } else {
+            if (isDone) {
+                circle.classList.add("completed");
+                circle.innerHTML = '<i class="fa-solid fa-fire"></i>';
+                circle.title = `${item.dateStr}: Tamamlandı`;
+            } else {
+                circle.innerHTML = '<i class="fa-solid fa-circle-dot" style="font-size: 8px; opacity: 0.3;"></i>';
+            }
+        }
+
+        col.appendChild(label);
+        col.appendChild(circle);
+        weeklyRow.appendChild(col);
+    });
+
+    // Milestone calculation (3, 7, 14, 30, 60 days)
+    const milestones = [3, 7, 14, 30, 60, 100];
+    let nextMilestone = milestones.find(m => m > streakCount) || 100;
+    let prevMilestone = milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+    let pct = Math.min(100, Math.max(0, Math.round(((streakCount - prevMilestone) / (nextMilestone - prevMilestone)) * 100)));
+
+    if (milestoneText) {
+        milestoneText.textContent = isEn 
+            ? `Goal: ${nextMilestone}-Day Streak (${streakCount}/${nextMilestone})` 
+            : (isDe ? `Ziel: ${nextMilestone}-Tage Serie (${streakCount}/${nextMilestone})` 
+            : `Hedef: ${nextMilestone} Gün Serisi (${streakCount}/${nextMilestone})`);
+    }
+    if (milestoneFill) {
+        milestoneFill.style.width = `${pct}%`;
+    }
+}
+
+// 2. Render Duolingo Learning Path (Tree of Nodes)
+function renderLearningPath() {
+    const treeContainer = document.getElementById("duolingo-path-tree");
+    const pathLangName = document.getElementById("path-lang-name");
+    const pathFlagIcon = document.getElementById("path-flag-icon");
+    const pathCompletedCount = document.getElementById("path-completed-count");
+    const pathOverallFill = document.getElementById("path-overall-fill");
+
+    if (!treeContainer) return;
+    treeContainer.innerHTML = "";
+
+    // Determine target database
+    const currentDb = (typeof LESSONS_DATABASE !== "undefined" && LESSONS_DATABASE[targetLang]) 
+        ? LESSONS_DATABASE[targetLang] 
+        : [];
+    
+    const completedList = getCompletedLessons(targetLang);
+    const isDe = targetLang === "de";
+    const isEnUi = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDeUi = typeof currentLang !== "undefined" && currentLang === "de";
+
+    // Header info update
+    if (pathFlagIcon) pathFlagIcon.textContent = isDe ? "🇩🇪" : "🇬🇧";
+    if (pathLangName) {
+        if (isEnUi) {
+            pathLangName.textContent = isDe ? "German Learning Roadmap" : "English Learning Roadmap";
+        } else if (isDeUi) {
+            pathLangName.textContent = isDe ? "Deutscher Lernpfad" : "Englischer Lernpfad";
+        } else {
+            pathLangName.textContent = isDe ? "Almanca Öğrenme Haritası" : "İngilizce Öğrenme Haritası";
+        }
+    }
+
+    const completedCount = completedList.length;
+    const totalCount = currentDb.length;
+    if (pathCompletedCount) pathCompletedCount.textContent = `${completedCount}/${totalCount}`;
+    if (pathOverallFill) {
+        pathOverallFill.style.width = `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%`;
+    }
+
+    // S-curve positions pattern
+    const curvePositions = ["pos-center", "pos-left", "pos-center", "pos-right"];
+
+    currentDb.forEach((lesson, index) => {
+        const isCompleted = completedList.includes(lesson.id);
+        // An uncompleted lesson is active (unlocked) if it's the first lesson OR the previous lesson is completed
+        const prevCompleted = index === 0 || completedList.includes(currentDb[index - 1].id);
+        const isActive = !isCompleted && prevCompleted;
+        const isLocked = !isCompleted && !prevCompleted;
+
+        const row = document.createElement("div");
+        row.className = `path-node-row ${curvePositions[index % 4]}`;
+
+        // Connector line to the next node
+        if (index < currentDb.length - 1) {
+            const connector = document.createElement("div");
+            connector.className = "path-node-connector";
+            if (isCompleted) {
+                connector.classList.add("completed-connector");
+            }
+            row.appendChild(connector);
+        }
+
+        // Unit tag badge above the node
+        const unitTag = document.createElement("div");
+        unitTag.className = "node-unit-tag";
+        unitTag.textContent = `${isDe ? "Lektion" : "Unit"} ${lesson.unit}`;
+        row.appendChild(unitTag);
+
+        // Big Circular Node Button
+        const nodeBtn = document.createElement("button");
+        nodeBtn.className = "path-node-btn";
+        nodeBtn.setAttribute("data-lesson-id", lesson.id);
+
+        if (isCompleted) {
+            nodeBtn.classList.add("node-completed");
+            nodeBtn.innerHTML = `<i class="fa-solid ${lesson.icon || 'fa-star'}"></i>`;
+            nodeBtn.title = `${lesson.title} - Tamamlandı (Tekrar Pratik Yap)`;
+
+            // Golden stars badge
+            const starsRow = document.createElement("div");
+            starsRow.className = "node-stars-row";
+            starsRow.innerHTML = '<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>';
+            nodeBtn.appendChild(starsRow);
+        } else if (isActive) {
+            nodeBtn.classList.add("node-active");
+            nodeBtn.innerHTML = `<i class="fa-solid ${lesson.icon || 'fa-play'}"></i>`;
+            nodeBtn.title = `${lesson.title} - Sıradaki Ders (Hemen Başla!)`;
+
+            // Crown badge on top
+            const crown = document.createElement("div");
+            crown.className = "node-crown-badge";
+            crown.innerHTML = '<i class="fa-solid fa-crown"></i>';
+            nodeBtn.appendChild(crown);
+        } else {
+            nodeBtn.classList.add("node-locked");
+            nodeBtn.innerHTML = '<i class="fa-solid fa-lock"></i>';
+            nodeBtn.title = `${lesson.title} - Kilitli (Önceki dersi tamamla)`;
+        }
+
+        // Click handler
+        nodeBtn.addEventListener("click", () => {
+            if (isLocked) {
+                const lockMsg = isEnUi ? "Complete previous lessons to unlock this stage! 🔒" : 
+                    (isDeUi ? "Schließe vorherige Lektionen ab, um diese freizuschalten! 🔒" : 
+                    "Bu dersin kilidini açmak için önce önceki dersi tamamlamalısın! 🔒");
+                showToast(lockMsg);
+                playAudioTone("error");
+            } else {
+                startLesson(lesson.id);
+            }
+        });
+
+        row.appendChild(nodeBtn);
+
+        // Subtitle Card below the node
+        const infoCard = document.createElement("div");
+        infoCard.className = "node-card-info";
+        infoCard.innerHTML = `
+            <div class="node-card-title">${lesson.title}</div>
+            <div class="node-card-meta">
+                <span><i class="fa-solid fa-list-check"></i> 10 Soru</span>
+                <span>•</span>
+                <span class="text-gold"><i class="fa-solid fa-bolt"></i> +50 XP</span>
+            </div>
+        `;
+        row.appendChild(infoCard);
+
+        treeContainer.appendChild(row);
+    });
+}
+
+// 3. Interactive Duolingo Lesson Runner Modal Engine
+function setupLessonModalListeners() {
+    const exitBtn = document.getElementById("lesson-exit-btn");
+    const actionBtn = document.getElementById("lesson-action-btn");
+    const ttsPlayBtn = document.getElementById("lesson-tts-play-btn");
+    const finishBtn = document.getElementById("v-finish-btn");
+    const modalOverlay = document.getElementById("lesson-modal-overlay");
+
+    if (exitBtn) {
+        exitBtn.addEventListener("click", () => {
+            const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+            const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+            const confirmMsg = isEn 
+                ? "Are you sure you want to quit? Your current lesson progress will be lost." 
+                : (isDe ? "Möchtest du die Lektion wirklich verlassen? Dein Fortschritt geht verloren." 
+                : "Dersten çıkmak istediğine emin misin? Mevcut ders ilerlemen sıfırlanır.");
+            if (confirm(confirmMsg)) {
+                closeLessonModal();
+            }
+        });
+    }
+
+    if (actionBtn) {
+        actionBtn.addEventListener("click", () => {
+            if (lessonStepState === "answering") {
+                checkLessonAnswer();
+            } else if (lessonStepState === "checked") {
+                nextLessonQuestion();
+            }
+        });
+    }
+
+    if (ttsPlayBtn) {
+        ttsPlayBtn.addEventListener("click", () => {
+            const textEl = document.getElementById("lesson-tts-text");
+            if (textEl && textEl.textContent) {
+                speakPhrase(textEl.textContent);
+            }
+        });
+    }
+
+    if (finishBtn) {
+        finishBtn.addEventListener("click", () => {
+            closeLessonModal();
+            renderLearningPath();
+            renderStreakHeroCard();
+        });
+    }
+
+    // Keyboard support: Numbers 1-4 for choices, Enter to check/continue
+    window.addEventListener("keydown", (e) => {
+        const modal = document.getElementById("lesson-modal-overlay");
+        if (!modal || !modal.classList.contains("active")) return;
+
+        if (e.key >= "1" && e.key <= "4" && lessonStepState === "answering") {
+            const idx = parseInt(e.key) - 1;
+            const optionBtns = document.querySelectorAll(".lesson-option-btn");
+            if (optionBtns && optionBtns[idx]) {
+                optionBtns[idx].click();
+            }
+        } else if (e.key === "Enter") {
+            const btn = document.getElementById("lesson-action-btn");
+            if (btn && !btn.disabled) {
+                btn.click();
+            }
+        } else if (e.key === "Escape") {
+            const exit = document.getElementById("lesson-exit-btn");
+            if (exit) exit.click();
+        }
+    });
+}
+
+function startLesson(lessonId) {
+    const currentDb = (typeof LESSONS_DATABASE !== "undefined" && LESSONS_DATABASE[targetLang]) 
+        ? LESSONS_DATABASE[targetLang] 
+        : [];
+    
+    activeLessonData = currentDb.find(l => l.id === lessonId);
+    if (!activeLessonData) return;
+
+    currentLessonIndex = 0;
+    lessonQuestions = activeLessonData.questions || [];
+    lessonHearts = 5;
+    lessonCorrectCount = 0;
+    lessonSelectedOption = null;
+    lessonWordBankSelected = [];
+    lessonStepState = "answering";
+
+    // Reset views
+    const modalOverlay = document.getElementById("lesson-modal-overlay");
+    const questionContainer = document.getElementById("lesson-question-container");
+    const victoryView = document.getElementById("lesson-victory-view");
+    const footer = document.getElementById("lesson-modal-footer");
+
+    if (modalOverlay) modalOverlay.classList.add("active");
+    if (questionContainer) questionContainer.style.display = "flex";
+    if (victoryView) victoryView.style.display = "none";
+    if (footer) footer.style.display = "block";
+
+    renderLessonHearts();
+    renderLessonQuestion();
+}
+
+function closeLessonModal() {
+    const modalOverlay = document.getElementById("lesson-modal-overlay");
+    if (modalOverlay) modalOverlay.classList.remove("active");
+    activeLessonData = null;
+    currentLessonIndex = 0;
+}
+
+function renderLessonHearts() {
+    const container = document.getElementById("lesson-hearts-container");
+    if (!container) return;
+
+    let html = "";
+    for (let i = 0; i < 5; i++) {
+        if (i < lessonHearts) {
+            html += '<span class="heart active"><i class="fa-solid fa-heart"></i></span>';
+        } else {
+            html += '<span class="heart lost"><i class="fa-solid fa-heart"></i></span>';
+        }
+    }
+    container.innerHTML = html;
+}
+
+function renderLessonQuestion() {
+    lessonSelectedOption = null;
+    lessonWordBankSelected = [];
+    lessonStepState = "answering";
+
+    const q = lessonQuestions[currentLessonIndex];
+    if (!q) {
+        finishLesson();
+        return;
+    }
+
+    // Progress Bar & Counter
+    const progressFill = document.getElementById("lesson-progress-fill");
+    const indicator = document.getElementById("lesson-step-indicator");
+    if (progressFill) progressFill.style.width = `${((currentLessonIndex) / 10) * 100}%`;
+    if (indicator) indicator.textContent = `${currentLessonIndex + 1}/10`;
+
+    // Reset Action Button
+    const actionBtn = document.getElementById("lesson-action-btn");
+    const actionBtnText = document.getElementById("lesson-action-btn-text");
+    if (actionBtn) {
+        actionBtn.disabled = true;
+        actionBtn.classList.remove("btn-continue-success");
+    }
+    if (actionBtnText) {
+        const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+        const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+        actionBtnText.textContent = isEn ? "Check" : (isDe ? "Prüfen" : "Kontrol Et");
+    }
+
+    // Hide feedback drawer
+    const drawer = document.getElementById("lesson-feedback-drawer");
+    if (drawer) {
+        drawer.style.display = "none";
+        drawer.className = "lesson-feedback-drawer";
+    }
+
+    // Question Type Label
+    const typeLabel = document.getElementById("lesson-type-label");
+    const promptTitle = document.getElementById("lesson-prompt-title");
+    const ttsBox = document.getElementById("lesson-tts-box");
+    const ttsText = document.getElementById("lesson-tts-text");
+    const optionsGrid = document.getElementById("lesson-options-grid");
+    const wordBankArea = document.getElementById("lesson-word-bank-area");
+
+    if (optionsGrid) optionsGrid.style.display = "none";
+    if (wordBankArea) wordBankArea.style.display = "none";
+    if (ttsBox) ttsBox.style.display = "none";
+
+    // Set Type Label text
+    const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+
+    if (typeLabel) {
+        if (q.type === "choice") typeLabel.textContent = isEn ? "Translate & Choose" : (isDe ? "Übersetzen & Wählen" : "Anlamını Seç");
+        else if (q.type === "reverse_choice") typeLabel.textContent = isEn ? "Reverse Translation" : (isDe ? "Rückübersetzung" : "Hedef Dile Çevir");
+        else if (q.type === "listen") typeLabel.textContent = isEn ? "Listen & Identify" : (isDe ? "Hören & Erkennen" : "Dinle ve Bul");
+        else if (q.type === "fill_blank") typeLabel.textContent = isEn ? "Fill in the Blank" : (isDe ? "Lücke füllen" : "Boşluğu Doldur");
+        else if (q.type === "word_order") typeLabel.textContent = isEn ? "Sentence Builder" : (isDe ? "Satzbau" : "Kelimeleri Sırala");
+    }
+
+    if (promptTitle) promptTitle.textContent = q.question;
+
+    // 1. Choice, Reverse Choice, Fill Blank & Listen Questions
+    if (q.type === "choice" || q.type === "reverse_choice" || q.type === "fill_blank" || q.type === "listen") {
+        if (optionsGrid) {
+            optionsGrid.style.display = "grid";
+            optionsGrid.innerHTML = "";
+
+            // If audio phrase exists, show TTS box
+            if (q.phrase && ttsBox && ttsText) {
+                ttsBox.style.display = "flex";
+                ttsText.textContent = q.phrase;
+                // Auto play listening comprehension questions
+                if (q.type === "listen") {
+                    setTimeout(() => speakPhrase(q.phrase), 300);
+                }
+            }
+
+            const badges = ["A", "B", "C", "D"];
+            q.options.forEach((optText, optIdx) => {
+                const btn = document.createElement("button");
+                btn.className = "lesson-option-btn";
+                btn.innerHTML = `
+                    <div class="option-badge">${badges[optIdx] || optIdx + 1}</div>
+                    <span class="option-label">${optText}</span>
+                `;
+                btn.addEventListener("click", () => {
+                    if (lessonStepState !== "answering") return;
+                    document.querySelectorAll(".lesson-option-btn").forEach(b => b.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    lessonSelectedOption = optIdx;
+                    if (actionBtn) actionBtn.disabled = false;
+                });
+                optionsGrid.appendChild(btn);
+            });
+        }
+    } 
+    // 2. Word Order Scrambled Sentences
+    else if (q.type === "word_order") {
+        if (wordBankArea) {
+            wordBankArea.style.display = "flex";
+            const slotsContainer = document.getElementById("word-bank-target-slots");
+            const poolContainer = document.getElementById("word-bank-source-pool");
+
+            if (slotsContainer) slotsContainer.innerHTML = "";
+            if (poolContainer) poolContainer.innerHTML = "";
+
+            // Shuffle words in pool
+            const scrambled = [...q.words].sort(() => Math.random() - 0.5);
+
+            scrambled.forEach((word, wIdx) => {
+                const chip = document.createElement("div");
+                chip.className = "word-chip";
+                chip.textContent = word;
+                chip.setAttribute("data-word-idx", wIdx);
+
+                chip.addEventListener("click", () => {
+                    if (lessonStepState !== "answering" || chip.classList.contains("used")) return;
+                    // Move to slots
+                    chip.classList.add("used");
+                    lessonWordBankSelected.push({ word, sourceChip: chip });
+                    renderWordBankSlots();
+                    if (actionBtn) actionBtn.disabled = lessonWordBankSelected.length === 0;
+                });
+
+                poolContainer.appendChild(chip);
+            });
+        }
+    }
+}
+
+function renderWordBankSlots() {
+    const slotsContainer = document.getElementById("word-bank-target-slots");
+    const actionBtn = document.getElementById("lesson-action-btn");
+    if (!slotsContainer) return;
+
+    slotsContainer.innerHTML = "";
+    lessonWordBankSelected.forEach((item, index) => {
+        const slotChip = document.createElement("div");
+        slotChip.className = "word-chip";
+        slotChip.textContent = item.word;
+        slotChip.title = "Geri koymak için tıkla";
+
+        slotChip.addEventListener("click", () => {
+            if (lessonStepState !== "answering") return;
+            // Return chip to pool
+            item.sourceChip.classList.remove("used");
+            lessonWordBankSelected.splice(index, 1);
+            renderWordBankSlots();
+            if (actionBtn) actionBtn.disabled = lessonWordBankSelected.length === 0;
+        });
+
+        slotsContainer.appendChild(slotChip);
+    });
+}
+
+// Check Answer Logic
+function checkLessonAnswer() {
+    const q = lessonQuestions[currentLessonIndex];
+    if (!q) return;
+
+    let isCorrect = false;
+    let expectedText = "";
+
+    if (q.type === "choice" || q.type === "reverse_choice" || q.type === "fill_blank" || q.type === "listen") {
+        isCorrect = lessonSelectedOption === q.correct;
+        expectedText = q.options[q.correct];
+    } else if (q.type === "word_order") {
+        const userSentence = lessonWordBankSelected.map(i => i.word).join(" ");
+        const correctSentence = q.correctOrder.join(" ");
+        isCorrect = userSentence.trim().toLowerCase() === correctSentence.trim().toLowerCase();
+        expectedText = correctSentence;
+    }
+
+    const drawer = document.getElementById("lesson-feedback-drawer");
+    const content = document.getElementById("lesson-feedback-content");
+    const actionBtn = document.getElementById("lesson-action-btn");
+    const actionBtnText = document.getElementById("lesson-action-btn-text");
+
+    const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+
+    lessonStepState = "checked";
+
+    if (isCorrect) {
+        lessonCorrectCount++;
+        playAudioTone("success");
+
+        if (drawer && content) {
+            drawer.className = "lesson-feedback-drawer correct";
+            drawer.style.display = "block";
+            content.innerHTML = `
+                <div class="feedback-headline">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>${isEn ? "Nicely done! Correct answer!" : (isDe ? "Hervorragend! Richtig!" : "Harika! Doğru cevap! 🎉")}</span>
+                </div>
+                ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ""}
+            `;
+        }
+
+        if (actionBtn) {
+            actionBtn.classList.add("btn-continue-success");
+        }
+        if (actionBtnText) {
+            actionBtnText.textContent = isEn ? "Continue" : (isDe ? "Weiter" : "Devam Et");
+        }
+    } else {
+        lessonHearts--;
+        renderLessonHearts();
+        playAudioTone("error");
+
+        // Shake question container
+        const qc = document.getElementById("lesson-question-container");
+        if (qc) {
+            qc.style.animation = "none";
+            void qc.offsetWidth; // trigger reflow
+            qc.style.animation = "flame-flicker 0.4s ease";
+        }
+
+        if (drawer && content) {
+            drawer.className = "lesson-feedback-drawer incorrect";
+            drawer.style.display = "block";
+            content.innerHTML = `
+                <div class="feedback-headline">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    <span>${isEn ? "Correct Answer:" : (isDe ? "Richtige Antwort:" : "Doğru Yanıt:")} <strong>${expectedText}</strong></span>
+                </div>
+                ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ""}
+            `;
+        }
+
+        if (actionBtnText) {
+            actionBtnText.textContent = isEn ? "Got It" : (isDe ? "Verstanden" : "Anladım");
+        }
+
+        // Out of hearts check
+        if (lessonHearts <= 0) {
+            setTimeout(() => {
+                const failMsg = isEn 
+                    ? "Out of hearts! Would you like to retry this lesson?" 
+                    : (isDe ? "Keine Herzen mehr! Möchtest du diese Lektion wiederholen?" 
+                    : "Canların bitti! Dersi baştan tekrar denemek ister misin?");
+                if (confirm(failMsg)) {
+                    startLesson(activeLessonData.id);
+                } else {
+                    closeLessonModal();
+                }
+            }, 600);
+            return;
+        }
+    }
+}
+
+function nextLessonQuestion() {
+    currentLessonIndex++;
+    if (currentLessonIndex < 10) {
+        renderLessonQuestion();
+    } else {
+        finishLesson();
+    }
+}
+
+// 4. Finish Lesson: Victory Celebration & Streak Increment
+function finishLesson() {
+    playAudioTone("victory");
+
+    // Save lesson completion
+    if (activeLessonData && activeLessonData.id) {
+        saveCompletedLesson(targetLang, activeLessonData.id);
+    }
+
+    // Protect and Increment Daily Streak
+    incrementStreak();
+
+    // Mark daily cards / study quest progress
+    trackCardStudyProgress();
+
+    // Check achievement unlock
+    if (typeof checkAchievements === "function") {
+        checkAchievements();
+    }
+
+    // Switch view to victory
+    const questionContainer = document.getElementById("lesson-question-container");
+    const victoryView = document.getElementById("lesson-victory-view");
+    const footer = document.getElementById("lesson-modal-footer");
+    const progressFill = document.getElementById("lesson-progress-fill");
+
+    if (progressFill) progressFill.style.width = "100%";
+    if (questionContainer) questionContainer.style.display = "none";
+    if (footer) footer.style.display = "none";
+    if (victoryView) victoryView.style.display = "flex";
+
+    // Populate Victory Stats
+    const scoreEl = document.getElementById("v-stat-score");
+    const xpEl = document.getElementById("v-stat-xp");
+    const accuracyEl = document.getElementById("v-stat-accuracy");
+    const streakTitle = document.getElementById("v-streak-title");
+    const streakDesc = document.getElementById("v-streak-desc");
+
+    const accuracy = Math.round((lessonCorrectCount / 10) * 100);
+
+    if (scoreEl) scoreEl.textContent = `${lessonCorrectCount}/10`;
+    if (xpEl) xpEl.textContent = `+${lessonCorrectCount * 10} XP`;
+    if (accuracyEl) accuracyEl.textContent = `${accuracy}%`;
+
+    const isEn = typeof currentLang !== "undefined" && currentLang === "en";
+    const isDe = typeof currentLang !== "undefined" && currentLang === "de";
+
+    if (streakTitle) {
+        streakTitle.textContent = isEn 
+            ? `🔥 Daily Streak: ${streakCount} Days!` 
+            : (isDe ? `🔥 Tages-Serie: ${streakCount} Tage!` : `🔥 Günlük Seri: ${streakCount} Gün!`);
+    }
+    if (streakDesc) {
+        streakDesc.textContent = isEn 
+            ? `Congratulations! You completed today's lesson and extended your streak.` 
+            : (isDe ? `Herzlichen Glückwunsch! Du hast die heutige Lektion gemeistert.` 
+            : `Tebrikler! Bugünün dersini tamamlayarak çalışma serini korudun ve bir sonraki dersin kilidini açtın!`);
+    }
+}
+
+// Global Exports
+window.initStreakAndLessonsEngine = initStreakAndLessonsEngine;
+window.renderStreakHeroCard = renderStreakHeroCard;
+window.renderLearningPath = renderLearningPath;
+window.scrollToLearningPath = scrollToLearningPath;
+window.startLesson = startLesson;
+window.recordStudyActivityDate = recordStudyActivityDate;
+window.getActivityDates = getActivityDates;
+window.playAudioTone = playAudioTone;
+
+// ==========================================================================
+// 19. App Bootstrap Execution
 // ==========================================================================
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initApp);
 } else {
     initApp();
 }
+
 

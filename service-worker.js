@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lexigoo-cache-v13';
+const CACHE_NAME = 'lexigoo-cache-v14';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
   './tenses_db.js',
   './words_de_db.js',
   './tenses_de_db.js',
+  './lessons_db.js',
   './icon-192.png',
   './icon-512.png'
 ];
