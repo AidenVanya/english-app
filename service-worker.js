@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lexigoo-cache-v16';
+const CACHE_NAME = 'lexigoo-cache-v17';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

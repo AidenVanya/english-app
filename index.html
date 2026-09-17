@@ -20,7 +20,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS with cache-busting -->
-    <link rel="stylesheet" href="style.css?v=2.2">
+    <link rel="stylesheet" href="style.css?v=2.3">
 
     <!-- Critical CSS for Hero CTA Banner and Duolingo Elements to ensure instant rendering -->
     <style>
@@ -181,6 +181,53 @@
                 font-size: 11px !important;
             }
         }
+        /* Modal Popup styles for learning path */
+        .learning-path-modal {
+            width: 100% !important;
+            max-width: 680px !important;
+            height: min(90vh, 820px) !important;
+            background: rgba(13, 21, 39, 0.98) !important;
+            border: 1px solid rgba(99, 102, 241, 0.35) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 45px rgba(99, 102, 241, 0.2) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+            animation: modalScaleIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            backdrop-filter: blur(20px) !important;
+            -webkit-backdrop-filter: blur(20px) !important;
+            box-sizing: border-box !important;
+        }
+        .streak-direct-start-btn {
+            width: 100% !important;
+            padding: 12px 18px !important;
+            border-radius: 14px !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            color: #ffffff !important;
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            cursor: pointer !important;
+            transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+            margin-top: 4px !important;
+            margin-bottom: 16px !important;
+            outline: none !important;
+            box-sizing: border-box !important;
+            font-family: inherit !important;
+        }
+        .streak-direct-start-btn:hover {
+            background: rgba(245, 158, 11, 0.15) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+            color: #fbbf24 !important;
+            transform: translateY(-2px) !important;
+        }
+        .streak-direct-start-btn:active {
+            transform: translateY(1px) !important;
+        }
     </style>
     <script>
         // Failsafe early definition of startNextAvailableLesson
@@ -200,6 +247,32 @@
                         window.startLesson(lang + "_lesson_1");
                     }
                 }, 250);
+            }
+        }
+        // Failsafe early definition of openLearningPathModal
+        function openLearningPathModal() {
+            if (typeof window._realOpenLearningPathModal === "function") {
+                window._realOpenLearningPathModal();
+            } else {
+                const modal = document.getElementById("learning-path-modal-overlay");
+                if (modal) {
+                    modal.style.setProperty("display", "flex", "important");
+                    modal.classList.add("active");
+                    document.body.style.overflow = "hidden";
+                    if (typeof window.renderLearningPath === "function") window.renderLearningPath();
+                }
+            }
+        }
+        function closeLearningPathModal() {
+            if (typeof window._realCloseLearningPathModal === "function") {
+                window._realCloseLearningPathModal();
+            } else {
+                const modal = document.getElementById("learning-path-modal-overlay");
+                if (modal) {
+                    modal.classList.remove("active");
+                    modal.style.setProperty("display", "none");
+                    document.body.style.overflow = "";
+                }
             }
         }
     </script>
@@ -306,23 +379,30 @@
                         </div>
                     </div>
 
-                    <!-- Big Duolingo-style Start Next Lesson Banner Button -->
-                    <button class="streak-cta-banner" id="btn-start-next-lesson" type="button" onclick="startNextAvailableLesson()" title="Sıradaki Dersi Başlat" style="position: relative; width: 100%; margin: 18px 0; padding: 18px 22px; border-radius: 18px; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); border: 1.5px solid rgba(255, 255, 255, 0.35); box-shadow: 0 6px 0 #b45309, 0 16px 32px rgba(234, 88, 12, 0.45); display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; text-decoration: none; outline: none; box-sizing: border-box; font-family: inherit;">
+                    <!-- Big Duolingo-style Learning Path Modal Opener Banner -->
+                    <button class="streak-cta-banner" id="btn-open-learning-path" type="button" onclick="openLearningPathModal()" title="Ders Yol Haritasını Aç" style="position: relative; width: 100%; margin: 18px 0 10px 0; padding: 18px 22px; border-radius: 18px; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); border: 1.5px solid rgba(255, 255, 255, 0.35); box-shadow: 0 6px 0 #b45309, 0 16px 32px rgba(234, 88, 12, 0.45); display: flex; align-items: center; justify-content: space-between; gap: 16px; cursor: pointer; text-decoration: none; outline: none; box-sizing: border-box; font-family: inherit;">
                         <div class="cta-banner-left" style="display: flex; align-items: center; gap: 16px; text-align: left; min-width: 0;">
                             <div class="cta-banner-icon" style="width: 50px; height: 50px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; font-size: 20px; color: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); flex-shrink: 0;">
-                                <i class="fa-solid fa-play"></i>
+                                <i class="fa-solid fa-map-location-dot"></i>
                             </div>
                             <div class="cta-banner-text" style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
-                                <span class="cta-banner-title" id="cta-banner-title" style="font-size: 16.5px; font-weight: 800; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; line-height: 1.2; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35); display: block;">GÜNÜN DERSİNE BAŞLA</span>
-                                <span class="cta-banner-sub" id="cta-banner-subtitle" style="font-size: 13px; color: rgba(255, 255, 255, 0.95); font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">Sıradaki: 1. Ders • 10 Soru</span>
+                                <span class="cta-banner-title" id="cta-banner-title" style="font-size: 16.5px; font-weight: 800; color: #ffffff; letter-spacing: 0.6px; text-transform: uppercase; line-height: 1.2; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.35); display: block;">DERS YOL HARİTASI (10 BÖLÜM)</span>
+                                <span class="cta-banner-sub" id="cta-banner-subtitle" style="font-size: 13px; color: rgba(255, 255, 255, 0.95); font-weight: 600; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">Sıradaki: 1. Ders • 🗺️ Haritayı Aç</span>
                             </div>
                         </div>
                         <div class="cta-banner-right" style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
                             <span class="cta-xp-badge" style="background: rgba(0, 0, 0, 0.35); color: #fef08a; font-weight: 800; font-size: 13px; padding: 6px 14px; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.25); display: inline-flex; align-items: center; gap: 5px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);"><i class="fa-solid fa-bolt"></i> +50 XP</span>
                             <div class="cta-arrow-circle" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255, 255, 255, 0.25); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 14px; flex-shrink: 0;">
-                                <i class="fa-solid fa-arrow-right"></i>
+                                <i class="fa-solid fa-chevron-right"></i>
                             </div>
                         </div>
+                    </button>
+
+                    <!-- Direct Fast Action to Start Next Lesson Immediately -->
+                    <button class="streak-direct-start-btn" id="btn-start-next-lesson" type="button" onclick="startNextAvailableLesson()" title="Sıradaki Dersi Hemen Başlat">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Sıradaki Dersi Doğrudan Başlat</span>
+                        <i class="fa-solid fa-arrow-right" style="font-size: 11px; opacity: 0.7;"></i>
                     </button>
 
                     <!-- 7-Day Weekly Streak Tracker -->
@@ -337,34 +417,6 @@
                         <div class="milestone-progress-bar">
                             <div class="milestone-progress-fill" id="streak-milestone-fill" style="width: 0%;"></div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Duolingo-style Learning Path Section (Ders Haritası) -->
-                <div class="learning-path-section" id="learning-path-section">
-                    <div class="path-header glass-panel">
-                        <div class="path-header-info">
-                            <div class="path-unit-badge" id="path-lang-badge">
-                                <span class="path-flag" id="path-flag-icon">🇬🇧</span>
-                                <span id="path-lang-name">İngilizce Öğrenme Haritası</span>
-                            </div>
-                            <h2 class="path-title" data-i18n="path-title">Adım Adım Ders Haritası</h2>
-                            <p class="path-subtitle" data-i18n="path-subtitle">Her ders 10 interaktif sorudan oluşur. Dersleri tamamlayarak ilerle ve serini koru!</p>
-                        </div>
-                        <div class="path-progress-widget">
-                            <div class="path-progress-counter">
-                                <span class="path-progress-val" id="path-completed-count">0/10</span>
-                                <span class="path-progress-lbl" data-i18n="path-completed-lbl">Ders Tamamlandı</span>
-                            </div>
-                            <div class="path-mini-progress">
-                                <div class="path-mini-fill" id="path-overall-fill" style="width: 0%;"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Duolingo Path Tree Container -->
-                    <div class="path-tree-wrapper" id="duolingo-path-tree">
-                        <!-- Populated dynamically with wavy lesson nodes and connectors -->
                     </div>
                 </div>
 
@@ -1068,6 +1120,53 @@
                 </div>
             </div>
         </div>
+    <!-- Duolingo-style Learning Path (Yol Haritası & Dersler) Modal Popup -->
+    <div class="modal-overlay" id="learning-path-modal-overlay">
+        <div class="learning-path-modal glass-panel" id="learning-path-modal">
+            <!-- Modal Header Bar -->
+            <div class="path-modal-header">
+                <div class="path-modal-title-left">
+                    <div class="path-modal-icon-badge">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div>
+                        <div class="path-unit-badge" id="path-lang-badge">
+                            <span class="path-flag" id="path-flag-icon">🇬🇧</span>
+                            <span id="path-lang-name">İngilizce Öğrenme Haritası</span>
+                        </div>
+                        <h2 class="path-modal-title" data-i18n="path-title">Adım Adım Ders Haritası</h2>
+                        <p class="path-modal-subtitle" data-i18n="path-subtitle">10 Bölüm • Her ders 10 interaktif sorudan oluşur</p>
+                    </div>
+                </div>
+                <button class="path-modal-close-btn" id="close-path-modal-btn" onclick="closeLearningPathModal()" title="Kapat" aria-label="Haritayı Kapat">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Top Progress & Quick Start Bar -->
+            <div class="path-modal-top-bar">
+                <div class="path-progress-widget">
+                    <div class="path-progress-counter">
+                        <span class="path-progress-val" id="path-completed-count">0/10</span>
+                        <span class="path-progress-lbl" data-i18n="path-completed-lbl">Ders Tamamlandı</span>
+                    </div>
+                    <div class="path-mini-progress">
+                        <div class="path-mini-fill" id="path-overall-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <button class="path-modal-quick-start-btn" id="modal-quick-start-lesson-btn" onclick="closeLearningPathModal(); startNextAvailableLesson();" type="button" title="Sıradaki Dersi Başlat">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span id="modal-quick-start-text">Sıradaki Dersi Başlat</span>
+                </button>
+            </div>
+
+            <!-- Scrollable Duolingo Path Tree Area -->
+            <div class="path-modal-body">
+                <div class="path-tree-wrapper" id="duolingo-path-tree">
+                    <!-- Populated dynamically with wavy lesson nodes and connectors -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Interactive Duolingo-style Lesson Runner Modal -->
@@ -1286,15 +1385,15 @@
     </div>
 
     <!-- English Databases -->
-    <script src="words_db.js?v=2.2"></script>
-    <script src="tenses_db.js?v=2.2"></script>
+    <script src="words_db.js?v=2.3"></script>
+    <script src="tenses_db.js?v=2.3"></script>
     <!-- German Databases (Almanca Veritabanları) -->
-    <script src="words_de_db.js?v=2.2"></script>
-    <script src="tenses_de_db.js?v=2.2"></script>
+    <script src="words_de_db.js?v=2.3"></script>
+    <script src="tenses_de_db.js?v=2.3"></script>
     <!-- Lessons Database (Ders & Harita Veritabanı) -->
-    <script src="lessons_db.js?v=2.2"></script>
+    <script src="lessons_db.js?v=2.3"></script>
     <!-- Custom JavaScript -->
-    <script src="script.js?v=2.2"></script>
+    <script src="script.js?v=2.3"></script>
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {

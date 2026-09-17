@@ -5345,13 +5345,36 @@ function recordStudyActivityDate(dateStr) {
     }
 }
 
-// Smooth scroll down to learning path
-function scrollToLearningPath() {
-    const el = document.getElementById("learning-path-section");
-    if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
+// Open Learning Path Popup Modal
+function openLearningPathModal() {
+    renderLearningPath();
+    const modalOverlay = document.getElementById("learning-path-modal-overlay");
+    if (modalOverlay) {
+        modalOverlay.style.setProperty("display", "flex", "important");
+        modalOverlay.classList.add("active");
+        document.body.style.overflow = "hidden";
     }
 }
+
+// Close Learning Path Popup Modal
+function closeLearningPathModal() {
+    const modalOverlay = document.getElementById("learning-path-modal-overlay");
+    if (modalOverlay) {
+        modalOverlay.classList.remove("active");
+        modalOverlay.style.setProperty("display", "none");
+        document.body.style.overflow = "";
+    }
+}
+
+// Smooth scroll / open learning path
+function scrollToLearningPath() {
+    openLearningPathModal();
+}
+
+window.openLearningPathModal = openLearningPathModal;
+window.closeLearningPathModal = closeLearningPathModal;
+window._realOpenLearningPathModal = openLearningPathModal;
+window._realCloseLearningPathModal = closeLearningPathModal;
 
 // Find the next active/unlocked lesson to start
 function getNextAvailableLesson() {
@@ -5495,9 +5518,10 @@ function renderStreakHeroCard() {
 
     // Update Big Action CTA Banner Button
     const nextLesson = getNextAvailableLesson();
-    const ctaBanner = document.getElementById("btn-start-next-lesson");
+    const ctaBanner = document.getElementById("btn-open-learning-path") || document.getElementById("btn-start-next-lesson");
     const ctaTitle = document.getElementById("cta-banner-title");
     const ctaSub = document.getElementById("cta-banner-subtitle");
+    const modalQuickStartText = document.getElementById("modal-quick-start-text");
 
     if (ctaBanner && nextLesson) {
         const isDeTarget = targetLang === "de";
@@ -5506,17 +5530,27 @@ function renderStreakHeroCard() {
         if (isTodayDone) {
             ctaBanner.classList.add("completed-state");
             if (ctaTitle) {
-                ctaTitle.textContent = isEn ? "CONTINUE PRACTICE" : (isDe ? "PRAXIS FORTSETZEN" : "PRATİĞE DEVAM ET");
+                ctaTitle.textContent = isEn ? "LEARNING ROADMAP" : (isDe ? "LERNPFAD ÖFFNEN" : "DERS YOL HARİTASI");
             }
         } else {
             ctaBanner.classList.remove("completed-state");
             if (ctaTitle) {
-                ctaTitle.textContent = isEn ? "START TODAY'S LESSON" : (isDe ? "HEUTIGE LEKTION STARTEN" : "GÜNÜN DERSİNE BAŞLA");
+                ctaTitle.textContent = isEn ? "LEARNING ROADMAP" : (isDe ? "LERNPFAD ÖFFNEN" : "DERS YOL HARİTASI (10 BÖLÜM)");
             }
         }
 
         if (ctaSub) {
-            ctaSub.textContent = `${unitPrefix} ${nextLesson.unit}: ${nextLesson.title} • 10 ${isEn ? "Questions" : (isDe ? "Fragen" : "Soru")}`;
+            ctaSub.textContent = isEn 
+                ? `Next: ${unitPrefix} ${nextLesson.unit}: ${nextLesson.title} • 🗺️ Open Map` 
+                : (isDe ? `Nächste: ${unitPrefix} ${nextLesson.unit}: ${nextLesson.title} • 🗺️ Karte öffnen` 
+                : `Sıradaki: ${unitPrefix} ${nextLesson.unit}: ${nextLesson.title} • 🗺️ Haritayı Aç`);
+        }
+
+        if (modalQuickStartText) {
+            modalQuickStartText.textContent = isEn 
+                ? `Start ${unitPrefix} ${nextLesson.unit}` 
+                : (isDe ? `${unitPrefix} ${nextLesson.unit} starten` 
+                : `${unitPrefix} ${nextLesson.unit}'e Başla`);
         }
     }
 
@@ -5731,6 +5765,7 @@ function renderLearningPath() {
                 showToast(lockMsg);
                 playAudioTone("error");
             } else {
+                closeLearningPathModal();
                 startLesson(lesson.id);
             }
         });
@@ -5762,6 +5797,34 @@ function setupLessonModalListeners() {
     const finishBtn = document.getElementById("v-finish-btn");
     const modalOverlay = document.getElementById("lesson-modal-overlay");
     const startNextBtn = document.getElementById("btn-start-next-lesson");
+    const openPathBtn = document.getElementById("btn-open-learning-path");
+    const closePathBtn = document.getElementById("close-path-modal-btn");
+    const pathModalOverlay = document.getElementById("learning-path-modal-overlay");
+
+    // Connect Open Roadmap Popup Button
+    if (openPathBtn) {
+        openPathBtn.onclick = (e) => {
+            e.preventDefault();
+            openLearningPathModal();
+        };
+    }
+
+    // Connect Close Roadmap Popup Button
+    if (closePathBtn) {
+        closePathBtn.onclick = (e) => {
+            e.preventDefault();
+            closeLearningPathModal();
+        };
+    }
+
+    // Close Roadmap Popup on overlay click
+    if (pathModalOverlay) {
+        pathModalOverlay.addEventListener("click", (e) => {
+            if (e.target === pathModalOverlay) {
+                closeLearningPathModal();
+            }
+        });
+    }
 
     // Connect Big Duolingo Start Next Lesson CTA Button
     if (startNextBtn) {
@@ -5809,11 +5872,18 @@ function setupLessonModalListeners() {
             closeLessonModal();
             renderLearningPath();
             renderStreakHeroCard();
+            openLearningPathModal();
         });
     }
 
-    // Keyboard support: Numbers 1-4 for choices, Enter to check/continue
+    // Keyboard support: Numbers 1-4 for choices, Enter to check/continue, Escape to close
     window.addEventListener("keydown", (e) => {
+        const pathModal = document.getElementById("learning-path-modal-overlay");
+        if (e.key === "Escape" && pathModal && pathModal.classList.contains("active")) {
+            closeLearningPathModal();
+            return;
+        }
+
         const modal = document.getElementById("lesson-modal-overlay");
         if (!modal || !modal.classList.contains("active")) return;
 
@@ -6240,6 +6310,8 @@ function finishLesson() {
 window.initStreakAndLessonsEngine = initStreakAndLessonsEngine;
 window.renderStreakHeroCard = renderStreakHeroCard;
 window.renderLearningPath = renderLearningPath;
+window.openLearningPathModal = openLearningPathModal;
+window.closeLearningPathModal = closeLearningPathModal;
 window.scrollToLearningPath = scrollToLearningPath;
 window.startLesson = startLesson;
 window.startNextAvailableLesson = startNextAvailableLesson;
